@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmark — OpenZeppelin Canton token template</title>
+<style>
+  :root{
+    --ink:#12161c; --body:#39414d; --mute:#6b7684; --line:#e3e7ec;
+    --bg:#fff; --panel:#f7f9fb; --accent:#1c4ed8; --good:#0f7b4f;
+    --warn:#b45309; --bad:#b42318;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--body);
+    font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px; margin:0 auto; padding:56px 32px 80px}
+  h1{font-size:31px; line-height:1.22; letter-spacing:-.021em; color:var(--ink); margin:0 0 10px; font-weight:680}
+  h2{font-size:20px; letter-spacing:-.012em; color:var(--ink); margin:52px 0 14px; font-weight:660;
+     padding-top:22px; border-top:1px solid var(--line)}
+  h3{font-size:16px; color:var(--ink); margin:30px 0 10px; font-weight:660}
+  p{margin:0 0 14px}
+  a{color:var(--accent)}
+  code{font:13.5px/1.5 ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+       background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:1px 5px}
+  .sub{font-size:15.5px; color:var(--mute); margin:0 0 26px}
+  .tags{display:flex; flex-wrap:wrap; gap:7px; margin:0 0 30px}
+  .tag{font-size:12px; letter-spacing:.02em; color:var(--body); background:var(--panel);
+       border:1px solid var(--line); border-radius:100px; padding:4px 11px; white-space:nowrap}
+  .tag b{font-weight:640; color:var(--ink)}
+
+  .headline{background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--accent);
+            border-radius:8px; padding:22px 24px; margin:0 0 26px}
+  .headline p{margin:0 0 12px; font-size:16.5px; color:var(--ink)}
+  .headline p:last-child{margin:0}
+  .headline strong{font-weight:660}
+
+  .cards{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:0 0 30px}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:15px 16px}
+  .card .k{font-size:11.5px; text-transform:uppercase; letter-spacing:.055em; color:var(--mute); font-weight:620}
+  .card .v{font-size:25px; line-height:1.2; color:var(--ink); font-weight:660; margin-top:5px;
+           font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+  .card .n{font-size:12.5px; color:var(--mute); margin-top:3px}
+
+  table{width:100%; border-collapse:collapse; margin:6px 0 18px; font-size:15px}
+  th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--line)}
+  th{font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--mute); font-weight:620}
+  td{font-variant-numeric:tabular-nums}
+  td:first-child{color:var(--ink)}
+  tbody tr:last-child td{border-bottom:none}
+  .hi{color:var(--ink); font-weight:640}
+  .scroll{overflow-x:auto; margin-bottom:18px}
+  .scroll table{margin-bottom:0}
+
+  .chart{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px 20px 14px; margin:0 0 18px}
+  .chart .ct{font-size:12.5px; color:var(--mute); margin-bottom:12px}
+  .chart .ct b{color:var(--ink); font-weight:640}
+  .bars{display:flex; align-items:flex-end; gap:4px; height:76px}
+  .bars i{flex:1; background:var(--accent); border-radius:2px 2px 0 0; opacity:.85; min-height:2px}
+  .bars.alt i{background:#93a3b8}
+  .axis{display:flex; justify-content:space-between; font-size:11.5px; color:var(--mute); margin-top:7px}
+
+  .note{border-left:3px solid var(--line); padding:2px 0 2px 16px; margin:0 0 18px; color:var(--body)}
+  .flag{background:#fffaf2; border:1px solid #f3e2c7; border-radius:8px; padding:16px 18px; margin:0 0 18px}
+  .flag .ft{font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--warn); font-weight:660; margin-bottom:6px}
+  .flag p{margin:0; font-size:15px}
+  ul{margin:0 0 16px; padding-left:20px}
+  li{margin-bottom:7px}
+  pre{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:15px 17px;
+      overflow-x:auto; font:13px/1.62 ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+      color:var(--ink); margin:0 0 18px}
+  pre code{background:none; border:none; padding:0; font-size:inherit}
+  .foot{margin-top:46px; padding-top:18px; border-top:1px solid var(--line); font-size:13px; color:var(--mute)}
+  @media (max-width:720px){
+    .wrap{padding:36px 20px 60px} h1{font-size:26px}
+    .cards{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>OpenZeppelin Canton token template — capacity benchmark</h1>
+  <p class="sub">Standard-interface transfer and settlement throughput, measured through
+  <code>TransferFactory_Transfer</code> (CIP-0056).</p>
+
+  <div class="tags">
+    <span class="tag"><b>Target</b> OpenZeppelin/canton-token-template · AGPL-3.0</span>
+    <span class="tag"><b>Third-party code</b> not vendored</span>
+    <span class="tag"><b>Canton</b> 3.4.11 · LF 2.1</span>
+    <span class="tag"><b>Host</b> single participant, in-memory, 6-core i7-8750H</span>
+  </div>
+
+  <div class="headline">
+    <p>The template settles <strong>~15–17 standard transfers/second</strong> at
+    <strong>p99 ≈ 400–800 ms</strong>, and stops scaling at <strong>~22 transfers/s offered</strong>.</p>
+    <p>Throughput is bounded by <strong>input-holding selection, not by the factory.</strong>
+    The dominant failure at every load level is <code>CONTRACT_NOT_FOUND</code> — a second
+    transfer reaching an input a concurrent transfer had already archived.</p>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="k">Throughput</div><div class="v">15.0<span style="font-size:15px;color:var(--mute)">/s</span></div><div class="n">57 of 60 committed</div></div>
+    <div class="card"><div class="k">p50 latency</div><div class="v">402<span style="font-size:15px;color:var(--mute)">ms</span></div><div class="n">median</div></div>
+    <div class="card"><div class="k">p99 latency</div><div class="v">1172<span style="font-size:15px;color:var(--mute)">ms</span></div><div class="n">with disclosure</div></div>
+    <div class="card"><div class="k">Contention</div><div class="v">3.3<span style="font-size:15px;color:var(--mute)">%</span></div><div class="n">at concurrency 8</div></div>
+  </div>
+
+  <p class="note">This implementation is deliberate about the bottleneck. <code>Rules.daml</code>
+  archives every input <em>first</em>, commented “first mutation for contention guarantee”.
+  The benchmark shows what that guarantee costs under concurrency: correctness is preserved,
+  and the price is paid in retries. <strong>This is a design trade-off, not a defect.</strong></p>
+
+  <h2>1 · Steady state</h2>
+  <p>Closed model, concurrency 8, 60 transfers, 400-holding pool. The sender submits
+  <strong>alone</strong>, reaching the factory by explicit disclosure — as a wallet does.</p>
+
+  <h3>What disclosure costs</h3>
+  <p>The same workload with the admin <strong>co-submitting</strong> instead of disclosing
+  (the factory is then visible because a stakeholder is on the submission):</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th></th><th>Co-submitted</th><th>Disclosed (realistic)</th><th>Delta</th></tr></thead>
+    <tbody>
+      <tr><td>Throughput</td><td>15.5/s</td><td class="hi">15.0/s</td><td>−3%</td></tr>
+      <tr><td>p50</td><td>~400 ms</td><td class="hi">402 ms</td><td>unchanged</td></tr>
+      <tr><td>p99</td><td>803 ms</td><td class="hi">1172 ms</td><td style="color:var(--bad);font-weight:640">+45%</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Attaching the factory's created-event blob to every submission costs <strong>~3% throughput
+  and raises p99 by ~45%</strong>. The blob is ~576 bytes and travels with every transfer. For a
+  wallet author that is a concrete, previously unmeasured number: <strong>disclosure is not free,
+  and it shows up in the tail rather than the median.</strong></p>
+
+  <h2>2 · Ramp — where it stops scaling</h2>
+  <p>Open model, 4 → 30 transfers/s over 45 s, 1200-holding pool (deep enough that the pool is
+  not the limit).</p>
+
+  <div class="chart">
+    <div class="ct"><b>Committed throughput</b> by 3-second bucket · peak 17/s</div>
+    <div class="bars">
+      <i style="height:25%"></i><i style="height:50%"></i><i style="height:50%"></i><i style="height:62%"></i>
+      <i style="height:62%"></i><i style="height:87%"></i><i style="height:62%"></i><i style="height:87%"></i>
+      <i style="height:87%"></i><i style="height:100%"></i><i style="height:87%"></i><i style="height:87%"></i>
+      <i style="height:87%"></i><i style="height:87%"></i>
+    </div>
+    <div class="axis"><span>4/s offered</span><span>45 s</span><span>30/s offered</span></div>
+  </div>
+
+  <div class="chart">
+    <div class="ct"><b>p99 latency</b> by 3-second bucket · max 443 ms — flat while throughput plateaus</div>
+    <div class="bars alt">
+      <i style="height:87%"></i><i style="height:87%"></i><i style="height:87%"></i><i style="height:100%"></i>
+      <i style="height:87%"></i><i style="height:87%"></i><i style="height:87%"></i><i style="height:87%"></i>
+      <i style="height:87%"></i><i style="height:87%"></i><i style="height:87%"></i><i style="height:87%"></i>
+      <i style="height:87%"></i><i style="height:87%"></i>
+    </div>
+    <div class="axis"><span>4/s offered</span><span>45 s</span><span>30/s offered</span></div>
+  </div>
+
+  <p>Cliff at <strong>~22 ops/s offered</strong>, peaking at 17 committed/s, with
+  <strong>26.5%</strong> of offered load refused (<code>CONTRACT_NOT_FOUND</code>, 195×).</p>
+  <p>Latency stays flat while throughput plateaus: the registry <strong>sheds</strong> excess load
+  rather than queueing it. For an SLA that is the good failure mode — the transfers that succeed
+  stay fast.</p>
+
+  <h2>3 · The measurement trap, demonstrated</h2>
+  <p>The same ramp against a <strong>400</strong>-holding pool reports something quite different:</p>
+
+  <div class="chart">
+    <div class="ct"><b>Throughput</b> — climbs, then collapses · reported 5.9/s, 77.4% contention</div>
+    <div class="bars">
+      <i style="height:37%"></i><i style="height:87%"></i><i style="height:87%"></i><i style="height:100%"></i>
+      <i style="height:87%"></i><i style="height:75%"></i><i style="height:87%"></i><i style="height:62%"></i>
+      <i style="height:50%"></i><i style="height:37%"></i><i style="height:37%"></i><i style="height:12%"></i>
+      <i style="height:12%"></i><i style="height:12%"></i>
+    </div>
+    <div class="axis"><span>4/s offered</span><span>45 s</span><span>30/s offered</span></div>
+  </div>
+
+  <div class="flag">
+    <div class="ft">This is not the system failing</div>
+    <p>That collapse is the <strong>pool emptying</strong> — 1,581 attempts against 400 holdings —
+    not the registry hitting a limit. Quoting 5.9/s as this app's capacity would be wrong. Sizing
+    the contract pool for the whole run is a precondition for a meaningful number, and this is what
+    it looks like when you get it wrong.</p>
+  </div>
+
+  <h2>4 · Settlement (DvP): the allocation path</h2>
+  <p>The same registry implements <code>AllocationFactory</code>.
+  <code>AllocationFactory_Allocate</code> is the flow institutional settlement actually uses: a
+  sender allocates an asset to a settlement identified by a reference, naming an executor and
+  deadlines. Per allocation the factory archives the inputs, creates a
+  <code>LockedSimpleHolding</code> held by the admin until <code>settleBefore</code>, creates a
+  <code>SimpleAllocation</code>, and returns change — <strong>strictly more work than a
+  transfer.</strong></p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Closed · concurrency 8 · 60 ops</th><th>Transfer</th><th>Allocation (DvP)</th></tr></thead>
+    <tbody>
+      <tr><td>Committed</td><td>57 / 60</td><td class="hi">57 / 60</td></tr>
+      <tr><td>Throughput</td><td>15.0/s</td><td class="hi">15.0/s</td></tr>
+      <tr><td>p50</td><td>402 ms</td><td class="hi">382 ms</td></tr>
+      <tr><td>p99</td><td>1172 ms</td><td class="hi">1184 ms</td></tr>
+      <tr><td>Contention</td><td>3.3%</td><td class="hi">5%</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><strong>Allocation costs no throughput.</strong> It does strictly more work per operation and
+  lands in the same band. That is the useful result: the ceiling is not set by the work inside the
+  choice, it is set by <strong>input-holding selection</strong> — the same
+  <code>CONTRACT_NOT_FOUND</code> collisions that bound the transfer path. Ramped 4 → 30/s over
+  45 s against a 1200-holding pool, the allocation path peaks at 17–19 allocations/s, matching
+  transfers.</p>
+
+  <h3>A caveat on single-ramp “cliff” numbers</h3>
+  <p>Two runs of that ramp differing only in RNG seed:</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Seed</th><th>Committed</th><th>Contention</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>42</td><td>544</td><td>26.4%</td><td>cliff at ~22/s offered, peak 17/s</td></tr>
+      <tr><td>7</td><td>538</td><td>27.0%</td><td class="hi">no clean cliff — still climbing at 30/s, peak 19/s</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Same throughput band, but the <em>cliff</em> is seed-sensitive at this sample size: in the
+  second run throughput was still rising when the ramp ended, and the tool declined to report a
+  cliff rather than nominating the largest bucket it saw. Treat a single 45-second ramp as
+  bracketing a range, not as a precise limit — and note that <strong>the numbers a tool refuses to
+  produce are as informative as the ones it does.</strong></p>
+
+  <h2>5 · Comparison with a minimal registry</h2>
+  <p>The same benchmark against a ~90-line registry implementing only the transfer interface:</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th></th><th>Minimal registry</th><th>OpenZeppelin template</th></tr></thead>
+    <tbody>
+      <tr><td>Steady throughput</td><td>~19/s</td><td class="hi">~15.5/s</td></tr>
+      <tr><td>Ramp peak</td><td>18/s</td><td class="hi">17/s</td></tr>
+      <tr><td>p99</td><td>~750 ms</td><td class="hi">~800 ms</td></tr>
+      <tr><td>Work per transfer</td><td>archive inputs, create receiver + change</td>
+          <td class="hi">20 invariant checks, 3-way dispatch, archive inputs, create locked holding + transfer instruction + change</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><strong>~15% less throughput for substantially more work per transfer</strong> — invariant
+  checking, multi-instrument support, lock handling and the two-step protocol. That is a reasonable
+  price, and it is the kind of comparison a team choosing an implementation actually wants.</p>
+
+  <h2>Honest scope</h2>
+  <ul>
+    <li><strong>Floor numbers, not production capacity.</strong> One laptop, one participant,
+    in-memory storage. What transfers to a real deployment is the <em>shape</em> of the result —
+    where the bottleneck sits and how the system behaves past it — not the absolute rate.</li>
+    <li><strong>SDK.</strong> Their <code>daml.yaml</code> pins 3.4.10; built here against 3.4.11
+    (patch-level, same <code>--target=2.1</code>).</li>
+    <li><strong>CIP-0104 traffic reads UNMETERED</strong> — a sandbox has no traffic control
+    enabled, so cost-per-transfer is still unanswered.</li>
+    <li><strong>Not covered</strong>, and good follow-up workloads: self-transfer
+    (merge/defragment), direct transfer via a <code>TransferPreapproval</code> in the choice
+    context, and the settlement lifecycle beyond allocation
+    (<code>Allocation_ExecuteTransfer</code>).</li>
+  </ul>
+
+  <h2>Reproducing</h2>
+<pre><code>git clone --depth 1 https://github.com/OpenZeppelin/canton-token-template.git
+cd canton-token-template/simple-token   # set sdk-version to your installed 3.4.x
+daml build
+
+canton-stress run simple-token-0.1.0.dar \
+  --workload-file examples/openzeppelin/workload-transfer.json \
+  --model closed --concurrency 8 --ops 60 --sandbox
+
+canton-stress run simple-token-0.1.0.dar \
+  --workload-file examples/openzeppelin/workload-transfer.json \
+  --model open --mode ramp --from 4 --to 30 --duration 45 --bucket 3 --sandbox</code></pre>
+  <p style="font-size:14.5px;color:var(--mute)">Raise the <code>holdings</code> step's
+  <code>count</code> if you increase the rate or duration — see §3.</p>
+
+  <div class="foot">
+    Measured with canton-stress · workloads are declarative JSON, runs are seeded and reproducible.
+    Bar charts are per-bucket values from the run's own 3-second time series.
+  </div>
+
+</div>
+</body>
+</html>

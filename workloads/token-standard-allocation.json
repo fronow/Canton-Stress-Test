@@ -1,0 +1,83 @@
+{
+  "_comment": [
+    "LIBRARY TEMPLATE — CIP-0056 SETTLEMENT (DvP), against any registry that",
+    "implements AllocationFactory.",
+    "",
+    "  AllocationFactory_Allocate  (splice-api-token-allocation-instruction-v1)",
+    "",
+    "This is the flow institutional settlement uses: a sender allocates an asset",
+    "to a settlement identified by a reference, naming an executor and deadlines.",
+    "A conforming registry locks the asset until settleBefore and returns change,",
+    "so it does strictly more work per operation than a plain transfer — which",
+    "makes the transfer/allocation comparison worth running.",
+    "",
+    "Parameters are the same as token-standard-transfer.json plus an executor",
+    "role, so the two can be run back to back against one registry.",
+    "",
+    "  node src/cli.ts check workloads/token-standard-allocation.json"
+  ],
+
+  "version": 1,
+  "parties": "$param:parties",
+  "roles": ["admin", "executor"],
+
+  "setup": [
+    {
+      "id": "factory",
+      "disclose": true,
+      "actAs": ["$role:admin"],
+      "op": {
+        "kind": "create",
+        "template": "$param:factoryTemplate",
+        "args": "$param:factoryArgs"
+      }
+    },
+    {
+      "id": "holdings",
+      "count": "$param:holdings",
+      "actAs": "$param:holdingActAs",
+      "op": {
+        "kind": "create",
+        "template": "$param:holdingTemplate",
+        "args": "$param:holdingArgs"
+      }
+    }
+  ],
+
+  "operations": [
+    {
+      "weight": 1,
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-allocation-instruction-v1:Splice.Api.Token.AllocationInstructionV1:AllocationFactory",
+        "contract": "$ref:factory",
+        "choice": "AllocationFactory_Allocate",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "allocation": {
+            "settlement": {
+              "executor": "$role:executor",
+              "settlementRef": { "id": "$param:settlementRef", "cid": null },
+              "requestedAt": "$now-60s",
+              "allocateBefore": "$now+1h",
+              "settleBefore": "$now+2h",
+              "meta": { "values": {} }
+            },
+            "transferLegId": "leg-1",
+            "transferLeg": {
+              "sender": "$p0",
+              "receiver": "$p1",
+              "amount": "$param:transferAmount",
+              "instrumentId": { "admin": "$role:admin", "id": "$param:instrumentId" },
+              "meta": { "values": {} }
+            }
+          },
+          "requestedAt": "$now-60s",
+          "inputHoldingCids": ["$ref:holdings[*]"],
+          "extraArgs": { "context": { "values": {} }, "meta": { "values": {} } }
+        }
+      },
+      "submit": { "actAs": ["$p0"] }
+    }
+  ]
+}

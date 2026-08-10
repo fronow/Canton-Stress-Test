@@ -1,0 +1,91 @@
+{
+  "_comment": [
+    "Load-test the settlement app's Transfer choice. Nothing here is directly",
+    "creatable: the setup program opens accounts through a factory, issues an",
+    "instrument, and credits holdings — binding each product to a name the next",
+    "step (and the measured mix) references as $ref:<name>.",
+    "",
+    "Run it:  node src/cli.ts run examples/settlement-app/.daml/dist/canton-stress-settlement-0.1.0.dar \\",
+    "           --workload-file examples/settlement-app/workload.json --sandbox --ops 100 --concurrency 8"
+  ],
+
+  "version": 1,
+  "parties": 6,
+  "roles": ["custodian", "issuer"],
+
+  "setup": [
+    {
+      "id": "factory",
+      "actAs": ["$role:custodian"],
+      "op": {
+        "kind": "create",
+        "template": "#canton-stress-settlement:Settlement:AccountFactory",
+        "args": { "custodian": "$role:custodian" }
+      }
+    },
+    {
+      "id": "instrument",
+      "actAs": ["$role:issuer"],
+      "op": {
+        "kind": "create",
+        "template": "#canton-stress-settlement:Settlement:Instrument",
+        "args": { "issuer": "$role:issuer", "custodian": "$role:custodian", "symbol": "USD" }
+      }
+    },
+    {
+      "id": "accounts",
+      "count": 6,
+      "actAs": ["$role:custodian"],
+      "op": {
+        "kind": "exercise",
+        "template": "#canton-stress-settlement:Settlement:AccountFactory",
+        "contract": "$ref:factory",
+        "choice": "OpenAccount",
+        "args": { "owner": "$pi" }
+      }
+    },
+    {
+      "id": "holdings",
+      "count": 24,
+      "actAs": ["$role:custodian"],
+      "op": {
+        "kind": "exercise",
+        "template": "#canton-stress-settlement:Settlement:Account",
+        "contract": "$ref:accounts[$i]",
+        "choice": "Credit",
+        "args": { "instrument": "$ref:instrument", "amount": "1000.0" }
+      }
+    }
+  ],
+
+  "operations": [
+    {
+      "weight": 8,
+      "_comment": [
+        "Settle a holding into another party's account. The destination is a",
+        "contract SETUP created, and actAsFrom reads the holding's real owner",
+        "off the target so the transfer is signed by whoever actually holds it.",
+        "The custodian co-submits because the sender is not a stakeholder of",
+        "the destination account and could not otherwise see it."
+      ],
+      "op": {
+        "kind": "exercise",
+        "template": "#canton-stress-settlement:Settlement:Holding",
+        "choice": "Transfer",
+        "actAsFrom": ["owner"],
+        "args": { "newAccount": "$ref:accounts[*]" }
+      },
+      "submit": { "actAs": ["$role:custodian"] }
+    },
+    {
+      "weight": 2,
+      "op": {
+        "kind": "exercise",
+        "template": "#canton-stress-settlement:Settlement:Holding",
+        "choice": "Split",
+        "actAsFrom": ["owner"],
+        "args": { "splitAmount": "1.0" }
+      }
+    }
+  ]
+}

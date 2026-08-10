@@ -1,0 +1,186 @@
+# A reusable GitHub Action, so adopting canton-stress is three lines in a
+# workflow rather than a script somebody has to write and maintain.
+#
+#   - uses: <owner>/canton-stress@v1
+#     with:
+#       dar: .daml/dist/my-app-1.0.0.dar
+#       workload: perf/transfer.json
+#       max-p99-ms: "2000"
+#
+# The gate is the point: a run that only prints numbers gets ignored, a run
+# that fails the build gets fixed.
+
+name: canton-stress
+description: Load-test a Canton application and gate the build on its performance.
+author: canton-stress
+
+branding:
+  icon: activity
+  color: blue
+
+inputs:
+  dar:
+    description: Path to the DAR under test.
+    required: true
+  workload:
+    description: Workload file. Omit to use the built-in create/transfer preset.
+    required: false
+  template:
+    description: templateId for the built-in presets (ignored when a workload file is given).
+    required: false
+  set:
+    description: |
+      Workload parameters, one `name=value` per line (strings).
+      Use `set-json` for numbers and records.
+    required: false
+  set-json:
+    description: Workload parameters as JSON, one `name=<json>` per line.
+    required: false
+  model:
+    description: closed | open
+    required: false
+    default: closed
+  ops:
+    description: Number of measured operations.
+    required: false
+    default: "200"
+  concurrency:
+    description: In-flight operations (closed model).
+    required: false
+    default: "16"
+  rate:
+    description: Arrival rate per second (open model).
+    required: false
+  mode:
+    description: Optional test mode — ramp | soak | spike | stress.
+    required: false
+  duration:
+    description: Run length in seconds, for a mode.
+    required: false
+  api:
+    description: Participant URL(s), comma-separated. Omit to boot a local sandbox from the DAR.
+    required: false
+  auth-token:
+    description: Ledger API bearer token. Pass a secret, never a literal.
+    required: false
+  workers:
+    description: Load-generating processes.
+    required: false
+    default: "1"
+
+  # --- the gate -----------------------------------------------------------
+  min-throughput:
+    description: Fail if committed/sec falls below this.
+    required: false
+  max-p99-ms:
+    description: Fail if p99 latency exceeds this.
+    required: false
+  max-contention-pct:
+    description: Fail if the contention rate exceeds this.
+    required: false
+  max-hotspot-share-pct:
+    description: Fail if one contract carries more than this share of all contention.
+    required: false
+  baseline:
+    description: A previous report JSON to compare against (regression gate).
+    required: false
+  max-throughput-drop-pct:
+    description: Fail if throughput dropped more than this vs the baseline.
+    required: false
+  max-p99-rise-pct:
+    description: Fail if p99 rose more than this vs the baseline.
+    required: false
+
+  report:
+    description: Where to write the JSON report.
+    required: false
+    default: canton-stress-report.json
+  html:
+    description: Where to write the self-contained HTML report.
+    required: false
+    default: canton-stress-report.html
+  prometheus:
+    description: Where to write Prometheus text-format metrics (optional).
+    required: false
+  java-home:
+    description: JDK home for the sandbox. Must be OpenJDK — Canton rejects Oracle JDK.
+    required: false
+
+outputs:
+  report:
+    description: Path to the JSON report.
+    value: ${{ inputs.report }}
+  html:
+    description: Path to the HTML report.
+    value: ${{ inputs.html }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run canton-stress
+      shell: bash
+      env:
+        CANTON_STRESS_TOKEN: ${{ inputs.auth-token }}
+      run: |
+        set -euo pipefail
+        args=(run "${{ inputs.dar }}")
+
+        [ -n "${{ inputs.workload }}" ] && args+=(--workload-file "${{ inputs.workload }}")
+        [ -n "${{ inputs.template }}" ] && args+=(--template "${{ inputs.template }}")
+        [ -n "${{ inputs.api }}" ] && args+=(--api "${{ inputs.api }}") || args+=(--sandbox)
+        [ -n "${{ inputs.java-home }}" ] && args+=(--java-home "${{ inputs.java-home }}")
+
+        args+=(--model "${{ inputs.model }}" --ops "${{ inputs.ops }}")
+        [ "${{ inputs.model }}" = "open" ] && [ -n "${{ inputs.rate }}" ] && args+=(--rate "${{ inputs.rate }}")
+        [ "${{ inputs.model }}" = "closed" ] && args+=(--concurrency "${{ inputs.concurrency }}")
+        [ -n "${{ inputs.mode }}" ] && args+=(--mode "${{ inputs.mode }}")
+        [ -n "${{ inputs.duration }}" ] && args+=(--duration "${{ inputs.duration }}")
+        [ "${{ inputs.workers }}" != "1" ] && args+=(--workers "${{ inputs.workers }}")
+
+        # Parameters: one name=value per line.
+        while IFS= read -r line; do
+          [ -n "$line" ] && args+=(--set "$line")
+        done <<< "${{ inputs.set }}"
+        while IFS= read -r line; do
+          [ -n "$line" ] && args+=(--set-json "$line")
+        done <<< "${{ inputs.set-json }}"
+
+        [ -n "${{ inputs.min-throughput }}" ] && args+=(--min-throughput "${{ inputs.min-throughput }}")
+        [ -n "${{ inputs.max-p99-ms }}" ] && args+=(--max-p99 "${{ inputs.max-p99-ms }}")
+        [ -n "${{ inputs.max-contention-pct }}" ] && args+=(--max-contention "${{ inputs.max-contention-pct }}")
+        [ -n "${{ inputs.max-hotspot-share-pct }}" ] && args+=(--max-hotspot-share "${{ inputs.max-hotspot-share-pct }}")
+
+        args+=(--report "${{ inputs.report }}")
+        [ -n "${{ inputs.prometheus }}" ] && args+=(--prometheus "${{ inputs.prometheus }}")
+
+        node "${{ github.action_path }}/src/cli.ts" "${args[@]}"
+
+    - name: Render the HTML report
+      shell: bash
+      if: always()
+      run: |
+        if [ -f "${{ inputs.report }}" ]; then
+          node "${{ github.action_path }}/src/cli.ts" report "${{ inputs.report }}" --out "${{ inputs.html }}"
+        fi
+
+    - name: Regression gate against the baseline
+      shell: bash
+      if: inputs.baseline != ''
+      run: |
+        set -euo pipefail
+        args=(report "${{ inputs.report }}" --baseline "${{ inputs.baseline }}")
+        [ -n "${{ inputs.max-throughput-drop-pct }}" ] && args+=(--max-throughput-drop "${{ inputs.max-throughput-drop-pct }}")
+        [ -n "${{ inputs.max-p99-rise-pct }}" ] && args+=(--max-p99-rise "${{ inputs.max-p99-rise-pct }}")
+        node "${{ github.action_path }}/src/cli.ts" "${args[@]}"
+
+    # Uploaded even on failure — the report of a run that breached its SLA is
+    # the one somebody actually needs to read.
+    - name: Upload reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: canton-stress-report
+        path: |
+          ${{ inputs.report }}
+          ${{ inputs.html }}
+        if-no-files-found: ignore

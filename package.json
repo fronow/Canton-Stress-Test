@@ -1,0 +1,23 @@
+{
+  "name": "canton-stress",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Load / performance / stress-testing harness for Canton applications: drive concurrent multi-party transactions at a DAR and measure throughput, latency percentiles and contention.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "canton-stress": "./src/cli.ts"
+  },
+  "engines": {
+    "node": ">=23.6"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.ts\"",
+    "test:integration": "node --test \"test/integration/*.integration.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "typescript": "^6.0.3"
+  }
+}

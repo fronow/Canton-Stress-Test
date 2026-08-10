@@ -1,0 +1,90 @@
+{
+  "_comment": [
+    "LIBRARY TEMPLATE — the FACTORY CHAIN shape.",
+    "",
+    "For apps where nothing you want to measure is directly creatable: a",
+    "factory opens accounts, an account is credited to produce the thing that",
+    "actually moves. daml-finance, settlement systems and most custody models",
+    "have this shape.",
+    "",
+    "Each step binds its product under a name the next step references, so the",
+    "chain is:  factory -> accounts[i] -> holdings[i] -> the measured choice.",
+    "",
+    "Parameterised for the templates, choices and argument shapes; the CHAIN",
+    "itself is what the template provides.",
+    "",
+    "  node src/cli.ts check workloads/factory-chain.json"
+  ],
+
+  "version": 1,
+  "parties": "$param:parties",
+  "roles": ["operator"],
+
+  "setup": [
+    {
+      "_comment": "The factory. Directly creatable — the app's entry point.",
+      "id": "factory",
+      "actAs": ["$role:operator"],
+      "op": {
+        "kind": "create",
+        "template": "$param:factoryTemplate",
+        "args": "$param:factoryArgs"
+      }
+    },
+    {
+      "_comment": [
+        "The asset definition the holdings refer to. Both the settlement shape",
+        "and daml-finance have one (Instrument); reference it from creditArgs as",
+        "\"$ref:instrument\"."
+      ],
+      "id": "instrument",
+      "actAs": "$param:instrumentActAs",
+      "op": {
+        "kind": "create",
+        "template": "$param:instrumentTemplate",
+        "args": "$param:instrumentArgs"
+      }
+    },
+    {
+      "_comment": "One account per party, via the factory's choice. $pi is the party at this repetition.",
+      "id": "accounts",
+      "count": "$param:accounts",
+      "actAs": ["$role:operator"],
+      "op": {
+        "kind": "exercise",
+        "template": "$param:factoryTemplate",
+        "contract": "$ref:factory",
+        "choice": "$param:openChoice",
+        "args": "$param:openArgs"
+      }
+    },
+    {
+      "_comment": "Credit each account in turn — $ref:accounts[$i] pairs this repetition with the account created at the same index.",
+      "id": "holdings",
+      "count": "$param:holdings",
+      "actAs": ["$role:operator"],
+      "op": {
+        "kind": "exercise",
+        "template": "$param:accountTemplate",
+        "contract": "$ref:accounts[$i]",
+        "choice": "$param:creditChoice",
+        "args": "$param:creditArgs"
+      }
+    }
+  ],
+
+  "operations": [
+    {
+      "weight": 1,
+      "_comment": "The measured operation, on a live holding picked from the ACS. actAsFrom reads the real owner off the target so it is signed by whoever actually holds it.",
+      "op": {
+        "kind": "exercise",
+        "template": "$param:holdingTemplate",
+        "choice": "$param:moveChoice",
+        "actAsFrom": "$param:ownerFields",
+        "args": "$param:moveArgs"
+      },
+      "submit": { "actAs": ["$role:operator"] }
+    }
+  ]
+}

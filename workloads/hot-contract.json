@@ -1,0 +1,48 @@
+{
+  "_comment": [
+    "LIBRARY TEMPLATE — a deliberate contention probe.",
+    "",
+    "Points every operation at ONE shared contract, to answer: what does this",
+    "app's throughput become when a workload funnels through a single registry,",
+    "config, counter or fee pool? Real systems grow these by accident, and they",
+    "are invisible in a global latency number — throughput simply stops scaling.",
+    "",
+    "Run it alongside create-throughput.json: the gap between the two is what",
+    "the shared contract costs you.",
+    "",
+    "  node src/cli.ts run <dar> --workload-file workloads/hot-contract.json \\",
+    "    --set sharedTemplate='#pkg:Module:Registry' \\",
+    "    --set-json sharedArgs='{\"operator\":\"$issuer\",\"count\":0}' \\",
+    "    --set choice=Record \\",
+    "    --set-json choiceArgs='{\"note\":\"x\"}' \\",
+    "    --set-json parties=4 --model closed --concurrency 8 --ops 60"
+  ],
+
+  "version": 1,
+  "parties": "$param:parties",
+
+  "setup": [
+    {
+      "_comment": "Exactly one — that is the point.",
+      "id": "shared",
+      "op": {
+        "kind": "create",
+        "template": "$param:sharedTemplate",
+        "args": "$param:sharedArgs"
+      }
+    }
+  ],
+
+  "operations": [
+    {
+      "weight": 1,
+      "op": {
+        "kind": "exercise",
+        "template": "$param:sharedTemplate",
+        "contract": "$ref:shared",
+        "choice": "$param:choice",
+        "args": "$param:choiceArgs"
+      }
+    }
+  ]
+}

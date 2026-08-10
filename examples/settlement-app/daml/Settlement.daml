@@ -1,0 +1,192 @@
+-- A small settlement app shaped like the real ones (daml-finance, the Canton
+-- Network Token Standard): NOTHING you want to load-test is directly
+-- creatable. You cannot `create Holding` — a holding exists only after
+--
+--   1. a custodian creates an AccountFactory,
+--   2. the factory's OpenAccount choice returns an Account,
+--   3. an issuer creates an Instrument,
+--   4. the account's Credit choice returns a Holding.
+--
+-- and the interesting measured operation (Transfer) needs the contract id of
+-- *another* account created in step 2. That chain — choices returning contract
+-- ids that later steps and the measured workload must reference by name — is
+-- exactly the setup gap S2 closes. A load tool that can only `create` a
+-- template can benchmark nothing here.
+
+module Settlement where
+
+-- | Mints accounts. Directly creatable — this is the app's entry point, the
+-- one thing a load tool can make without help.
+template AccountFactory
+  with
+    custodian : Party
+  where
+    signatory custodian
+
+    -- Nonconsuming: one factory opens many accounts.
+    nonconsuming choice OpenAccount : ContractId Account
+      with
+        owner : Party
+      controller custodian
+      do create Account with custodian, owner
+
+-- | What an owner holds assets in. Only the factory can make one.
+template Account
+  with
+    custodian : Party
+    owner : Party
+  where
+    signatory custodian
+    observer owner
+
+    -- Credit the account with a holding of an instrument. Nonconsuming so an
+    -- account can be credited repeatedly (that's what the setup pool does).
+    nonconsuming choice Credit : ContractId Holding
+      with
+        instrument : ContractId Instrument
+        amount : Decimal
+      controller custodian
+      do
+        -- Readable here only because the custodian is an observer on the
+        -- instrument: a fetch needs a stakeholder's authority.
+        inst <- fetch instrument
+        assertMsg "instrument must be held at this custodian" (inst.custodian == custodian)
+        create Holding with
+          custodian
+          owner
+          symbol = inst.symbol
+          amount
+
+-- | An asset definition. Directly creatable, but by the ISSUER — a different
+-- party from the custodian who opens accounts. Setup steps therefore have to
+-- submit as different parties, which is why a step declares its own actAs.
+template Instrument
+  with
+    issuer : Party
+    custodian : Party
+    symbol : Text
+  where
+    signatory issuer
+    observer custodian
+    ensure symbol /= ""
+
+-- | A fixture for testing EXPLICIT DISCLOSURE.
+--
+-- Signed by the operator alone, with no observers, and a choice whose
+-- controller comes from the choice argument. So the claimer authorises the
+-- choice but cannot see the contract — the exact situation a Token-Standard
+-- wallet is in with a registry's factory, and the only way through is to
+-- disclose the contract with the submission.
+template Ticket
+  with
+    operator : Party
+    label : Text
+  where
+    signatory operator
+
+    nonconsuming choice Claim : ContractId Claimed
+      with
+        claimer : Party
+      controller claimer
+      do create Claimed with operator, claimer, label
+
+template Claimed
+  with
+    operator : Party
+    claimer : Party
+    label : Text
+  where
+    signatory operator, claimer
+
+-- | A payment offered by one party to another — the CROSS-PARTICIPANT shape.
+--
+-- Canton requires every `actAs` party of a submission to be hosted on the
+-- submitting participant, so a single transaction cannot be signed by two
+-- parties living on different nodes. The way real apps span participants is
+-- propose/accept: the proposer's participant creates the offer, and the
+-- acceptor's participant — a different node — exercises the choice on it.
+--
+-- That second transaction is the one worth measuring: it proves topology
+-- propagation (participant 2 can see a contract created on participant 1),
+-- cross-participant visibility, and commit coordination through the shared
+-- synchronizer.
+template PaymentOffer
+  with
+    from : Party
+    to : Party
+    amount : Decimal
+  where
+    signatory from
+    observer to
+    ensure amount > 0.0
+
+    choice Accept : ContractId Payment
+      controller to
+      do create Payment with from, to, amount
+
+-- | The settled payment.
+template Payment
+  with
+    from : Party
+    to : Party
+    amount : Decimal
+  where
+    signatory from
+    observer to
+
+-- | A shared registry every settlement is supposed to stamp — the classic
+-- hot contract. `Record` is consuming and recreates the registry, so every
+-- concurrent stamp races on the SAME contract id and all but one lose. Real
+-- systems grow these by accident (a config, a sequence counter, a fee pool),
+-- and they are invisible in a global latency number: throughput just stops
+-- scaling. S4's hot-contract attribution exists to name them.
+template Registry
+  with
+    operator : Party
+    count : Int
+  where
+    signatory operator
+
+    choice Record : ContractId Registry
+      with
+        note : Text
+      controller operator
+      do create this with count = count + 1
+
+-- | The unit of value that actually moves under load.
+template Holding
+  with
+    custodian : Party
+    owner : Party
+    symbol : Text
+    amount : Decimal
+  where
+    signatory custodian
+    observer owner
+    ensure amount > 0.0
+
+    -- The measured operation. Settling into another account requires that
+    -- account's CONTRACT ID — not just a party — so the workload has to
+    -- reference a contract created during setup.
+    choice Transfer : ContractId Holding
+      with
+        newAccount : ContractId Account
+      controller owner
+      do
+        -- Authorized by the custodian, delegated through this contract's
+        -- signatory: the sender is not a stakeholder of the destination.
+        acct <- fetch newAccount
+        assertMsg "destination account must share the custodian" (acct.custodian == custodian)
+        create this with owner = acct.owner
+
+    -- A second operation so a weighted mix is meaningful under load.
+    choice Split : (ContractId Holding, ContractId Holding)
+      with
+        splitAmount : Decimal
+      controller owner
+      do
+        assertMsg "splitAmount must be positive" (splitAmount > 0.0)
+        assertMsg "splitAmount must be smaller than amount" (splitAmount < amount)
+        a <- create this with amount = splitAmount
+        b <- create this with amount = amount - splitAmount
+        pure (a, b)

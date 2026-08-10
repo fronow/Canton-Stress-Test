@@ -1,0 +1,19 @@
+node_modules/
+log/
+.daml/
+boot.log
+*.dar
+*-report.json
+*-run.json
+report.html
+*-report.html
+# ...but the published benchmark report and its screenshot are part of the repo
+!examples/openzeppelin/benchmark-report.html
+!docs/benchmark-report.png
+
+# Private working material - never commit
+proposal/
+STATUS.md
+VALUE-AND-FUNDING.md
+INSTITUTIONAL-ROADMAP.md
+PUBLISHING.md

@@ -1,0 +1,90 @@
+{
+  "_comment": [
+    "Benchmark the SETTLEMENT (DvP) path of OpenZeppelin's canton-token-template,",
+    "through the real CIP-0056 interface choice",
+    "  AllocationFactory_Allocate  (splice-api-token-allocation-instruction-v1)",
+    "",
+    "This is the flow institutional settlement actually uses: a sender allocates",
+    "an asset to a settlement identified by a reference, naming an executor and a",
+    "deadline. Their factory archives the inputs, creates a LockedSimpleHolding",
+    "held by the admin until settleBefore, creates the SimpleAllocation, and",
+    "returns change — strictly more work per operation than a plain transfer.",
+    "",
+    "Argument shape taken from their own tests",
+    "(simple-token-test/daml/SimpleToken/Test/Allocation.daml, mkAllocationArgs).",
+    "",
+    "  node src/cli.ts run E:/ozt/simple-token/.daml/dist/simple-token-0.1.0.dar \\",
+    "    --workload-file examples/openzeppelin/workload-allocation.json \\",
+    "    --model closed --concurrency 8 --ops 60 --sandbox --java-home <jdk>"
+  ],
+
+  "version": 1,
+  "parties": 6,
+  "roles": ["admin", "executor"],
+
+  "setup": [
+    {
+      "id": "rules",
+      "disclose": true,
+      "actAs": ["$role:admin"],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Rules:SimpleTokenRules",
+        "args": { "admin": "$role:admin", "supportedInstruments": ["SIMPLE"] }
+      }
+    },
+    {
+      "id": "holdings",
+      "count": 400,
+      "actAs": ["$role:admin", "$p0"],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Holding:SimpleHolding",
+        "args": {
+          "admin": "$role:admin",
+          "owner": "$p0",
+          "instrumentId": { "admin": "$role:admin", "id": "SIMPLE" },
+          "amount": "1000.0",
+          "meta": { "values": {} }
+        }
+      }
+    }
+  ],
+
+  "operations": [
+    {
+      "weight": 1,
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-allocation-instruction-v1:Splice.Api.Token.AllocationInstructionV1:AllocationFactory",
+        "contract": "$ref:rules",
+        "choice": "AllocationFactory_Allocate",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "allocation": {
+            "settlement": {
+              "executor": "$role:executor",
+              "settlementRef": { "id": "bench-settlement", "cid": null },
+              "requestedAt": "$now-60s",
+              "allocateBefore": "$now+1h",
+              "settleBefore": "$now+2h",
+              "meta": { "values": {} }
+            },
+            "transferLegId": "leg-1",
+            "transferLeg": {
+              "sender": "$p0",
+              "receiver": "$p1",
+              "amount": "1.0",
+              "instrumentId": { "admin": "$role:admin", "id": "SIMPLE" },
+              "meta": { "values": {} }
+            }
+          },
+          "requestedAt": "$now-60s",
+          "inputHoldingCids": ["$ref:holdings[*]"],
+          "extraArgs": { "context": { "values": {} }, "meta": { "values": {} } }
+        }
+      },
+      "submit": { "actAs": ["$p0"] }
+    }
+  ]
+}

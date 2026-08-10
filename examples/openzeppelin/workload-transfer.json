@@ -1,0 +1,81 @@
+{
+  "_comment": [
+    "Benchmark OpenZeppelin's canton-token-template — THIRD-PARTY Canton code we",
+    "did not write — through the real CIP-0056 interface choice",
+    "  TransferFactory_Transfer  (splice-api-token-transfer-instruction-v1)",
+    "against their SimpleTokenRules factory.",
+    "",
+    "Their transfer does a 3-way dispatch: self-transfer (merge), direct transfer",
+    "(when a TransferPreapproval is supplied in the choice context), and the",
+    "two-step path. With an empty context and sender != receiver this exercises",
+    "the TWO-STEP path: archive the inputs, create a LockedSimpleHolding plus a",
+    "SimpleTransferInstruction, and return change.",
+    "",
+    "Submitters: SimpleTokenRules is `signatory admin` with no observers, so the",
+    "sender cannot see it. This uses EXPLICIT DISCLOSURE — the factory's",
+    "created-event blob is captured once during setup and attached to every",
+    "submission — which is exactly how a wallet reaches a registry's factory.",
+    "The sender submits alone; the admin does not co-sign."
+  ],
+
+  "version": 1,
+  "parties": 6,
+  "roles": ["admin"],
+
+  "setup": [
+    {
+      "id": "rules",
+      "disclose": true,
+      "actAs": ["$role:admin"],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Rules:SimpleTokenRules",
+        "args": { "admin": "$role:admin", "supportedInstruments": ["SIMPLE"] }
+      }
+    },
+    {
+      "_comment": "SimpleHolding is signed by BOTH admin and owner, so both must authorise the create.",
+      "id": "holdings",
+      "count": 400,
+      "actAs": ["$role:admin", "$p0"],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Holding:SimpleHolding",
+        "args": {
+          "admin": "$role:admin",
+          "owner": "$p0",
+          "instrumentId": { "admin": "$role:admin", "id": "SIMPLE" },
+          "amount": "1000.0",
+          "meta": { "values": {} }
+        }
+      }
+    }
+  ],
+
+  "operations": [
+    {
+      "weight": 1,
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "contract": "$ref:rules",
+        "choice": "TransferFactory_Transfer",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "transfer": {
+            "sender": "$p0",
+            "receiver": "$p1",
+            "amount": "1.0",
+            "instrumentId": { "admin": "$role:admin", "id": "SIMPLE" },
+            "requestedAt": "$now-60s",
+            "executeBefore": "$now+1h",
+            "inputHoldingCids": ["$ref:holdings[*]"],
+            "meta": { "values": {} }
+          },
+          "extraArgs": { "context": { "values": {} }, "meta": { "values": {} } }
+        }
+      },
+      "submit": { "actAs": ["$p0"] }
+    }
+  ]
+}

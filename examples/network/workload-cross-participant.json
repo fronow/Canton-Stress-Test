@@ -1,0 +1,60 @@
+{
+  "_comment": [
+    "A workload that genuinely SPANS two participants.",
+    "",
+    "Canton requires every actAs party of a submission to be hosted on the",
+    "submitting participant, so no single transaction can be co-signed by",
+    "parties on different nodes. Real apps span participants with propose/accept:",
+    "",
+    "  setup    the issuer (hosted on participant 1) creates PaymentOffers whose",
+    "           counterparty is a party hosted on participant 2.",
+    "  measured the counterparty ACCEPTS — a transaction submitted by a DIFFERENT",
+    "           participant, against a contract created on the first one.",
+    "",
+    "That measured transaction is what proves a real network: topology has",
+    "propagated, participant 2 can see participant 1's contract, and the commit",
+    "is coordinated through the shared synchronizer.",
+    "",
+    "Run against the two-participant network (see examples/network/README.md):",
+    "  node src/cli.ts run --workload-file examples/network/workload-cross-participant.json \\",
+    "    --api http://localhost:7011,http://localhost:7021 --model closed --concurrency 4 --ops 40"
+  ],
+
+  "version": 1,
+  "parties": 4,
+  "placement": "round-robin",
+  "roles": ["issuer"],
+  "rolePlacement": { "issuer": 0 },
+
+  "setup": [
+    {
+      "_comment": "Offers from the issuer on p1 to party 1, which round-robin placement hosts on p2.",
+      "id": "offers",
+      "count": 150,
+      "actAs": ["$role:issuer"],
+      "op": {
+        "kind": "create",
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "args": { "from": "$role:issuer", "to": "$p1", "amount": "$amount" }
+      }
+    }
+  ],
+
+  "operations": [
+    {
+      "weight": 1,
+      "_comment": [
+        "Accepted by the recipient — actAsFrom reads 'to' off the offer, and that",
+        "party is hosted on participant 2, so this submission goes to a different",
+        "node than the one that created the contract."
+      ],
+      "op": {
+        "kind": "exercise",
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "choice": "Accept",
+        "actAsFrom": ["to"],
+        "args": {}
+      }
+    }
+  ]
+}

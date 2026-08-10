@@ -1,0 +1,29 @@
+// Bootstrap a single authenticated participant onto a synchronizer, and
+// upload the DAR under test.
+
+import com.digitalasset.canton.config.NonNegativeDuration
+
+bootstrap.synchronizer(
+  synchronizerName = "authnet",
+  sequencers = Seq(sequencer1),
+  mediators = Seq(mediator1),
+  synchronizerOwners = Seq(sequencer1),
+  synchronizerThreshold = com.digitalasset.canton.config.RequireTypes.PositiveInt.one,
+  staticSynchronizerParameters =
+    com.digitalasset.canton.admin.api.client.data.StaticSynchronizerParameters.defaultsWithoutKMS(
+      com.digitalasset.canton.version.ProtocolVersion.latest
+    ),
+)
+
+participant1.synchronizers.connect_local(sequencer1, alias = "authnet")
+
+utils.retry_until_true(NonNegativeDuration.tryFromDuration(scala.concurrent.duration.Duration("60s"))) {
+  participant1.synchronizers.list_connected().nonEmpty
+}
+
+// The admin console is authenticated separately from the Ledger API, so the
+// DAR can be uploaded here rather than over HTTP. Relative to this directory,
+// so the config is not tied to one machine.
+participant1.dars.upload("../settlement-app/.daml/dist/canton-stress-settlement-0.1.0.dar")
+
+println("=== AUTHNET READY: participant1 requires a bearer token on the Ledger API ===")

@@ -1,0 +1,97 @@
+{
+  "_comment": [
+    "The same settlement workload, but every operation also stamps a shared",
+    "Registry contract — the classic accidental bottleneck. The global",
+    "contention rate alone would just say 'lots of races'; S4's hot-contract",
+    "attribution names the ONE contract carrying them.",
+    "",
+    "  node src/cli.ts run examples/settlement-app/.daml/dist/canton-stress-settlement-0.1.0.dar \\",
+    "    --workload-file examples/settlement-app/workload-hotspot.json \\",
+    "    --model closed --concurrency 8 --ops 60 --lag-sample 250 --sandbox"
+  ],
+
+  "version": 1,
+  "parties": 6,
+  "roles": ["custodian", "issuer"],
+
+  "setup": [
+    {
+      "id": "factory",
+      "actAs": ["$role:custodian"],
+      "op": {
+        "kind": "create",
+        "template": "#canton-stress-settlement:Settlement:AccountFactory",
+        "args": { "custodian": "$role:custodian" }
+      }
+    },
+    {
+      "id": "instrument",
+      "actAs": ["$role:issuer"],
+      "op": {
+        "kind": "create",
+        "template": "#canton-stress-settlement:Settlement:Instrument",
+        "args": { "issuer": "$role:issuer", "custodian": "$role:custodian", "symbol": "USD" }
+      }
+    },
+    {
+      "_comment": "ONE registry, shared by the whole workload — the hotspot.",
+      "id": "registry",
+      "actAs": ["$role:custodian"],
+      "op": {
+        "kind": "create",
+        "template": "#canton-stress-settlement:Settlement:Registry",
+        "args": { "operator": "$role:custodian", "count": 0 }
+      }
+    },
+    {
+      "id": "accounts",
+      "count": 6,
+      "actAs": ["$role:custodian"],
+      "op": {
+        "kind": "exercise",
+        "template": "#canton-stress-settlement:Settlement:AccountFactory",
+        "contract": "$ref:factory",
+        "choice": "OpenAccount",
+        "args": { "owner": "$pi" }
+      }
+    },
+    {
+      "id": "holdings",
+      "count": 120,
+      "actAs": ["$role:custodian"],
+      "op": {
+        "kind": "exercise",
+        "template": "#canton-stress-settlement:Settlement:Account",
+        "contract": "$ref:accounts[$i]",
+        "choice": "Credit",
+        "args": { "instrument": "$ref:instrument", "amount": "1000.0" }
+      }
+    }
+  ],
+
+  "operations": [
+    {
+      "weight": 5,
+      "_comment": "Healthy work: settlements spread across a deep holding pool.",
+      "op": {
+        "kind": "exercise",
+        "template": "#canton-stress-settlement:Settlement:Holding",
+        "choice": "Transfer",
+        "actAsFrom": ["owner"],
+        "args": { "newAccount": "$ref:accounts[*]" }
+      },
+      "submit": { "actAs": ["$role:custodian"] }
+    },
+    {
+      "weight": 5,
+      "_comment": "Every stamp targets the single Registry contract and serializes.",
+      "op": {
+        "kind": "exercise",
+        "template": "#canton-stress-settlement:Settlement:Registry",
+        "choice": "Record",
+        "args": { "note": "settled" }
+      },
+      "submit": { "actAs": ["$role:custodian"] }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "_comment": [
+    "LIBRARY TEMPLATE — raw write throughput for any directly-creatable template.",
+    "",
+    "The simplest useful measurement, and the right FIRST run against a new app:",
+    "it has no setup chain and no contention, so whatever number it produces is",
+    "the ceiling for everything else. If your business operation runs slower than",
+    "this, the difference is your application's own work.",
+    "",
+    "  node src/cli.ts run <dar> --workload-file workloads/create-throughput.json \\",
+    "    --set template='#pkg:Module:Entity' \\",
+    "    --set-json createArgs='{\"issuer\":\"$issuer\",\"owner\":\"$party\",\"amount\":\"1.0\"}' \\",
+    "    --set-json parties=3 --model closed --concurrency 16 --ops 200"
+  ],
+
+  "version": 1,
+  "parties": "$param:parties",
+  "setup": [],
+
+  "operations": [
+    {
+      "weight": 1,
+      "op": {
+        "kind": "create",
+        "template": "$param:template",
+        "args": "$param:createArgs"
+      }
+    }
+  ]
+}

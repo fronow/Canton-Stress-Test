@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install
+      - name: Type-check
+        run: npm run typecheck
+      - name: Test (hermetic — no ledger)
+        run: npm test
+
+  # Integration: drives a REAL Canton ledger. Separate job because it needs the
+  # Daml SDK and a JVM, and takes minutes rather than a second — but without it
+  # nothing catches an SDK upgrade changing the Ledger API underneath us.
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin # NOT Oracle: Canton rejects it (unsigned BouncyCastle)
+          java-version: "21"
+      - name: Install Daml SDK
+        run: |
+          curl -sSL https://get.daml.com | sh -s 3.4.11
+          echo "$HOME/.daml/bin" >> $GITHUB_PATH
+      - run: npm install
+      - name: Build the example DAR
+        run: cd examples/settlement-app && daml build
+      - name: Integration tests (real ledger)
+        env:
+          CANTON_STRESS_IT: "1"
+          CANTON_STRESS_IT_CANTON: ${{ github.workspace }}/../.daml/sdk/3.4.11/canton/canton.jar
+        run: npm run test:integration

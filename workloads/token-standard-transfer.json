@@ -1,0 +1,73 @@
+{
+  "_comment": [
+    "LIBRARY TEMPLATE — a Canton Network Token Standard (CIP-0056) transfer,",
+    "against ANY registry that implements TransferFactory.",
+    "",
+    "The measured operation is the standard interface choice itself, so this",
+    "file does not need to know anything about the implementation behind it.",
+    "What differs between registries is only how holdings are created and how",
+    "the factory is constructed — supplied as parameters.",
+    "",
+    "  node src/cli.ts check workloads/token-standard-transfer.json",
+    "    → lists the parameters this template needs",
+    "",
+    "Worked invocations for two different registries are in workloads/README.md."
+  ],
+
+  "version": 1,
+  "parties": "$param:parties",
+  "roles": ["admin"],
+
+  "setup": [
+    {
+      "_comment": "The registry's factory. Its template and fields are implementation-specific.",
+      "id": "factory",
+      "disclose": true,
+      "actAs": ["$role:admin"],
+      "op": {
+        "kind": "create",
+        "template": "$param:factoryTemplate",
+        "args": "$param:factoryArgs"
+      }
+    },
+    {
+      "_comment": "The sending wallet's holdings. One per measured transfer, so a transfer normally has its own input to spend.",
+      "id": "holdings",
+      "count": "$param:holdings",
+      "actAs": "$param:holdingActAs",
+      "op": {
+        "kind": "create",
+        "template": "$param:holdingTemplate",
+        "args": "$param:holdingArgs"
+      }
+    }
+  ],
+
+  "operations": [
+    {
+      "weight": 1,
+      "_comment": "The standard transfer — identical for every conforming registry.",
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "contract": "$ref:factory",
+        "choice": "TransferFactory_Transfer",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "transfer": {
+            "sender": "$p0",
+            "receiver": "$p1",
+            "amount": "$param:transferAmount",
+            "instrumentId": { "admin": "$role:admin", "id": "$param:instrumentId" },
+            "requestedAt": "$now-60s",
+            "executeBefore": "$now+1h",
+            "inputHoldingCids": ["$ref:holdings[*]"],
+            "meta": { "values": {} }
+          },
+          "extraArgs": { "context": { "values": {} }, "meta": { "values": {} } }
+        }
+      },
+      "submit": { "actAs": ["$p0"] }
+    }
+  ]
+}

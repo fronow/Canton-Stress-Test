@@ -1,0 +1,31 @@
+// Bootstrap the synchronizer and connect both participants to it.
+// Run via: canton daemon -c two-participants.conf --bootstrap bootstrap.canton
+
+import com.digitalasset.canton.config.NonNegativeDuration
+
+bootstrap.synchronizer(
+  synchronizerName = "stressnet",
+  sequencers = Seq(sequencer1),
+  mediators = Seq(mediator1),
+  synchronizerOwners = Seq(sequencer1),
+  synchronizerThreshold = com.digitalasset.canton.config.RequireTypes.PositiveInt.one,
+  staticSynchronizerParameters =
+    com.digitalasset.canton.admin.api.client.data.StaticSynchronizerParameters.defaultsWithoutKMS(
+      com.digitalasset.canton.version.ProtocolVersion.latest
+    ),
+)
+
+// Both participants join the SAME synchronizer — that shared membership is
+// what makes a transaction with stakeholders on different participants
+// possible at all.
+participant1.synchronizers.connect_local(sequencer1, alias = "stressnet")
+participant2.synchronizers.connect_local(sequencer1, alias = "stressnet")
+
+utils.retry_until_true(NonNegativeDuration.tryFromDuration(scala.concurrent.duration.Duration("60s"))) {
+  participant1.synchronizers.is_connected(participant1.synchronizers.list_connected().headOption.map(_.synchronizerId).getOrElse(
+    throw new RuntimeException("participant1 not connected")
+  )) &&
+  participant2.synchronizers.list_connected().nonEmpty
+}
+
+println("=== STRESSNET READY: participant1 + participant2 on synchronizer 'stressnet' ===")
