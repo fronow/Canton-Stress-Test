@@ -15,6 +15,17 @@ finding is the *shape* of the result and what limits it.
 
 ---
 
+> ### ⚠ The headline number below is a SINGLE-WALLET figure
+>
+> This run used one sending wallet, so all 400 holdings came from the same pool
+> and every concurrent transfer contended with itself. **~15/s is not the
+> registry's capacity** — with 8 independent sending wallets the same code does
+> **44/s**, and contention falls from 48.8% to 6.2%.
+>
+> The finding below still holds: the factory never conflicts, and the limit is
+> input-holding selection. See **[BENCHMARK-SCALING.md](BENCHMARK-SCALING.md)**
+> for the corrected numbers.
+
 ## Headline
 
 > OpenZeppelin's token template settles **~15–17 standard transfers/second**

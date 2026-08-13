@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wallet-count scaling</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#0f1419;--body:#3c4753;--mute:#77828f;--line:#e4e8ed;--accent:#1c4ed8;
+        --warm:#b45309;--good:#0f7b4f}
+  body{width:1200px;height:760px;background:#fff;
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--body);-webkit-font-smoothing:antialiased;overflow:hidden}
+  .card{padding:40px 50px;height:100%;display:flex;flex-direction:column}
+
+  .eyebrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mute);margin-bottom:12px}
+  .eyebrow b{color:var(--ink);font-weight:640}
+  .dot{width:4px;height:4px;border-radius:50%;background:#c3cad3}
+
+  h1{font-size:33px;line-height:1.2;letter-spacing:-.022em;color:var(--ink);font-weight:690;margin-bottom:9px}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{font-size:16.5px;line-height:1.48;max-width:1020px;margin-bottom:22px}
+  .lede b{color:var(--ink);font-weight:650}
+
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:22px}
+  .m{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fbfcfd}
+  .m .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-weight:650}
+  .m .v{font-size:30px;line-height:1.12;color:var(--ink);font-weight:680;margin-top:7px;
+        letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .m .v s{text-decoration:none;font-size:15px;color:var(--mute);font-weight:600}
+  .m .n{font-size:12px;color:var(--mute);margin-top:3px}
+
+  .split{display:grid;grid-template-columns:1.35fr 1fr;gap:24px;flex:1;min-height:0}
+  .panel{border:1px solid var(--line);border-radius:10px;padding:16px 20px;background:#fbfcfd;
+         display:flex;flex-direction:column;min-height:0}
+  .pt{font-size:12.5px;color:var(--mute);margin-bottom:12px}
+  .pt b{color:var(--ink);font-weight:650;font-size:14px}
+
+  .chart{flex:1;display:flex;align-items:flex-end;gap:22px;min-height:0;padding:0 6px}
+  .col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+  .val{font-size:15px;font-weight:680;color:var(--ink);margin-bottom:5px;font-variant-numeric:tabular-nums}
+  .bar{width:100%;background:var(--accent);border-radius:4px 4px 0 0;opacity:.9}
+  .cx{font-size:11.5px;color:var(--warm);margin-top:6px;font-weight:640}
+  .lbl{font-size:12.5px;color:var(--mute);margin-top:3px}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td,th{text-align:left;padding:7px 3px;border-bottom:1px solid var(--line)}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);font-weight:650}
+  td{font-variant-numeric:tabular-nums;color:var(--ink)}
+  tr:last-child td{border-bottom:none}
+  .kicker{margin-top:11px;font-size:13px;line-height:1.46}
+  .kicker b{color:var(--ink);font-weight:650}
+
+  .foot{display:flex;justify-content:space-between;margin-top:18px;padding-top:14px;
+        border-top:1px solid var(--line);font-size:12px;color:var(--mute)}
+  .foot b{color:var(--ink);font-weight:640}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="eyebrow">
+    <span><b>OpenZeppelin</b> canton-token-template</span><span class="dot"></span>
+    <span>CIP-0056 <b>TransferFactory_Transfer</b></span><span class="dot"></span>
+    <span>per-wallet concurrency fixed at 8</span>
+  </div>
+
+  <h1>~15/s was never the registry's limit — it was <em>one wallet</em> contending with itself.</h1>
+
+  <p class="lede">Each sender owns its own holding pool and its own receiver, so wallets never touch
+  each other's holdings. The only variable is how many independent wallets the load is spread
+  across. <b>Contention is a property of wallet count, not of the registry.</b></p>
+
+  <div class="row">
+    <div class="m"><div class="k">1 wallet</div><div class="v">14.6<s>/s</s></div><div class="n">48.8% contention</div></div>
+    <div class="m"><div class="k">8 wallets</div><div class="v">44.0<s>/s</s></div><div class="n">6.2% contention</div></div>
+    <div class="m"><div class="k">Throughput</div><div class="v">3.0<s>x</s></div><div class="n">sublinear for 8x wallets</div></div>
+    <div class="m"><div class="k">Load lost</div><div class="v">50<s>% → 6.7%</s></div><div class="n">offered but not committed</div></div>
+  </div>
+
+  <div class="split">
+    <div class="panel">
+      <div class="pt"><b>Committed throughput by wallet count</b><br>240 transfers per run, offered load scales with wallets</div>
+      <div class="chart">
+        <div class="col"><div class="val">14.6/s</div><div class="bar" style="height:33%"></div><div class="cx">48.8% cont.</div><div class="lbl">1 wallet</div></div>
+        <div class="col"><div class="val">25.4/s</div><div class="bar" style="height:58%"></div><div class="cx">27.5% cont.</div><div class="lbl">2 wallets</div></div>
+        <div class="col"><div class="val">35.2/s</div><div class="bar" style="height:80%"></div><div class="cx">12.9% cont.</div><div class="lbl">4 wallets</div></div>
+        <div class="col"><div class="val">44.0/s</div><div class="bar" style="height:100%"></div><div class="cx">6.2% cont.</div><div class="lbl">8 wallets</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="pt"><b>The cost of getting there</b><br>latency as offered load rises with wallet count</div>
+      <table>
+        <tr><th>Wallets</th><th>p50</th><th>p99</th></tr>
+        <tr><td>1</td><td>350 ms</td><td>1361 ms</td></tr>
+        <tr><td>2</td><td>451 ms</td><td>1652 ms</td></tr>
+        <tr><td>4</td><td>692 ms</td><td>1759 ms</td></tr>
+        <tr><td>8</td><td>1083 ms</td><td>2366 ms</td></tr>
+      </table>
+      <p class="kicker">Scaling is <b>sublinear and latency rises throughout</b>, so a second
+      ceiling sits above wallet contention — and on this hardware it is almost certainly the
+      participant, not the registry.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Holding a wallet's own pool at 150; input selection is a uniform random pick from it</span>
+    <span>Single participant, in-memory, one laptop · <b>floor numbers</b></span>
+  </div>
+
+</div>
+</body>
+</html>

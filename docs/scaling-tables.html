@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wallet-count scaling - full results</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#0f1419;--body:#3c4753;--mute:#77828f;--line:#e4e8ed;--accent:#1c4ed8;--warm:#b45309}
+  body{width:1200px;height:820px;background:#fff;
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--body);-webkit-font-smoothing:antialiased;overflow:hidden}
+  .card{padding:38px 50px;height:100%;display:flex;flex-direction:column}
+
+  .eyebrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mute);margin-bottom:10px}
+  .eyebrow b{color:var(--ink);font-weight:640}
+  .dot{width:4px;height:4px;border-radius:50%;background:#c3cad3}
+
+  h1{font-size:27px;line-height:1.22;letter-spacing:-.02em;color:var(--ink);font-weight:690;margin-bottom:8px}
+  .lede{font-size:15px;line-height:1.45;max-width:1030px;margin-bottom:24px}
+  .lede b{color:var(--ink);font-weight:650}
+
+  .blk{margin-bottom:22px}
+  .cap{display:flex;align-items:baseline;gap:10px;margin-bottom:9px}
+  .cap h2{font-size:16px;color:var(--ink);font-weight:660;letter-spacing:-.01em}
+  .cap span{font-size:13px;color:var(--mute)}
+
+  table{width:100%;border-collapse:collapse;font-size:15.5px}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);
+     font-weight:650;text-align:right;padding:0 14px 8px;border-bottom:1px solid var(--line)}
+  th:first-child{text-align:left}
+  td{padding:9px 14px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);
+     border-bottom:1px solid #eef1f4}
+  td:first-child{text-align:left;color:var(--body)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#fafbfc}
+  .tp{font-weight:680;color:var(--accent)}
+  .ct{color:var(--warm);font-weight:620}
+  .end td{background:#f4f7fc}
+
+  .note{font-size:13.5px;line-height:1.45;color:var(--body);margin-top:9px;
+        padding-left:13px;border-left:3px solid var(--line)}
+  .note b{color:var(--ink);font-weight:650}
+
+  .foot{display:flex;justify-content:space-between;margin-top:auto;padding-top:14px;
+        border-top:1px solid var(--line);font-size:12px;color:var(--mute)}
+  .foot b{color:var(--ink);font-weight:640}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="eyebrow">
+    <span><b>OpenZeppelin</b> canton-token-template</span><span class="dot"></span>
+    <span>CIP-0056 <b>TransferFactory_Transfer</b></span><span class="dot"></span>
+    <span>Canton 3.4.11</span>
+  </div>
+
+  <h1>Wallet-count scaling — full results</h1>
+  <p class="lede">Each sender owns its own pool of 150 holdings and its own receiver, so wallets
+  never touch each other's holdings. Input selection is a uniform random pick from the sender's own
+  pool. <b>The only variable is how many independent wallets the load is spread across.</b></p>
+
+  <div class="blk">
+    <div class="cap">
+      <h2>1 · Offered load held constant</h2>
+      <span>concurrency 8 throughout · 120 transfers per run</span>
+    </div>
+    <table>
+      <thead><tr><th>Wallets</th><th>Committed</th><th>Throughput</th><th>Contention</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>88 / 120</td><td class="tp">15.2/s</td><td class="ct">25.8%</td></tr>
+        <tr><td>2</td><td>107 / 120</td><td class="tp">16.5/s</td><td class="ct">10.0%</td></tr>
+        <tr><td>4</td><td>115 / 120</td><td class="tp">18.5/s</td><td class="ct">4.2%</td></tr>
+        <tr class="end"><td>8</td><td>120 / 120</td><td class="tp">19.0/s</td><td class="ct">0%</td></tr>
+      </tbody>
+    </table>
+    <p class="note">More wallets simply convert failures into successes. <b>Contention reaches zero
+    and nothing is lost</b>, but throughput barely moves, because the offered rate never rose.</p>
+  </div>
+
+  <div class="blk">
+    <div class="cap">
+      <h2>2 · Offered load scales with wallet count</h2>
+      <span>per-wallet concurrency held at 8 · 240 transfers per run</span>
+    </div>
+    <table>
+      <thead><tr><th>Wallets</th><th>Committed</th><th>Throughput</th><th>Contention</th><th>p50</th><th>p99</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>120 / 240</td><td class="tp">14.6/s</td><td class="ct">48.8%</td><td>350 ms</td><td>1361 ms</td></tr>
+        <tr><td>2</td><td>171 / 240</td><td class="tp">25.4/s</td><td class="ct">27.5%</td><td>451 ms</td><td>1652 ms</td></tr>
+        <tr><td>4</td><td>206 / 240</td><td class="tp">35.2/s</td><td class="ct">12.9%</td><td>692 ms</td><td>1759 ms</td></tr>
+        <tr class="end"><td>8</td><td>224 / 240</td><td class="tp">44.0/s</td><td class="ct">6.2%</td><td>1083 ms</td><td>2366 ms</td></tr>
+      </tbody>
+    </table>
+    <p class="note">The same code does <b>3x the throughput at 8 wallets</b> (14.6 → 44.0/s), so
+    ~15/s was never a registry ceiling. But scaling is <b>sublinear and latency rises throughout</b>
+    — a second ceiling sits above wallet contention, and on this hardware it is almost certainly the
+    participant rather than the registry.</p>
+  </div>
+
+  <div class="foot">
+    <span>Contention is a property of wallet count, not of the registry</span>
+    <span>Single participant, in-memory, one laptop · <b>floor numbers</b></span>
+  </div>
+
+</div>
+</body>
+</html>

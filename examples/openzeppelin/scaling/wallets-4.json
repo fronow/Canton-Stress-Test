@@ -1,0 +1,303 @@
+{
+  "_comment": [
+    "Wallet-count scaling: 4 independent sending wallet(s).",
+    "",
+    "Each of the 4 senders owns its own pool of 150 holdings and",
+    "sends to its own receiver, so senders never contend with each other - only",
+    "with themselves. Input selection is a uniform random pick from the sender's",
+    "own pool ($ref:holdingsK[*]), the same naive strategy as the single-wallet run.",
+    "",
+    "Explicit disclosure throughout: the sender submits alone and carries the",
+    "factory's created-event blob, exactly as a wallet does."
+  ],
+  "version": 1,
+  "parties": 8,
+  "roles": [
+    "admin"
+  ],
+  "setup": [
+    {
+      "id": "rules",
+      "disclose": true,
+      "actAs": [
+        "$role:admin"
+      ],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Rules:SimpleTokenRules",
+        "args": {
+          "admin": "$role:admin",
+          "supportedInstruments": [
+            "SIMPLE"
+          ]
+        }
+      }
+    },
+    {
+      "id": "holdings0",
+      "count": 150,
+      "actAs": [
+        "$role:admin",
+        "$p0"
+      ],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Holding:SimpleHolding",
+        "args": {
+          "admin": "$role:admin",
+          "owner": "$p0",
+          "instrumentId": {
+            "admin": "$role:admin",
+            "id": "SIMPLE"
+          },
+          "amount": "1000.0",
+          "meta": {
+            "values": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "holdings1",
+      "count": 150,
+      "actAs": [
+        "$role:admin",
+        "$p2"
+      ],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Holding:SimpleHolding",
+        "args": {
+          "admin": "$role:admin",
+          "owner": "$p2",
+          "instrumentId": {
+            "admin": "$role:admin",
+            "id": "SIMPLE"
+          },
+          "amount": "1000.0",
+          "meta": {
+            "values": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "holdings2",
+      "count": 150,
+      "actAs": [
+        "$role:admin",
+        "$p4"
+      ],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Holding:SimpleHolding",
+        "args": {
+          "admin": "$role:admin",
+          "owner": "$p4",
+          "instrumentId": {
+            "admin": "$role:admin",
+            "id": "SIMPLE"
+          },
+          "amount": "1000.0",
+          "meta": {
+            "values": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "holdings3",
+      "count": 150,
+      "actAs": [
+        "$role:admin",
+        "$p6"
+      ],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Holding:SimpleHolding",
+        "args": {
+          "admin": "$role:admin",
+          "owner": "$p6",
+          "instrumentId": {
+            "admin": "$role:admin",
+            "id": "SIMPLE"
+          },
+          "amount": "1000.0",
+          "meta": {
+            "values": {}
+          }
+        }
+      }
+    }
+  ],
+  "operations": [
+    {
+      "weight": 1,
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "contract": "$ref:rules",
+        "choice": "TransferFactory_Transfer",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "transfer": {
+            "sender": "$p0",
+            "receiver": "$p1",
+            "amount": "1.0",
+            "instrumentId": {
+              "admin": "$role:admin",
+              "id": "SIMPLE"
+            },
+            "requestedAt": "$now-60s",
+            "executeBefore": "$now+1h",
+            "inputHoldingCids": [
+              "$ref:holdings0[*]"
+            ],
+            "meta": {
+              "values": {}
+            }
+          },
+          "extraArgs": {
+            "context": {
+              "values": {}
+            },
+            "meta": {
+              "values": {}
+            }
+          }
+        }
+      },
+      "submit": {
+        "actAs": [
+          "$p0"
+        ]
+      }
+    },
+    {
+      "weight": 1,
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "contract": "$ref:rules",
+        "choice": "TransferFactory_Transfer",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "transfer": {
+            "sender": "$p2",
+            "receiver": "$p3",
+            "amount": "1.0",
+            "instrumentId": {
+              "admin": "$role:admin",
+              "id": "SIMPLE"
+            },
+            "requestedAt": "$now-60s",
+            "executeBefore": "$now+1h",
+            "inputHoldingCids": [
+              "$ref:holdings1[*]"
+            ],
+            "meta": {
+              "values": {}
+            }
+          },
+          "extraArgs": {
+            "context": {
+              "values": {}
+            },
+            "meta": {
+              "values": {}
+            }
+          }
+        }
+      },
+      "submit": {
+        "actAs": [
+          "$p2"
+        ]
+      }
+    },
+    {
+      "weight": 1,
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "contract": "$ref:rules",
+        "choice": "TransferFactory_Transfer",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "transfer": {
+            "sender": "$p4",
+            "receiver": "$p5",
+            "amount": "1.0",
+            "instrumentId": {
+              "admin": "$role:admin",
+              "id": "SIMPLE"
+            },
+            "requestedAt": "$now-60s",
+            "executeBefore": "$now+1h",
+            "inputHoldingCids": [
+              "$ref:holdings2[*]"
+            ],
+            "meta": {
+              "values": {}
+            }
+          },
+          "extraArgs": {
+            "context": {
+              "values": {}
+            },
+            "meta": {
+              "values": {}
+            }
+          }
+        }
+      },
+      "submit": {
+        "actAs": [
+          "$p4"
+        ]
+      }
+    },
+    {
+      "weight": 1,
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "contract": "$ref:rules",
+        "choice": "TransferFactory_Transfer",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "transfer": {
+            "sender": "$p6",
+            "receiver": "$p7",
+            "amount": "1.0",
+            "instrumentId": {
+              "admin": "$role:admin",
+              "id": "SIMPLE"
+            },
+            "requestedAt": "$now-60s",
+            "executeBefore": "$now+1h",
+            "inputHoldingCids": [
+              "$ref:holdings3[*]"
+            ],
+            "meta": {
+              "values": {}
+            }
+          },
+          "extraArgs": {
+            "context": {
+              "values": {}
+            },
+            "meta": {
+              "values": {}
+            }
+          }
+        }
+      },
+      "submit": {
+        "actAs": [
+          "$p6"
+        ]
+      }
+    }
+  ]
+}

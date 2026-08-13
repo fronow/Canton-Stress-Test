@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>canton-stress results</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#0f1419;--body:#3c4753;--mute:#77828f;--line:#e4e8ed;--accent:#1c4ed8;--bad:#b42318}
+  body{width:1200px;height:760px;background:#fff;
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--body);-webkit-font-smoothing:antialiased;overflow:hidden}
+  .card{padding:42px 52px;height:100%;display:flex;flex-direction:column}
+
+  .eyebrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mute);
+           letter-spacing:.03em;margin-bottom:14px}
+  .eyebrow b{color:var(--ink);font-weight:640}
+  .dot{width:4px;height:4px;border-radius:50%;background:#c3cad3}
+
+  h1{font-size:35px;line-height:1.18;letter-spacing:-.022em;color:var(--ink);font-weight:690;
+     margin-bottom:10px}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{font-size:17px;line-height:1.5;color:var(--body);max-width:1000px;margin-bottom:26px}
+  .lede b{color:var(--ink);font-weight:650}
+
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+  .m{border:1px solid var(--line);border-radius:10px;padding:16px 18px;background:#fbfcfd}
+  .m .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-weight:650}
+  .m .v{font-size:33px;line-height:1.1;color:var(--ink);font-weight:680;margin-top:8px;
+        letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .m .v s{text-decoration:none;font-size:16px;color:var(--mute);font-weight:600}
+  .m .n{font-size:12.5px;color:var(--mute);margin-top:4px}
+
+  .split{display:grid;grid-template-columns:1.15fr 1fr;gap:26px;flex:1;min-height:0}
+  .panel{border:1px solid var(--line);border-radius:10px;padding:18px 20px;background:#fbfcfd;
+         display:flex;flex-direction:column}
+  .pt{font-size:12.5px;color:var(--mute);margin-bottom:14px}
+  .pt b{color:var(--ink);font-weight:650;font-size:14px}
+
+  .bars{display:flex;align-items:flex-end;gap:6px;flex:1;min-height:0;padding-top:4px}
+  .bars i{flex:1;background:var(--accent);border-radius:3px 3px 0 0;opacity:.88}
+  .axis{display:flex;justify-content:space-between;font-size:11.5px;color:var(--mute);margin-top:9px}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  td,th{text-align:left;padding:8px 4px;border-bottom:1px solid var(--line)}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);font-weight:650}
+  td{font-variant-numeric:tabular-nums;color:var(--ink)}
+  tr:last-child td{border-bottom:none}
+  .delta{color:var(--bad);font-weight:660}
+  .flat{color:var(--mute)}
+  .kicker{margin-top:12px;font-size:13.5px;line-height:1.5;color:var(--body)}
+  .kicker b{color:var(--ink);font-weight:650}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;
+        margin-top:22px;padding-top:16px;border-top:1px solid var(--line);
+        font-size:12.5px;color:var(--mute)}
+  .foot b{color:var(--ink);font-weight:640}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="eyebrow">
+    <span>CIP-0056 Token Standard</span><span class="dot"></span>
+    <span><b>OpenZeppelin</b> canton-token-template</span><span class="dot"></span>
+    <span>third-party code</span><span class="dot"></span>
+    <span>Canton 3.4.11</span>
+  </div>
+
+  <h1>The bottleneck was not the factory <em>everything</em> goes through.</h1>
+
+  <p class="lede">Every transfer routes through the shared factory contract, so it looks like the
+  obvious chokepoint. It is referenced by every transfer and <b>consumed by none</b> — it can never
+  conflict. The real ceiling is <b>input-holding selection</b>: two transfers reaching the same
+  holding, one finding it already archived.</p>
+
+  <div class="row">
+    <div class="m"><div class="k">Throughput</div><div class="v">15.0<s>/s</s></div><div class="n">57 of 60 committed</div></div>
+    <div class="m"><div class="k">p50 latency</div><div class="v">402<s>ms</s></div><div class="n">median</div></div>
+    <div class="m"><div class="k">p99 latency</div><div class="v">1172<s>ms</s></div><div class="n">with disclosure</div></div>
+    <div class="m"><div class="k">Scaling stops</div><div class="v">~22<s>/s</s></div><div class="n">offered, peak 17 committed</div></div>
+  </div>
+
+  <div class="split">
+    <div class="panel">
+      <div class="pt"><b>Load sheds, it does not queue</b><br>committed throughput per 3s bucket, ramp 4 → 30/s</div>
+      <div class="bars">
+        <i style="height:25%"></i><i style="height:50%"></i><i style="height:50%"></i><i style="height:62%"></i>
+        <i style="height:62%"></i><i style="height:87%"></i><i style="height:62%"></i><i style="height:87%"></i>
+        <i style="height:87%"></i><i style="height:100%"></i><i style="height:87%"></i><i style="height:87%"></i>
+        <i style="height:87%"></i><i style="height:87%"></i>
+      </div>
+      <div class="axis"><span>4/s offered</span><span>p99 stays flat at ~443 ms</span><span>30/s</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="pt"><b>What explicit disclosure costs</b><br>~576-byte blob on every submission</div>
+      <table>
+        <tr><th></th><th>Co-submitted</th><th>Disclosed</th></tr>
+        <tr><td>Throughput</td><td>15.5/s</td><td>15.0/s <span class="flat">−3%</span></td></tr>
+        <tr><td>p50</td><td>~400 ms</td><td>402 ms <span class="flat">flat</span></td></tr>
+        <tr><td>p99</td><td>803 ms</td><td>1172 ms <span class="delta">+45%</span></td></tr>
+      </table>
+      <p class="kicker">Nearly free at the median. <b>Expensive in the tail</b> — the half an SLA
+      is written against.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Measured through <b>TransferFactory_Transfer</b> — the call an interoperating wallet makes</span>
+    <span>Single participant, in-memory, one laptop · <b>floor numbers</b></span>
+  </div>
+
+</div>
+</body>
+</html>
