@@ -372,6 +372,13 @@ export async function runMeasured(
       buildCtx: {
         ...payloadCtx,
         rand: rng,
+        // Shared by every concurrent submission on this context, so
+        // "$ref:pool[seq]" hands each in-flight op a distinct contract —
+        // the reservation strategy, against "[*]"'s naive random pick.
+        seq: (() => {
+          let n = 0;
+          return () => n++;
+        })(),
         contractsFor: (t: string) => pools.get(t) ?? [],
         boundCids,
       } as BuildCtx,

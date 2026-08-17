@@ -1,14 +1,12 @@
 {
   "_comment": [
-    "Wallet-count scaling: 1 independent sending wallet(s).",
+    "Pool turnover: 1920 holdings for 240 operations (8x).",
     "",
-    "Each of the 1 senders owns its own pool of 960 holdings and",
-    "sends to its own receiver, so senders never contend with each other - only",
-    "with themselves. Input selection is a uniform random pick from the sender's",
-    "own pool ($ref:holdingsK[*]), the same naive strategy as the single-wallet run.",
+    "One sending wallet, uniform random input selection, concurrency fixed by",
+    "the runner. The ONLY variable across this sweep is pool depth, so any",
+    "change in contention is a turnover effect and not a concurrency effect.",
     "",
-    "Explicit disclosure throughout: the sender submits alone and carries the",
-    "factory's created-event blob, exactly as a wallet does."
+    "Predicted contention if the hypothesis holds: about 6.3%."
   ],
   "version": 1,
   "parties": 6,
@@ -34,8 +32,8 @@
       }
     },
     {
-      "id": "holdings0",
-      "count": 960,
+      "id": "holdings",
+      "count": 1920,
       "actAs": [
         "$role:admin",
         "$p0"
@@ -79,7 +77,7 @@
             "requestedAt": "$now-60s",
             "executeBefore": "$now+1h",
             "inputHoldingCids": [
-              "$ref:holdings0[*]"
+              "$ref:holdings[*]"
             ],
             "meta": {
               "values": {}

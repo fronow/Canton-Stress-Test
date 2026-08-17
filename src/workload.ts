@@ -302,6 +302,10 @@ export interface PayloadCtx {
   index?: number;
   /** Uniform in [0, 1) — only needed for "$ref:name[*]". */
   rand?: () => number;
+  /** Monotonically increasing, one step per call — only needed for
+   * "$ref:name[seq]". Shared across concurrent submissions on a context, so
+   * consecutive in-flight ops receive distinct pool entries. */
+  seq?: () => number;
   /** The payload of the contract an exercise op is targeting ("$target:field"). */
   target?: Record<string, unknown>;
 }
@@ -313,9 +317,16 @@ const fail = (msg: string): never => {
 };
 
 /** Resolve "$ref:<name>", "$ref:<name>[<k>]" where k is an integer, "*"
- * (random) or "$i" (the enclosing repetition index). */
+ * (random), "seq" (the next contract in the pool, advancing once per
+ * resolution) or "$i" (the enclosing repetition index).
+ *
+ * "seq" exists to make INPUT SELECTION STRATEGY measurable. A wallet picking
+ * an input at random from its own pool collides with itself under concurrency;
+ * one that hands each in-flight submission a distinct input does not. The
+ * counter is shared across the concurrent submissions on a context, so "seq"
+ * models a per-submission reservation, and "*" models the naive strategy. */
 function resolveRef(expr: string, ctx: PayloadCtx): string {
-  const m = /^([A-Za-z0-9_-]+)(?:\[(\*|\$i|\d+)\])?$/.exec(expr);
+  const m = /^([A-Za-z0-9_-]+)(?:\[(\*|\$i|seq|\d+)\])?$/.exec(expr);
   if (!m) return fail(`malformed $ref: "$ref:${expr}"`);
   const [, name, sel] = m;
   const pool = ctx.bindings?.[name];
@@ -324,6 +335,7 @@ function resolveRef(expr: string, ctx: PayloadCtx): string {
     return fail(`$ref:${name} — the binding is empty (its setup step created nothing)`);
   if (sel === undefined) return pool[0];
   if (sel === "*") return pool[Math.floor((ctx.rand?.() ?? 0) * pool.length) % pool.length];
+  if (sel === "seq") return pool[(ctx.seq?.() ?? 0) % pool.length];
   const i = sel === "$i" ? (ctx.index ?? 0) : Number(sel);
   return pool[i % pool.length];
 };

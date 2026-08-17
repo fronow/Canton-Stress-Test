@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contention is a turnover effect</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#0f1419;--body:#3c4753;--mute:#77828f;--line:#e4e8ed;--accent:#1c4ed8;
+        --warm:#b45309;--good:#0f7b4f;--pred:#9aa6b4}
+  body{width:1200px;height:790px;background:#fff;
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--body);-webkit-font-smoothing:antialiased;overflow:hidden}
+  .card{padding:36px 50px;height:100%;display:flex;flex-direction:column}
+
+  .eyebrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mute);margin-bottom:10px}
+  .eyebrow b{color:var(--ink);font-weight:640}
+  .dot{width:4px;height:4px;border-radius:50%;background:#c3cad3}
+
+  h1{font-size:32px;line-height:1.19;letter-spacing:-.022em;color:var(--ink);font-weight:690;margin-bottom:9px}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{font-size:16px;line-height:1.46;max-width:1035px;margin-bottom:18px}
+  .lede b{color:var(--ink);font-weight:650}
+
+  .eq{display:inline-block;background:#f2f5f8;border:1px solid var(--line);border-radius:6px;
+      padding:7px 14px;font-size:16px;color:var(--ink);font-weight:640;margin-bottom:20px}
+  .eq s{text-decoration:none;color:var(--mute);font-weight:500}
+
+  .split{display:grid;grid-template-columns:1.25fr 1fr;gap:26px;flex:1;min-height:0}
+  .panel{display:flex;flex-direction:column;min-height:0}
+  .pt{font-size:12.5px;color:var(--mute);margin-bottom:12px}
+  .pt b{color:var(--ink);font-weight:650;font-size:14px}
+
+  .chart{flex:1;display:flex;align-items:flex-end;gap:26px;min-height:0;padding:0 4px}
+  .col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+  .pair{display:flex;align-items:flex-end;gap:5px;width:100%;height:100%}
+  .bar{flex:1;border-radius:3px 3px 0 0}
+  .bp{background:var(--pred)}
+  .bm{background:var(--accent)}
+  .vals{display:flex;gap:5px;width:100%;margin-bottom:5px}
+  .vals span{flex:1;text-align:center;font-size:13px;font-variant-numeric:tabular-nums}
+  .vp{color:var(--mute)}
+  .vm{color:var(--ink);font-weight:680}
+  .lbl{font-size:12.5px;color:var(--mute);margin-top:6px;text-align:center}
+  .lbl b{display:block;color:var(--ink);font-weight:640;font-size:13px}
+  .key{display:flex;gap:16px;font-size:12px;color:var(--mute);margin-top:10px}
+  .key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+  .box{border:1px solid var(--line);border-radius:10px;padding:15px 17px;background:#fbfcfd;margin-bottom:13px}
+  .box .h{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);
+          font-weight:650;margin-bottom:7px}
+  .box p{font-size:13.5px;line-height:1.48}
+  .box b{color:var(--ink);font-weight:650}
+  .big{font-size:25px;color:var(--ink);font-weight:680;font-variant-numeric:tabular-nums;
+       letter-spacing:-.02em;margin-bottom:3px}
+  .big u{text-decoration:none;color:var(--good)}
+
+  .foot{display:flex;justify-content:space-between;margin-top:16px;padding-top:13px;
+        border-top:1px solid var(--line);font-size:12px;color:var(--mute)}
+  .foot b{color:var(--ink);font-weight:640}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="eyebrow">
+    <span><b>OpenZeppelin</b> canton-token-template</span><span class="dot"></span>
+    <span>one wallet · random selection</span><span class="dot"></span>
+    <span>240 transfers · concurrency 8</span><span class="dot"></span>
+    <span>only pool depth varies</span>
+  </div>
+
+  <h1>Contention isn't a concurrency effect. It's a <em>bookkeeping</em> effect.</h1>
+
+  <p class="lede">A random pick fails when it lands on a holding the wallet already spent. The spent
+  fraction grows from 0 to <i>f</i> over a run, so the average failure rate should be about
+  <i>f</i>/2 — and it should not care how many submissions are in flight.
+  <b>Predictions were fixed before the runs.</b></p>
+
+  <div class="eq">contention &asymp; <i>f</i> / 2 &nbsp;<s>where f = holdings spent ÷ pool size</s></div>
+
+  <div class="split">
+    <div class="panel">
+      <div class="pt"><b>Double the pool, halve the contention</b><br>predicted vs. measured, across an 8x range of pool depth</div>
+      <div class="chart">
+        <div class="col">
+          <div class="vals"><span class="vp">31.5</span><span class="vm">37.1</span></div>
+          <div class="pair"><div class="bar bp" style="height:85%"></div><div class="bar bm" style="height:100%"></div></div>
+          <div class="lbl"><b>240</b>1x ops</div>
+        </div>
+        <div class="col">
+          <div class="vals"><span class="vp">19.9</span><span class="vm">20.4</span></div>
+          <div class="pair"><div class="bar bp" style="height:54%"></div><div class="bar bm" style="height:55%"></div></div>
+          <div class="lbl"><b>480</b>2x ops</div>
+        </div>
+        <div class="col">
+          <div class="vals"><span class="vp">10.8</span><span class="vm">12.9</span></div>
+          <div class="pair"><div class="bar bp" style="height:29%"></div><div class="bar bm" style="height:35%"></div></div>
+          <div class="lbl"><b>960</b>4x ops</div>
+        </div>
+        <div class="col">
+          <div class="vals"><span class="vp">5.9</span><span class="vm">5.0</span></div>
+          <div class="pair"><div class="bar bp" style="height:16%"></div><div class="bar bm" style="height:13%"></div></div>
+          <div class="lbl"><b>1920</b>8x ops</div>
+        </div>
+      </div>
+      <div class="key">
+        <span><i style="background:var(--pred)"></i>predicted f/2</span>
+        <span><i style="background:var(--accent)"></i>measured contention %</span>
+        <span>mean error ~2 points</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="box">
+        <div class="h">Concurrency barely matters</div>
+        <div class="big">12.5% → 11.7%</div>
+        <p>Raising concurrency <b>4x</b>, from 8 to 32, at the same pool depth. If contention were
+        a collision-between-concurrent-submissions effect, this should have moved sharply.
+        <b>It didn't.</b></p>
+      </div>
+      <div class="box">
+        <div class="h">And it is avoidable entirely</div>
+        <div class="big">12.5% → <u>0%</u></div>
+        <p>Handing each in-flight submission a <b>distinct</b> holding — a per-submission
+        reservation — removes contention completely, at every concurrency tested, with
+        <b>no latency cost</b>.</p>
+      </div>
+      <div class="box" style="margin-bottom:0">
+        <div class="h">Where the model is weakest</div>
+        <p>It under-predicts at high turnover (37.1% vs 31.5%), which is where genuine concurrent
+        collisions add on top. Treat it as <b>a floor and a good estimate</b>, not an identity.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Practical form: <b>contention &asymp; (transfers ÷ holdings) ÷ 2</b> — so size the pool, or reserve inputs</span>
+    <span>Single participant, in-memory, one laptop · <b>floor numbers</b></span>
+  </div>
+
+</div>
+</body>
+</html>

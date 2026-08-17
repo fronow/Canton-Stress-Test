@@ -2,7 +2,7 @@
   "_comment": [
     "Wallet-count scaling: 2 independent sending wallet(s).",
     "",
-    "Each of the 2 senders owns its own pool of 150 holdings and",
+    "Each of the 2 senders owns its own pool of 480 holdings and",
     "sends to its own receiver, so senders never contend with each other - only",
     "with themselves. Input selection is a uniform random pick from the sender's",
     "own pool ($ref:holdingsK[*]), the same naive strategy as the single-wallet run.",
@@ -35,7 +35,7 @@
     },
     {
       "id": "holdings0",
-      "count": 150,
+      "count": 480,
       "actAs": [
         "$role:admin",
         "$p0"
@@ -59,7 +59,7 @@
     },
     {
       "id": "holdings1",
-      "count": 150,
+      "count": 480,
       "actAs": [
         "$role:admin",
         "$p2"

@@ -13,13 +13,25 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const HOLDINGS_PER_WALLET = 150; // deep enough that no wallet can run dry
+// Pool sizing matters more than it looks. A FIXED pool per wallet is wrong:
+// with one wallet doing every operation its pool drains hard (150 -> 30 in the
+// first version of this sweep), while at eight wallets each pool barely moves.
+// The 1-wallet arm is then handicapped by shrinking depth, and the measured
+// contention gap is partly a pool-depth artefact rather than wallet count.
+//
+// So size each wallet's pool to 4x ITS OWN expected consumption: every arm
+// drains by the same ~25%, and the total number of holdings created is constant
+// across the sweep. Wallet count is then the only variable.
+const OPS = 240;
+const POOL_MULTIPLE = 4;
 const WALLET_COUNTS = [1, 2, 4, 8];
+const poolFor = (wallets) => Math.round((POOL_MULTIPLE * OPS) / wallets);
 
 const outDir = path.join(__dirname, "scaling");
 fs.mkdirSync(outDir, { recursive: true });
 
 for (const w of WALLET_COUNTS) {
+  const HOLDINGS_PER_WALLET = poolFor(w);
   const setup = [
     {
       id: "rules",

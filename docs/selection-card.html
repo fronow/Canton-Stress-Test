@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Input-selection strategy</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#0f1419;--body:#3c4753;--mute:#77828f;--line:#e4e8ed;--accent:#1c4ed8;
+        --warm:#b45309;--good:#0f7b4f}
+  body{width:1200px;height:718px;background:#fff;
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--body);-webkit-font-smoothing:antialiased;overflow:hidden}
+  .card{padding:38px 50px;height:100%;display:flex;flex-direction:column}
+
+  .eyebrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mute);margin-bottom:11px}
+  .eyebrow b{color:var(--ink);font-weight:640}
+  .dot{width:4px;height:4px;border-radius:50%;background:#c3cad3}
+
+  h1{font-size:32px;line-height:1.2;letter-spacing:-.022em;color:var(--ink);font-weight:690;margin-bottom:9px}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{font-size:16px;line-height:1.47;max-width:1030px;margin-bottom:20px}
+  .lede b{color:var(--ink);font-weight:650}
+  .lede code{font:13.5px ui-monospace,Menlo,Consolas,monospace;background:#f2f5f8;
+             border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+
+  .row{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:20px}
+  .m{border:1px solid var(--line);border-radius:10px;padding:15px 17px;background:#fbfcfd}
+  .m .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-weight:650}
+  .m .v{font-size:29px;line-height:1.12;color:var(--ink);font-weight:680;margin-top:7px;
+        letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .m .v s{text-decoration:none;font-size:15px;color:var(--mute);font-weight:600}
+  .m .v u{text-decoration:none;color:var(--good)}
+  .m .n{font-size:12.5px;color:var(--mute);margin-top:3px}
+
+  table{width:100%;border-collapse:collapse;font-size:15.5px;margin-bottom:16px}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);
+     font-weight:650;text-align:right;padding:0 13px 8px;border-bottom:1px solid var(--line)}
+  th:first-child{text-align:left}
+  td{padding:9px 13px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);
+     border-bottom:1px solid #eef1f4}
+  td:first-child{text-align:left}
+  tbody tr:last-child td{border-bottom:none}
+  .grp{background:#fafbfc}
+  .win td{background:#f2f8f4}
+  .zero{color:var(--good);font-weight:680}
+  .ct{color:var(--warm);font-weight:620}
+  .tp{font-weight:670;color:var(--accent)}
+  .st{font-weight:640}
+
+  .notes{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .n1{padding-left:13px;border-left:3px solid var(--line);font-size:13.5px;line-height:1.5}
+  .n1 b{color:var(--ink);font-weight:650}
+  .n1 .h{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+         color:var(--mute);font-weight:650;margin-bottom:5px}
+
+  .foot{display:flex;justify-content:space-between;margin-top:auto;padding-top:14px;
+        border-top:1px solid var(--line);font-size:12px;color:var(--mute)}
+  .foot b{color:var(--ink);font-weight:640}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="eyebrow">
+    <span><b>OpenZeppelin</b> canton-token-template</span><span class="dot"></span>
+    <span>one sending wallet</span><span class="dot"></span>
+    <span>pool 960 · 240 transfers</span><span class="dot"></span>
+    <span>only the input pick changes</span>
+  </div>
+
+  <h1>How a wallet picks its input decides whether it contends <em>at all</em>.</h1>
+
+  <p class="lede">Same registry, same wallet, same load. <code>[*]</code> picks an input uniformly
+  at random from the wallet's own pool; <code>[seq]</code> hands each in-flight submission a distinct
+  one — a per-submission reservation. <b>Reservation removes contention entirely, at both
+  concurrency levels.</b></p>
+
+  <div class="row">
+    <div class="m"><div class="k">Contention</div><div class="v">12.5<s>%</s> → <u>0<s>%</s></u></div><div class="n">every failure was a self-collision</div></div>
+    <div class="m"><div class="k">Offered load lost</div><div class="v">13.3<s>%</s> → <u>0<s>%</s></u></div><div class="n">208/240 → 240/240 committed</div></div>
+    <div class="m"><div class="k">Throughput at c32</div><div class="v">+15<s>%</s></div><div class="n">36.6/s → 42.1/s</div></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Selection</th><th>Concurrency</th><th>Committed</th><th>Throughput</th><th>Contention</th><th>p50</th><th>p99</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td class="st">random</td><td>8</td><td>208 / 240</td><td class="tp">19.4/s</td><td class="ct">12.5%</td><td>357 ms</td><td>1270 ms</td></tr>
+      <tr class="win"><td class="st">reservation</td><td>8</td><td>240 / 240</td><td class="tp">20.4/s</td><td class="zero">0%</td><td>358 ms</td><td>1302 ms</td></tr>
+      <tr class="grp"><td class="st">random</td><td>32</td><td>208 / 240</td><td class="tp">36.6/s</td><td class="ct">11.7%</td><td>644 ms</td><td>1902 ms</td></tr>
+      <tr class="win"><td class="st">reservation</td><td>32</td><td>240 / 240</td><td class="tp">42.1/s</td><td class="zero">0%</td><td>599 ms</td><td>1763 ms</td></tr>
+    </tbody>
+  </table>
+
+  <div class="notes">
+    <div class="n1">
+      <span class="h">The gap widens with pressure</span>
+      Reservation buys <b>5% throughput at concurrency 8, but 15% at concurrency 32</b> — and at 32
+      it is also <b>faster</b> (p99 1902 → 1763 ms). There is no latency price for removing
+      contention; the harder you push, the more selection strategy is worth.
+    </div>
+    <div class="n1">
+      <span class="h">A correction to an earlier number</span>
+      With a pool sized so depth stays roughly constant, single-wallet random selection contends
+      <b>12.5%</b> — not the 48.8% reported in the first scaling sweep. That run's pool drained
+      150 → 30, and <b>a shrinking pool inflated the collision rate.</b> Pool depth and selection
+      strategy are separate effects, and the earlier figure confounded them.
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Measured through <b>TransferFactory_Transfer</b> · CIP-0056 · Canton 3.4.11</span>
+    <span>Single participant, in-memory, one laptop · <b>floor numbers</b></span>
+  </div>
+
+</div>
+</body>
+</html>

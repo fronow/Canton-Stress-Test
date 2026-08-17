@@ -1,14 +1,15 @@
 {
   "_comment": [
-    "Wallet-count scaling: 1 independent sending wallet(s).",
+    "Input-selection strategy: random.",
     "",
-    "Each of the 1 senders owns its own pool of 960 holdings and",
-    "sends to its own receiver, so senders never contend with each other - only",
-    "with themselves. Input selection is a uniform random pick from the sender's",
-    "own pool ($ref:holdingsK[*]), the same naive strategy as the single-wallet run.",
+    "One sending wallet, one receiver, a pool of 960 holdings sized to 4x",
+    "the 240 operations so pool depth stays roughly constant across the run.",
     "",
-    "Explicit disclosure throughout: the sender submits alone and carries the",
-    "factory's created-event blob, exactly as a wallet does."
+    "Inputs are picked uniformly at random from the pool - two concurrent",
+    "transfers can select the same holding, and one loses.",
+    "",
+    "Everything else is identical to the transfer benchmark: explicit disclosure,",
+    "sender submits alone, CIP-0056 TransferFactory_Transfer."
   ],
   "version": 1,
   "parties": 6,
@@ -34,7 +35,7 @@
       }
     },
     {
-      "id": "holdings0",
+      "id": "holdings",
       "count": 960,
       "actAs": [
         "$role:admin",
@@ -79,7 +80,7 @@
             "requestedAt": "$now-60s",
             "executeBefore": "$now+1h",
             "inputHoldingCids": [
-              "$ref:holdings0[*]"
+              "$ref:holdings[*]"
             ],
             "meta": {
               "values": {}
