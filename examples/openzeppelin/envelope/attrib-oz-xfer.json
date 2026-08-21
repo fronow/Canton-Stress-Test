@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "parties": 6,
+  "roles": [
+    "admin"
+  ],
+  "setup": [
+    {
+      "_comment": "The registry's factory. Its template and fields are implementation-specific.",
+      "id": "factory",
+      "disclose": true,
+      "actAs": [
+        "$role:admin"
+      ],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Rules:SimpleTokenRules",
+        "args": {
+          "admin": "$role:admin",
+          "supportedInstruments": [
+            "SIMPLETOKEN"
+          ]
+        }
+      }
+    },
+    {
+      "_comment": "The sending wallet's holdings. One per measured transfer, so a transfer normally has its own input to spend.",
+      "id": "holdings",
+      "count": 40,
+      "actAs": [
+        "$role:admin",
+        "$p0"
+      ],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Holding:SimpleHolding",
+        "args": {
+          "admin": "$role:admin",
+          "owner": "$p0",
+          "instrumentId": {
+            "admin": "$role:admin",
+            "id": "SIMPLETOKEN"
+          },
+          "amount": "1000.0",
+          "meta": {
+            "values": {}
+          }
+        }
+      }
+    }
+  ],
+  "operations": [
+    {
+      "weight": 1,
+      "_comment": "The standard transfer — identical for every conforming registry.",
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "contract": "$ref:factory",
+        "choice": "TransferFactory_Transfer",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "transfer": {
+            "sender": "$p0",
+            "receiver": "$p1",
+            "amount": "1.0",
+            "instrumentId": {
+              "admin": "$role:admin",
+              "id": "SIMPLETOKEN"
+            },
+            "requestedAt": "$now-60s",
+            "executeBefore": "$now+1h",
+            "inputHoldingCids": [
+              "$ref:holdings[*]"
+            ],
+            "meta": {
+              "values": {}
+            }
+          },
+          "extraArgs": {
+            "context": {
+              "values": {}
+            },
+            "meta": {
+              "values": {}
+            }
+          }
+        }
+      },
+      "submit": {
+        "actAs": [
+          "$p0"
+        ]
+      }
+    }
+  ]
+}

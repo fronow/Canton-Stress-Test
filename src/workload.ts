@@ -306,6 +306,10 @@ export interface PayloadCtx {
    * "$ref:name[seq]". Shared across concurrent submissions on a context, so
    * consecutive in-flight ops receive distinct pool entries. */
   seq?: () => number;
+  /** Pool entries already handed out WITHIN the command being built, by binding
+   * name — the state behind "$ref:name[*!]". Scoped to one command by
+   * buildCommand, never shared across submissions. */
+  picked?: Map<string, Set<string>>;
   /** The payload of the contract an exercise op is targeting ("$target:field"). */
   target?: Record<string, unknown>;
 }
@@ -317,8 +321,9 @@ const fail = (msg: string): never => {
 };
 
 /** Resolve "$ref:<name>", "$ref:<name>[<k>]" where k is an integer, "*"
- * (random), "seq" (the next contract in the pool, advancing once per
- * resolution) or "$i" (the enclosing repetition index).
+ * (random), "*!" (random, but distinct within one command), "seq" (the next
+ * contract in the pool, advancing once per resolution) or "$i" (the enclosing
+ * repetition index).
  *
  * "seq" exists to make INPUT SELECTION STRATEGY measurable. A wallet picking
  * an input at random from its own pool collides with itself under concurrency;
@@ -326,7 +331,7 @@ const fail = (msg: string): never => {
  * counter is shared across the concurrent submissions on a context, so "seq"
  * models a per-submission reservation, and "*" models the naive strategy. */
 function resolveRef(expr: string, ctx: PayloadCtx): string {
-  const m = /^([A-Za-z0-9_-]+)(?:\[(\*|\$i|seq|\d+)\])?$/.exec(expr);
+  const m = /^([A-Za-z0-9_-]+)(?:\[(\*!|\*|\$i|seq|\d+)\])?$/.exec(expr);
   if (!m) return fail(`malformed $ref: "$ref:${expr}"`);
   const [, name, sel] = m;
   const pool = ctx.bindings?.[name];
@@ -335,6 +340,33 @@ function resolveRef(expr: string, ctx: PayloadCtx): string {
     return fail(`$ref:${name} — the binding is empty (its setup step created nothing)`);
   if (sel === undefined) return pool[0];
   if (sel === "*") return pool[Math.floor((ctx.rand?.() ?? 0) * pool.length) % pool.length];
+  // "*!" is "*" without replacement WITHIN one command. A multi-input transfer
+  // nominates several holdings at once, and plain "*" can hand it the same
+  // holding twice — a self-duplicate that fails for reasons unrelated to
+  // contention, and whose likelihood GROWS with the number of inputs. That
+  // would counterfeit the very effect a multi-input sweep is measuring.
+  if (sel === "*!") {
+    const seen = ctx.picked?.get(name) ?? new Set<string>();
+    ctx.picked?.set(name, seen);
+    if (seen.size >= pool.length)
+      return fail(
+        `$ref:${name}[*!] — the command asked for more distinct contracts than the ` +
+          `binding holds (${pool.length}); widen the pool or nominate fewer inputs`,
+      );
+    // Random start, then probe forward for the first entry not yet handed out.
+    // Rejection sampling would be unbounded as the pool fills; probing is O(1)
+    // while picks are sparse and terminates for certain once the size check
+    // above has passed.
+    let i = Math.floor((ctx.rand?.() ?? 0) * pool.length) % pool.length;
+    for (let n = 0; n < pool.length; n++) {
+      const cid = pool[(i + n) % pool.length];
+      if (!seen.has(cid)) {
+        seen.add(cid);
+        return cid;
+      }
+    }
+    return fail(`$ref:${name}[*!] — no unpicked contract remains`);
+  }
   if (sel === "seq") return pool[(ctx.seq?.() ?? 0) % pool.length];
   const i = sel === "$i" ? (ctx.index ?? 0) : Number(sel);
   return pool[i % pool.length];
@@ -466,7 +498,10 @@ export function collectContractIds(v: unknown, known: Set<string>, out: string[]
 /** Turn one op into a ledger command. Returns null when an exercise op has no
  * live target contract — the caller records that as a skip rather than a
  * bogus submission. */
-export function buildCommand(op: OpSpec, ctx: BuildCtx): BuiltCommand | null {
+export function buildCommand(op: OpSpec, outerCtx: BuildCtx): BuiltCommand | null {
+  // "[*!]" is distinct within ONE command but independent across commands, so
+  // its bookkeeping is created here and dies when this command is built.
+  const ctx: BuildCtx = { ...outerCtx, picked: new Map() };
   if (op.kind === "create") {
     return {
       command: {

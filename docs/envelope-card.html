@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>canton-stress — envelope cost</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#0f1419;--body:#3c4753;--mute:#77828f;--line:#e4e8ed;--accent:#1c4ed8;
+        --bad:#b42318;--good:#0f7b4f}
+  body{width:1200px;height:760px;background:#fff;
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--body);-webkit-font-smoothing:antialiased;overflow:hidden}
+  .card{padding:42px 52px;height:100%;display:flex;flex-direction:column}
+
+  .eyebrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mute);
+           letter-spacing:.03em;margin-bottom:14px}
+  .eyebrow b{color:var(--ink);font-weight:640}
+  .dot{width:4px;height:4px;border-radius:50%;background:#c3cad3}
+
+  h1{font-size:35px;line-height:1.18;letter-spacing:-.022em;color:var(--ink);font-weight:690;
+     margin-bottom:10px}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{font-size:17px;line-height:1.5;color:var(--body);max-width:1010px;margin-bottom:26px}
+  .lede b{color:var(--ink);font-weight:650}
+
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+  .m{border:1px solid var(--line);border-radius:10px;padding:16px 18px;background:#fbfcfd}
+  .m .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-weight:650}
+  .m .v{font-size:33px;line-height:1.1;color:var(--ink);font-weight:680;margin-top:8px;
+        letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .m .v s{text-decoration:none;font-size:16px;color:var(--mute);font-weight:600}
+  .m .n{font-size:12.5px;color:var(--mute);margin-top:4px}
+
+  .split{display:grid;grid-template-columns:1.1fr 1fr;gap:26px;flex:1;min-height:0}
+  .panel{border:1px solid var(--line);border-radius:10px;padding:18px 20px;background:#fbfcfd;
+         display:flex;flex-direction:column}
+  .pt{font-size:12.5px;color:var(--mute);margin-bottom:14px}
+  .pt b{color:var(--ink);font-weight:650;font-size:14px}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  td,th{text-align:left;padding:9px 4px;border-bottom:1px solid var(--line)}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);font-weight:650}
+  td{font-variant-numeric:tabular-nums;color:var(--ink)}
+  th.r,td.r{text-align:right}
+  tr:last-child td{border-bottom:none}
+  .delta{color:var(--bad);font-weight:660}
+  .kicker{margin-top:auto;padding-top:14px;font-size:13.5px;line-height:1.5;color:var(--body)}
+  .kicker b{color:var(--ink);font-weight:650}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;
+        margin-top:22px;padding-top:16px;border-top:1px solid var(--line);
+        font-size:12.5px;color:var(--mute)}
+  .foot b{color:var(--ink);font-weight:640}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="eyebrow">
+    <span>CIP-0056 Token Standard</span><span class="dot"></span>
+    <span>same <b>TransferFactory_Transfer</b></span><span class="dot"></span>
+    <span>6 parties · single input</span><span class="dot"></span>
+    <span>Canton 3.4.11</span>
+  </div>
+
+  <h1>The <em>settlement model</em> costs more than the data model.</h1>
+  <p class="lede">Canton meters traffic, so every transaction is paid for by the byte. Two
+  registries differ by 2,222 bytes on the same standard call — and <b>all of it is propose/accept
+  versus completing directly</b>. Their data models are within 287 bytes.</p>
+
+  <div class="row">
+    <div class="m"><div class="k">Two-step transfer</div><div class="v">13,955<s>B</s></div><div class="n">$0.7985 · instruction + locked holding</div></div>
+    <div class="m"><div class="k">Direct completion</div><div class="v">11,446<s>B</s></div><div class="n">$0.6549 — same registry, same code</div></div>
+    <div class="m"><div class="k">Propose/accept costs</div><div class="v">+2,509<s>B</s></div><div class="n">+$0.1436 per transfer</div></div>
+    <div class="m"><div class="k">Data-model gap</div><div class="v">287<s>B</s></div><div class="n">between the two registries</div></div>
+  </div>
+
+  <div class="split">
+    <div class="panel">
+      <div class="pt"><b>Same call, same six parties, same single input</b><br>prepared-transaction size, priced at $60/MB</div>
+      <table>
+        <tr><th>Registry</th><th>Path</th><th class="r">Envelope</th><th class="r">Cost</th></tr>
+        <tr><td>std-spike</td><td>cross-party</td><td class="r">11,733 B</td><td class="r">$0.6714</td></tr>
+        <tr><td>std-spike</td><td>direct</td><td class="r">11,733 B</td><td class="r">$0.6714</td></tr>
+        <tr><td>OpenZeppelin</td><td>two-step</td><td class="r">13,955 B</td><td class="r delta">$0.7985</td></tr>
+        <tr><td>OpenZeppelin</td><td>direct</td><td class="r">11,446 B</td><td class="r">$0.6549</td></tr>
+      </table>
+      <p class="kicker">std-spike always completes, so its two paths are <b>byte-identical</b>.</p>
+    </div>
+
+    <div class="panel">
+      <div class="pt"><b>And this understates it</b><br>the second transaction is not counted</div>
+      <p class="kicker" style="margin-top:0">A two-step transfer is not finished. The receiver
+      still has to accept, which is <b>another transaction with its own envelope</b>. So +$0.14 is
+      the floor on what propose/accept costs, not the total.</p>
+      <p class="kicker"><b>Measurable without a metered synchronizer.</b> CIP-0104 reads zero on a
+      sandbox, but <b>prepare</b> interprets a command without submitting it and returns the
+      prepared transaction. Its size is real on any participant.</p>
+      <p class="kicker"><b>A lower bound</b> — the sequenced request adds views per informee.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Direct path isolated via self-transfer — a preapproved cross-party transfer was not measured</span>
+    <span>$60/MB is a quoted price, not a measured one · <b>lower bound</b></span>
+  </div>
+
+</div>
+</body>
+</html>

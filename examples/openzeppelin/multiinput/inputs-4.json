@@ -1,0 +1,109 @@
+{
+  "_comment": [
+    "Multi-input selection: 4 input(s) per transfer.",
+    "",
+    "Holdings are worth 10 each and the transfer is 40.0, so the",
+    "registry must consume 4 of them. The wallet nominates 4 candidates picked",
+    "uniformly at random from its own pool - the naive strategy, extended to",
+    "the multi-input case.",
+    "",
+    "Pool 1200, 120 transfers. If contention is a bookkeeping effect it should",
+    "rise roughly with the number of inputs, since each transfer both consumes",
+    "more of the pool and takes more chances of landing on something spent."
+  ],
+  "version": 1,
+  "parties": 6,
+  "roles": [
+    "admin"
+  ],
+  "setup": [
+    {
+      "id": "rules",
+      "disclose": true,
+      "actAs": [
+        "$role:admin"
+      ],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Rules:SimpleTokenRules",
+        "args": {
+          "admin": "$role:admin",
+          "supportedInstruments": [
+            "SIMPLE"
+          ]
+        }
+      }
+    },
+    {
+      "id": "holdings",
+      "count": 1200,
+      "actAs": [
+        "$role:admin",
+        "$p0"
+      ],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Holding:SimpleHolding",
+        "args": {
+          "admin": "$role:admin",
+          "owner": "$p0",
+          "instrumentId": {
+            "admin": "$role:admin",
+            "id": "SIMPLE"
+          },
+          "amount": "10.0",
+          "meta": {
+            "values": {}
+          }
+        }
+      }
+    }
+  ],
+  "operations": [
+    {
+      "weight": 1,
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "contract": "$ref:rules",
+        "choice": "TransferFactory_Transfer",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "transfer": {
+            "sender": "$p0",
+            "receiver": "$p1",
+            "amount": "40.0",
+            "instrumentId": {
+              "admin": "$role:admin",
+              "id": "SIMPLE"
+            },
+            "requestedAt": "$now-60s",
+            "executeBefore": "$now+1h",
+            "inputHoldingCids": [
+              "$ref:holdings[*!]",
+              "$ref:holdings[*!]",
+              "$ref:holdings[*!]",
+              "$ref:holdings[*!]"
+            ],
+            "meta": {
+              "values": {}
+            }
+          },
+          "extraArgs": {
+            "context": {
+              "values": {}
+            },
+            "meta": {
+              "values": {}
+            }
+          }
+        }
+      },
+      "submit": {
+        "actAs": [
+          "$p0"
+        ]
+      }
+    }
+  ]
+}

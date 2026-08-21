@@ -109,7 +109,9 @@ Resolved recursively through `args`, `contract`, `actAs` and `readAs`.
 | `$role:<name>` | A named party from `roles`. |
 | `$ref:<name>` | A contract id bound by a setup step. |
 | `$ref:<name>[0]` | Index into a bound pool. |
-| `$ref:<name>[*]` | A random member of the pool. |
+| `$ref:<name>[*]` | A random member of the pool, drawn independently each time. |
+| `$ref:<name>[*!]` | Random, but **distinct within one command** — for ops that nominate several contracts at once (a multi-input transfer), where `[*]` could name the same one twice. |
+| `$ref:<name>[seq]` | The next member, advancing once per resolution and shared across in-flight submissions — models a per-submission **reservation**, against `[*]`'s naive random pick. |
 | `$ref:<name>[$i]` | The member at the current repetition index — pairs a repeated step against an earlier pool. |
 | `$target:<field>` | A field of the contract an exercise op is targeting. |
 

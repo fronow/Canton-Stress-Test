@@ -232,6 +232,9 @@ export interface TrafficEstimate {
   confirmationRequest: number;
   confirmationResponse: number;
   total: number;
+  /** Prepared-transaction size in bytes — measurable without traffic control.
+   * See TrafficCost.preparedBytes for what it is and is not. */
+  preparedBytes?: number;
 }
 
 export interface TrafficReport {
@@ -245,6 +248,19 @@ export interface TrafficReport {
    * traffic control is UNMETERED, and reporting "0" as if it were a measured
    * cost would be a lie. */
   unmetered: boolean;
+  /** Prepared-transaction bytes across all committed operations. Present even
+   * when the run is unmetered, which is the point: envelope size is measurable
+   * on any participant, while the CIP-0104 cost is not. */
+  preparedBytesForRun?: number;
+  /** Mean prepared bytes per committed operation. */
+  preparedBytesPerOp?: number;
+  /** Cost of `preparedBytesForRun` at the configured price, in USD. */
+  estimatedCostUsd?: number;
+  /** Cost per committed operation, in USD. */
+  costPerOpUsd?: number;
+  /** The price used, in USD per megabyte. Reported so the figure above can
+   * never be quoted without the assumption that produced it. */
+  usdPerMb?: number;
 }
 
 /** Combine per-operation cost estimates with what the run actually committed. */
@@ -252,23 +268,47 @@ export function summarizeTraffic(
   estimates: TrafficEstimate[],
   results: OpResult[],
   wallMs: number,
+  usdPerMb?: number,
 ): TrafficReport | undefined {
   if (estimates.length === 0) return undefined;
   const byOp = new Map(estimates.map((e) => [e.operation, e]));
   let totalForRun = 0;
+  let preparedForRun = 0;
+  let committed = 0;
+  let sawPrepared = false;
   for (const r of results) {
     // Only committed transactions are actually sequenced, so only they cost.
     if (r.outcome !== "committed" || !r.attribution) continue;
     const key = `${shortTemplate(r.attribution.template)}:${r.attribution.choice ?? "create"}`;
-    totalForRun += byOp.get(key)?.total ?? 0;
+    const e = byOp.get(key);
+    totalForRun += e?.total ?? 0;
+    if (e?.preparedBytes !== undefined) {
+      preparedForRun += e.preparedBytes;
+      sawPrepared = true;
+    }
+    committed++;
   }
   const secs = wallMs / 1000;
-  return {
+  const report: TrafficReport = {
     perOperation: estimates,
     totalForRun,
     perSecond: secs > 0 ? totalForRun / secs : 0,
     unmetered: estimates.every((e) => e.total === 0),
   };
+  if (sawPrepared) {
+    report.preparedBytesForRun = preparedForRun;
+    report.preparedBytesPerOp = committed > 0 ? preparedForRun / committed : 0;
+    // Pricing is opt-in. Without a price there is a size and no dollar figure,
+    // because the price varies by network and inventing a default would put an
+    // unsourced number in a report people quote.
+    if (usdPerMb !== undefined && usdPerMb > 0) {
+      const mb = preparedForRun / (1024 * 1024);
+      report.usdPerMb = usdPerMb;
+      report.estimatedCostUsd = mb * usdPerMb;
+      report.costPerOpUsd = committed > 0 ? (mb * usdPerMb) / committed : 0;
+    }
+  }
+  return report;
 }
 
 // ---- the S4 block as a whole ----------------------------------------------
@@ -295,6 +335,9 @@ export function instrument(o: {
   trafficEstimates?: TrafficEstimate[];
   synchronizerId?: string;
   hotspotLimit?: number;
+  /** Price for envelope bytes, USD per megabyte. Omitted means report size
+   * only — see summarizeTraffic for why there is no default. */
+  usdPerMb?: number;
 }): Instrumentation {
   return {
     hotspots: hotContracts(o.results, o.hotspotLimit ?? 10),
@@ -302,7 +345,7 @@ export function instrument(o: {
     byParty: byParty(o.results),
     byOperation: byOperation(o.results),
     readLag: summarizeLag(o.lagSamples ?? []),
-    traffic: summarizeTraffic(o.trafficEstimates ?? [], o.results, o.wallMs),
+    traffic: summarizeTraffic(o.trafficEstimates ?? [], o.results, o.wallMs, o.usdPerMb),
     synchronizerId: o.synchronizerId,
     failureMode: o.results.some((r) => r.outcome !== "committed")
       ? dominantFailure(o.results)
@@ -313,6 +356,7 @@ export function instrument(o: {
 /** Human-readable S4 block for the console. */
 export function formatInstrumentation(i: Instrumentation): string {
   const r1 = (n: number) => Math.round(n * 10) / 10;
+  const kb = (b: number) => (b < 1024 ? `${Math.round(b)} B` : `${r1(b / 1024)} KB`);
   const out: string[] = [];
 
   if (i.failureMode && i.failureMode !== "none")
@@ -364,12 +408,31 @@ export function formatInstrumentation(i: Instrumentation): string {
         `mean ${r1(i.readLag.meanOffsetLag)}; ACS query p99 ${r1(i.readLag.p99QueryMs)}ms`,
     );
 
-  if (i.traffic)
+  if (i.traffic) {
     out.push(
       i.traffic.unmetered
         ? "  traffic cost: UNMETERED on this synchronizer (no traffic control configured — a sandbox reports 0)"
         : `  traffic cost: ${i.traffic.totalForRun} units for the run, ${r1(i.traffic.perSecond)}/s`,
     );
+    // Envelope size is measurable even when the cost is not, which is the whole
+    // reason it is reported separately from the CIP-0104 figure above.
+    const t = i.traffic;
+    if (t.preparedBytesPerOp !== undefined) {
+      out.push(
+        `  envelope size: ${kb(t.preparedBytesPerOp)} per operation, ` +
+          `${kb(t.preparedBytesForRun ?? 0)} for the run`,
+      );
+      if (t.costPerOpUsd !== undefined)
+        out.push(
+          `    at $${t.usdPerMb}/MB: $${t.costPerOpUsd.toFixed(4)} per operation, ` +
+            `$${(t.estimatedCostUsd ?? 0).toFixed(2)} for the run`,
+        );
+      out.push(
+        "    (prepared-transaction size — a lower bound: the sequenced request also",
+        "     carries encrypted views per informee, so the metered figure is larger)",
+      );
+    }
+  }
 
   return out.join("\n");
 }

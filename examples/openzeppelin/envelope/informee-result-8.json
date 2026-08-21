@@ -1,0 +1,98 @@
+{
+  "model": "closed",
+  "parties": 8,
+  "ops": 8,
+  "summary": {
+    "ops": 8,
+    "committed": 8,
+    "contention": 0,
+    "rejected": 0,
+    "wallMs": 4631.692900000002,
+    "throughputPerSec": 1.7272302315207464,
+    "attemptedPerSec": 1.7272302315207464,
+    "contentionRate": 0,
+    "latency": {
+      "p50": 427.9296000000031,
+      "p90": 4215.5334,
+      "p95": 4215.5334,
+      "p99": 4215.5334,
+      "max": 4215.5334,
+      "mean": 2313.2957875
+    },
+    "latencyCurve": [
+      {
+        "p": 50,
+        "ms": 427.9296000000031
+      },
+      {
+        "p": 75,
+        "ms": 4211.0337
+      },
+      {
+        "p": 90,
+        "ms": 4215.5334
+      },
+      {
+        "p": 95,
+        "ms": 4215.5334
+      },
+      {
+        "p": 99,
+        "ms": 4215.5334
+      },
+      {
+        "p": 99.9,
+        "ms": 4215.5334
+      }
+    ]
+  },
+  "instrumentation": {
+    "hotspots": [],
+    "byParty": [
+      {
+        "key": "cs-mt20anuj-admin::1220282d8d560456c40b99ab46e8a9744faac58d94c0cb85a5db760c6e0a7331c297",
+        "ops": 8,
+        "committed": 8,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 427.9296000000031,
+        "p99": 4215.5334,
+        "maxMs": 4215.5334
+      }
+    ],
+    "byOperation": [
+      {
+        "key": "StdToken:StdTransferFactory:create",
+        "ops": 8,
+        "committed": 8,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 427.9296000000031,
+        "p99": 4215.5334,
+        "maxMs": 4215.5334
+      }
+    ],
+    "traffic": {
+      "perOperation": [
+        {
+          "operation": "StdToken:StdTransferFactory:create",
+          "confirmationRequest": 0,
+          "confirmationResponse": 0,
+          "total": 0,
+          "preparedBytes": 2277
+        }
+      ],
+      "totalForRun": 0,
+      "perSecond": 0,
+      "unmetered": true,
+      "preparedBytesForRun": 18216,
+      "preparedBytesPerOp": 2277,
+      "usdPerMb": 60,
+      "estimatedCostUsd": 1.042327880859375,
+      "costPerOpUsd": 0.13029098510742188
+    },
+    "synchronizerId": "mysynchronizer::1220c44a829611d9484802b7e31bd5db7fd84f60df191bcf5e92124cefe5e8416701"
+  }
+}

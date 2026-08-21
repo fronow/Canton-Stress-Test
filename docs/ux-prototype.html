@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>canton-stress UX prototype</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#0f1419;--body:#3c4753;--mute:#77828f;--line:#e4e8ed;--accent:#1c4ed8;--good:#0f7b4f;--warn:#b45309}
+  body{width:1200px;height:880px;background:#fff;
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--body);-webkit-font-smoothing:antialiased;overflow:hidden}
+  .card{padding:36px 46px;height:100%;display:flex;flex-direction:column}
+
+  .cap{font-size:12.5px;color:var(--mute);margin-bottom:7px}
+  h1{font-size:26px;line-height:1.22;letter-spacing:-.018em;color:var(--ink);font-weight:680;margin-bottom:8px}
+  .lede{font-size:15.5px;line-height:1.47;max-width:1020px;margin-bottom:20px}
+  .lede b{color:var(--ink);font-weight:650}
+
+  .cols{display:grid;grid-template-columns:1.32fr 1fr;gap:26px;flex:1;min-height:0}
+
+  .term{background:#0f141b;border-radius:11px;padding:20px 22px;overflow:hidden;white-space:pre;
+        font:13.5px/1.62 ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:#c8d3e0}
+  .term .p{color:#5cc8a0}
+  .term .cmd{color:#fff;font-weight:600}
+  .term .d{color:#66738a}
+  .term .ok{color:#5cc8a0}
+  .term .hl{color:#fff;font-weight:600}
+  .term .n{color:#f0b45e;font-weight:600}
+  .term .bad{color:#f08a7a;font-weight:600}
+  .term .rule{color:#2c3646}
+  .term .lab{color:#7aa2f7;font-weight:700;letter-spacing:.04em}
+
+  .side .blk{border:1px solid var(--line);border-radius:10px;padding:15px 17px;margin-bottom:12px;background:#fbfcfd}
+  .side .h{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);font-weight:650;margin-bottom:7px}
+  .side p{font-size:13.5px;line-height:1.47}
+  .side b{color:var(--ink);font-weight:650}
+  .side .now{font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--body);
+             background:#f2f5f8;border:1px solid var(--line);border-radius:6px;padding:8px 10px;
+             margin-top:7px;word-break:break-all}
+
+  .foot{margin-top:16px;padding-top:13px;border-top:1px solid var(--line);
+        display:flex;justify-content:space-between;font-size:12px;color:var(--mute)}
+  .foot b{color:var(--ink);font-weight:640}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="cap">canton-stress · interface prototype</div>
+  <h1>One command. A verdict, a cause, and a fix.</h1>
+  <p class="lede">No workload file to author, no flags for the common case, and no percentiles to
+  interpret. The tool reads the DAR, builds its own test data, runs, and answers the question the
+  user actually asked. <b>The numbers are the evidence; the verdict is the product.</b></p>
+
+  <div class="cols">
+    <div class="term">
+<span class="p">$</span> <span class="cmd">canton-stress wallet.dar</span>
+
+<span class="d">  Reading wallet.dar … 4 templates, 1 interface (TransferFactory)</span>
+<span class="d">  Starting a local sandbox …                              </span><span class="ok">ok</span>
+<span class="d">  Building test data … 480 holdings, 2 parties            </span><span class="ok">ok</span>
+<span class="d">  Running 240 transfers  ████████████████████████  100%</span>
+
+<span class="rule">  ────────────────────────────────────────────────────</span>
+
+  <span class="lab">VERDICT</span>   <span class="hl">19 transfers/second</span>
+            <span class="bad">1 in 5 transfers failed</span> and had to be retried
+
+  <span class="lab">WHY</span>       Input selection, not the registry.
+            Your wallet reached for holdings it had
+            already spent. <span class="d">(SimpleHolding, 47 collisions)</span>
+
+  <span class="lab">FIX</span>       Hold <span class="n">2,400</span> instead of 480      <span class="d">→</span> under <span class="ok">5%</span>
+            Reserve an input per submission  <span class="d">→</span> <span class="ok">0%</span>
+
+<span class="rule">  ────────────────────────────────────────────────────</span>
+
+<span class="d">  Latency  p50 358ms · p99 1302ms · slowest 1.4s</span>
+<span class="d">  Full report → report.html      Details → --explain</span>
+    </div>
+
+    <div class="side">
+      <div class="blk">
+        <div class="h">What it replaces</div>
+        <p>Today the same run needs a hand-written JSON workload with setup steps and placeholder
+        syntax, plus seven flags:</p>
+        <div class="now">run x.dar --workload-file w.json --model closed --concurrency 8 --ops 240 --sandbox --java-home …</div>
+      </div>
+      <div class="blk">
+        <div class="h">Three design rules</div>
+        <p><b>Never author a file.</b> The DAR says what the templates and interfaces are; the tool
+        can generate the workload and let it be edited later if needed.</p>
+        <p style="margin-top:8px"><b>Never make them read a percentile</b> to get an answer. Report
+        the verdict; keep the distribution for those who want it.</p>
+        <p style="margin-top:8px"><b>Always name the fix.</b> A diagnosis without a remedy just
+        moves the problem.</p>
+      </div>
+      <div class="blk" style="margin-bottom:0">
+        <div class="h">Why the FIX line is possible at all</div>
+        <p>Because contention has a model: <b>contention ≈ (transfers ÷ holdings) ÷ 2</b>. That is
+        what turns "12.5% contention" into <b>"hold 2,400 instead of 480."</b> No general-purpose
+        load tool can say this, because none of them know what a holding is.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Progressive disclosure: every flag still exists — <b>none is needed for the common case</b></span>
+    <span>Implemented — this is <b>canton-stress &lt;dar&gt;</b></span>
+  </div>
+
+</div>
+</body>
+</html>

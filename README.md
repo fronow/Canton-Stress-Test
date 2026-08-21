@@ -24,12 +24,13 @@ A self-contained HTML report per run. This one benchmarks
 in a browser for the full report, or read it as markdown in
 [`examples/openzeppelin/BENCHMARK.md`](examples/openzeppelin/BENCHMARK.md).</sub>
 
-**The headline result:** the template settles ~15–17 transfers/second and stops
-scaling at ~22/s offered — but throughput is bounded by **input-holding
-selection, not by the factory contract** every transfer routes through. The
-factory is referenced by every transfer and consumed by none, so it never
-conflicts. Along the way the report puts a number on explicit disclosure:
-**~3% throughput, and p99 up 45%**, for a ~576-byte blob on every submission.
+**The headline result:** throughput is bounded by **input-holding selection, not
+by the factory contract** every transfer routes through. The factory is
+referenced by every transfer and consumed by none, so it never conflicts. On a
+single-participant in-memory sandbox the template settles ~15–17 transfers/second
+under *random* input selection — but that figure is a property of the selection
+strategy, not a ceiling: the same registry on the same machine commits 240 of
+240 at **42.1/s** once each in-flight submission reserves a distinct input.
 
 That is a design trade-off in correct code, not a defect — and it is the kind of
 answer that only appears under concurrent load.
@@ -57,6 +58,49 @@ answer that only appears under concurrent load.
 
 `src/` is a standalone, dependency-free TypeScript tool (Node ≥ 23.6) reusing
 the proven ledger client + sandbox manager from `../tool`.
+
+### Point it at a DAR
+
+For a Canton Network Token Standard registry there is nothing to configure:
+
+```
+node src/cli.ts <registry.dar> --java-home <openjdk>
+```
+
+It reads the DAR, finds the templates implementing `Holding` and
+`TransferFactory`, generates the test data, boots a sandbox, runs, and answers
+the question rather than reporting percentiles:
+
+```
+  Reading simple-token-0.1.0.dar … simple-token 0.1.0, 7 templates
+  Measuring TransferFactory_Transfer on SimpleTokenRules … Token Standard registry
+  Test data 480 × SimpleHolding, 6 parties, instrument "SIMPLETOKEN"
+
+  ────────────────────────────────────────────────────
+
+  VERDICT   19.4 transfers/second
+            1 in 5 transfers failed and had to be retried
+
+  WHY       Input selection, not the registry.
+            The wallet reached for holdings it had
+            already spent. (SimpleHolding, 48 collisions)
+
+  FIX       Hold 2,281 instead of 480        → under 5%
+            Reserve an input per submission  → 0% (measured)
+```
+
+The FIX line is arithmetic, not a heuristic: contention has a measured model
+([`src/contention.ts`](src/contention.ts)), which is what turns "20% contention"
+into "hold 2,281 instead of 480". Add `--traffic-price 60` to get envelope size
+and cost per transaction as well. `--explain` prints the generated parameters,
+which are the same ones a hand-written workload would supply — so the zero-config
+path is a starting point you can take over, not a black box.
+
+Templates the planner cannot build test data for are refused by name and type,
+never guessed at. Everything below still works, and every flag overrides what
+was inferred.
+
+### Or drive it yourself
 
 ```
 # quick smoke: raw write throughput + latency (boots a sandbox from cold):

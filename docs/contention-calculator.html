@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canton wallet contention calculator</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --ink:#0f1419;--body:#3c4753;--mute:#77828f;--line:#e4e8ed;--bg:#fff;--panel:#f7f9fb;
+    --accent:#1c4ed8;--good:#0f7b4f;--warn:#b45309;--bad:#b42318;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--ink:#f0f3f6;--body:#c3ccd6;--mute:#8996a5;--line:#2a3340;--bg:#12161c;--panel:#1a2029;
+          --accent:#7aa2f7;--good:#4ade80;--warn:#fbbf24;--bad:#f87171}
+  }
+  :root[data-theme="dark"]{--ink:#f0f3f6;--body:#c3ccd6;--mute:#8996a5;--line:#2a3340;--bg:#12161c;
+    --panel:#1a2029;--accent:#7aa2f7;--good:#4ade80;--warn:#fbbf24;--bad:#f87171}
+  :root[data-theme="light"]{--ink:#0f1419;--body:#3c4753;--mute:#77828f;--line:#e4e8ed;--bg:#fff;
+    --panel:#f7f9fb;--accent:#1c4ed8;--good:#0f7b4f;--warn:#b45309;--bad:#b42318}
+
+  body{background:var(--bg);color:var(--body);
+       font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:680px;margin:0 auto;padding:48px 24px 72px}
+
+  h1{font-size:27px;line-height:1.22;letter-spacing:-.02em;color:var(--ink);font-weight:690;margin-bottom:8px}
+  .sub{font-size:16px;color:var(--mute);margin-bottom:28px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:20px}
+
+  label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.06em;
+        color:var(--mute);font-weight:650;margin-bottom:9px}
+  .field{margin-bottom:22px}
+  .field:last-child{margin-bottom:0}
+  .rowin{display:flex;align-items:center;gap:14px}
+  input[type=range]{flex:1;accent-color:var(--accent);height:22px}
+  input[type=number]{width:110px;padding:9px 11px;font:600 17px ui-monospace,Menlo,Consolas,monospace;
+    background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;
+    font-variant-numeric:tabular-nums}
+  .hint{font-size:13px;color:var(--mute);margin-top:7px}
+
+  .out{border:1px solid var(--line);border-radius:12px;padding:26px 24px;margin-bottom:20px;
+       background:var(--bg)}
+  .big{font-size:52px;line-height:1;font-weight:700;letter-spacing:-.03em;color:var(--ink);
+       font-variant-numeric:tabular-nums}
+  .big small{font-size:24px;color:var(--mute);font-weight:600}
+  .cap{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);
+       font-weight:650;margin-bottom:10px}
+  .verdict{margin-top:12px;font-size:16.5px;color:var(--ink)}
+  .verdict b{font-weight:660}
+  .bar{height:9px;border-radius:5px;background:var(--line);margin-top:18px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:5px;transition:width .18s ease,background .18s ease}
+
+  .fix{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 24px}
+  .fix h2{font-size:15px;color:var(--ink);font-weight:660;margin-bottom:13px}
+  .fix ul{list-style:none}
+  .fix li{padding:11px 0;border-bottom:1px solid var(--line);font-size:15px;
+          display:flex;justify-content:space-between;gap:16px;align-items:baseline}
+  .fix li:last-child{border-bottom:none}
+  .fix li span:last-child{font-variant-numeric:tabular-nums;font-weight:660;color:var(--ink);
+                          white-space:nowrap}
+  .zero{color:var(--good)}
+
+  details{margin-top:24px;font-size:14px;color:var(--mute)}
+  summary{cursor:pointer;color:var(--accent);font-weight:600}
+  details p{margin-top:12px;line-height:1.6}
+  details code{font:13px ui-monospace,Menlo,Consolas,monospace;background:var(--panel);
+               border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);
+        font-size:13px;color:var(--mute);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>How often will your wallet's transfers fail?</h1>
+  <p class="sub">On Canton, a wallet that picks its input holding at random collides with itself.
+  This estimates how often, and what to do about it.</p>
+
+  <div class="panel">
+    <div class="field">
+      <label for="tx">Transfers you send before topping up</label>
+      <div class="rowin">
+        <input type="range" id="txr" min="10" max="2000" step="10" value="240">
+        <input type="number" id="tx" min="1" max="100000" value="240">
+      </div>
+      <p class="hint">How many transfers between refills of your holdings.</p>
+    </div>
+
+    <div class="field">
+      <label for="pool">Holdings in your wallet</label>
+      <div class="rowin">
+        <input type="range" id="poolr" min="10" max="4000" step="10" value="480">
+        <input type="number" id="pool" min="1" max="200000" value="480">
+      </div>
+      <p class="hint">The number of separate holding contracts you can spend from.</p>
+    </div>
+  </div>
+
+  <div class="out">
+    <div class="cap">Expected failure rate</div>
+    <div class="big" id="rate">—</div>
+    <div class="verdict" id="verdict"></div>
+    <div class="bar"><i id="barfill" style="width:0%"></i></div>
+  </div>
+
+  <div class="fix">
+    <h2>What would fix it</h2>
+    <ul>
+      <li><span>Reserve one input per in-flight submission</span><span class="zero">0% &mdash; measured</span></li>
+      <li><span>Hold enough for under 5% failures</span><span id="p5">—</span></li>
+      <li><span>Hold enough for under 1% failures</span><span id="p1">—</span></li>
+    </ul>
+  </div>
+
+  <details>
+    <summary>Where this comes from</summary>
+    <p>A random pick fails when it lands on a holding you have already spent. The spent fraction of
+    your pool grows from zero to <i>f</i> over a run, so the average failure rate is about
+    <code>f / 2</code>, where <code>f = transfers / holdings</code>.</p>
+    <p>Measured against a CIP-0056 registry across an eightfold range of pool depth, predictions
+    recorded before the runs: contention halved every time the pool doubled, with a mean error of
+    about two percentage points. Raising concurrency fourfold moved it by less than one point —
+    this is a bookkeeping effect, not a concurrency effect.</p>
+    <p>It under-predicts at high turnover, where genuine concurrent collisions start adding on top.
+    Treat it as a good estimate and a floor, not an identity. Single participant, in-memory,
+    one machine.</p>
+  </details>
+
+  <p class="foot">Estimates only, from a model measured on one registry. Your figures will differ —
+  if they differ a lot, that is worth knowing and worth sharing.</p>
+
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+  function rateFor(tx, pool) {
+    // f = fraction of the pool spent over the run, capped at 1.
+    // Average failure rate over the run is about f/2.
+    const f = clamp(tx / pool, 0, 1);
+    let r = f / 2;
+    // Past full turnover the tail of the run is picking almost entirely from
+    // spent holdings, so the average keeps climbing beyond f/2.
+    if (tx > pool) r = 0.5 + 0.5 * clamp(1 - pool / tx, 0, 1);
+    return clamp(r, 0, 0.95);
+  }
+
+  // Pool needed so that f/2 <= target  =>  pool >= tx / (2 * target)
+  const poolFor = (tx, target) => Math.ceil(tx / (2 * target));
+
+  function render() {
+    const tx = clamp(parseInt($('tx').value || '0', 10), 1, 100000);
+    const pool = clamp(parseInt($('pool').value || '0', 10), 1, 200000);
+
+    const r = rateFor(tx, pool);
+    const pct = r * 100;
+    $('rate').innerHTML = pct.toFixed(1) + '<small>%</small>';
+
+    const failed = Math.round(tx * r);
+    const oneIn = r > 0 ? Math.max(2, Math.round(1 / r)) : 0;
+    let word, colour;
+    if (pct < 1)       { word = 'Negligible.'; colour = 'var(--good)'; }
+    else if (pct < 5)  { word = 'Low.';        colour = 'var(--good)'; }
+    else if (pct < 15) { word = 'Noticeable.'; colour = 'var(--warn)'; }
+    else               { word = 'Severe.';     colour = 'var(--bad)';  }
+
+    $('verdict').innerHTML = '<b>' + word + '</b> About <b>1 in ' + oneIn +
+      '</b> transfers fails and needs a retry &mdash; roughly <b>' + failed +
+      '</b> of your ' + tx + '.';
+    $('barfill').style.width = Math.min(100, pct * 2) + '%';
+    $('barfill').style.background = colour;
+
+    $('p5').textContent = poolFor(tx, 0.05).toLocaleString() + ' holdings';
+    $('p1').textContent = poolFor(tx, 0.01).toLocaleString() + ' holdings';
+  }
+
+  function link(numId, rangeId) {
+    const n = $(numId), r = $(rangeId);
+    n.addEventListener('input', () => {
+      if (n.value !== '') r.value = clamp(+n.value, +r.min, +r.max);
+      render();
+    });
+    r.addEventListener('input', () => { n.value = r.value; render(); });
+  }
+  link('tx', 'txr');
+  link('pool', 'poolr');
+  render();
+</script>
+</body>
+</html>

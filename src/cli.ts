@@ -17,6 +17,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { basename } from "node:path";
 import {
   assignEndpoints,
   formatCluster,
@@ -73,11 +74,15 @@ import { stdioWorkerMain } from "./worker.ts";
 import {
   applyParams,
   requiredParams,
+  toSetupSteps,
   validateWorkload,
   WORKLOAD_FORMAT_VERSION,
   type Workload,
   type WorkloadParams,
 } from "./workload.ts";
+import { formatVerdict } from "./verdict.ts";
+import { inspectDar } from "./inspect.ts";
+import { planTransfer } from "./plan.ts";
 
 const USAGE = `usage:
   canton-stress run [<dar>] --template <templateId>
@@ -109,6 +114,8 @@ const USAGE = `usage:
     [--max-rate n] [--max-ops n] [--max-duration s]   raise the safety caps
     [--lag-sample ms]      sample read-side lag during the run (0 = off)
     [--no-traffic]         skip the CIP-0104 traffic cost estimation
+    [--traffic-price usd]  price envelope bytes at USD per MB (e.g. 60), giving
+                           a cost per operation alongside the size
     [--min-throughput n] [--max-p99 ms] [--max-contention pct]   SLA gate → non-zero exit on breach
     [--max-hotspot-share pct] [--max-read-lag offsets]           SLA gate on Canton instrumentation
 
@@ -159,6 +166,39 @@ function loadWorkloadFile(path: string, params: WorkloadParams = {}): Workload {
   return w;
 }
 
+/**
+ * What the FIX arithmetic needs, read off the workload itself.
+ *
+ * The workload is the source of truth for both figures, so this works for a
+ * hand-written file as well as an auto-planned one: the pool is the repetition
+ * count of the setup step the measured op draws its inputs from, and the input
+ * count is how many contracts one operation nominates.
+ */
+function verdictShape(w: Workload): { pool?: number; inputs?: number } {
+  // The measured op's input list, wherever it sits in the argument record.
+  let inputs: number | undefined;
+  let poolBinding: string | undefined;
+  const walk = (v: unknown): void => {
+    if (Array.isArray(v)) {
+      const refs = v.filter((x): x is string => typeof x === "string" && x.startsWith("$ref:"));
+      // An array made entirely of pool references IS the input list.
+      if (refs.length > 0 && refs.length === v.length) {
+        inputs = refs.length;
+        poolBinding = /^\$ref:([A-Za-z0-9_-]+)/.exec(refs[0])?.[1];
+      }
+      for (const x of v) walk(x);
+    } else if (v && typeof v === "object") {
+      for (const x of Object.values(v as Record<string, unknown>)) walk(x);
+    }
+  };
+  for (const o of w.operations) walk(o.op.args);
+
+  // Setup accepts both the bare-op and full-step forms; only steps carry ids.
+  const step = toSetupSteps(w.setup ?? []).find((s) => s.id === poolBinding);
+  const count = typeof step?.count === "number" ? step.count : undefined;
+  return { pool: count, inputs };
+}
+
 async function runMain(rest: string[]): Promise<void> {
   let dar: string | null = null;
   let templateId = "#daml-fuzz-sample:SampleToken:Token";
@@ -191,6 +231,7 @@ async function runMain(rest: string[]): Promise<void> {
   let setupConcurrency = 8;
   let lagSampleMs = 0;
   let noTraffic = false;
+  let usdPerMb: number | undefined;
   let workers = 1;
   let workerCmd: string | undefined;
   let opsSet = false;
@@ -206,11 +247,17 @@ async function runMain(rest: string[]): Promise<void> {
   let toRate: number | undefined;
   let bucketMs: number | undefined;
   const sla: SlaThresholds = {};
+  let verdict = false;
+  let verdictNoun: string | undefined;
+  let verdictSubject: string | undefined;
 
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
     const val = () => rest[++i] ?? fail(`${a} needs a value`);
-    if (a === "--template") templateId = val();
+    if (a === "--verdict") verdict = true;
+    else if (a === "--verdict-noun") verdictNoun = val();
+    else if (a === "--verdict-subject") verdictSubject = val();
+    else if (a === "--template") templateId = val();
     else if (a === "--workload") {
       const w = val();
       if (w !== "create" && w !== "transfer") fail("--workload must be create|transfer");
@@ -293,6 +340,7 @@ async function runMain(rest: string[]): Promise<void> {
     else if (a === "--worker-cmd") workerCmd = val();
     else if (a === "--lag-sample") lagSampleMs = Number(val());
     else if (a === "--no-traffic") noTraffic = true;
+    else if (a === "--traffic-price") usdPerMb = Number(val());
     else if (a === "--min-throughput") sla.minThroughput = Number(val());
     else if (a === "--max-p99") sla.maxP99Ms = Number(val());
     else if (a === "--max-contention") sla.maxContentionPct = Number(val());
@@ -553,6 +601,7 @@ async function runMain(rest: string[]): Promise<void> {
         onSetupStep,
         lagSampleMs,
         noTraffic,
+        usdPerMb,
         onProgress: (d, total) => {
           // A duration-driven run (a mode) has no op target, so tick
           // periodically instead of dividing by a total that does not exist.
@@ -578,6 +627,22 @@ async function runMain(rest: string[]): Promise<void> {
       if (rep.instrumentation) {
         const block = formatInstrumentation(rep.instrumentation);
         if (block) console.error(`\nCANTON INSTRUMENTATION:\n${block}`);
+      }
+      // The answer, for people who came with a question rather than a
+      // profiler. Printed last so the evidence is above it.
+      if (verdict) {
+        const shape = verdictShape(workload);
+        console.error(
+          "\n" +
+            formatVerdict({
+              summary: rep.summary,
+              instrumentation: rep.instrumentation,
+              pool: shape.pool,
+              inputs: shape.inputs,
+              noun: verdictNoun,
+              subject: verdictSubject,
+            }),
+        );
       }
       if (report) {
         writeFileSync(report, JSON.stringify(rep, null, 2) + "\n");
@@ -736,6 +801,87 @@ function trendMain(rest: string[]): void {
   console.error(`\n${formatTrend(summarizeTrend(hist, window), hist)}`);
 }
 
+/**
+ * `canton-stress <dar>` — the zero-configuration path.
+ *
+ * Reads the DAR, decides what is worth measuring, generates the parameters for
+ * the published library workload, and runs it. No file to author and no flags
+ * for the common case; every flag still works and overrides what is inferred,
+ * because the generated arguments are placed BEFORE the user's.
+ */
+async function autoMain(dar: string, rest: string[]): Promise<void> {
+  let info;
+  try {
+    info = inspectDar(dar);
+  } catch (e) {
+    fail(String(e instanceof Error ? e.message : e));
+  }
+  const named = `${info.packageName}${info.packageVersion ? " " + info.packageVersion : ""}`;
+  console.error(`  Reading ${basename(dar)} … ${named}, ${info.templates.length} templates`);
+
+  const planned = planTransfer(info);
+  if (!planned.ok) {
+    // Refusing is the honest outcome, but it should still leave the user
+    // somewhere: the library templates cover cases this cannot infer.
+    fail(
+      [
+        `cannot plan a run for ${basename(dar)} automatically:`,
+        ...planned.reasons.map((r) => `  - ${r}`),
+        "",
+        "The zero-configuration path handles Canton Network Token Standard",
+        "registries. For anything else, start from a library workload:",
+        "  canton-stress check workloads/create-throughput.json",
+        "and see workloads/README.md.",
+      ].join("\n"),
+    );
+  }
+  const { plan } = planned;
+  const p = plan.params;
+  console.error(
+    `  Measuring TransferFactory_Transfer on ${plan.factory.name} … Token Standard registry`,
+  );
+  console.error(
+    `  Test data ${p.holdings} × ${plan.holding.name}, ${p.parties} parties, instrument "${p.instrumentId}"`,
+  );
+  for (const n of plan.notes) console.error(`    note: ${n}`);
+
+  const explain = rest.includes("--explain");
+  if (explain) {
+    console.error("\n  generated parameters:");
+    for (const [k, v] of Object.entries(p))
+      console.error(`    ${k} = ${typeof v === "string" ? v : JSON.stringify(v)}`);
+  }
+
+  const workloadFile = fileURLToPath(
+    new URL("../workloads/token-standard-transfer.json", import.meta.url),
+  );
+  const set = (k: string, v: unknown): string[] =>
+    typeof v === "string" ? ["--set", `${k}=${v}`] : ["--set-json", `${k}=${JSON.stringify(v)}`];
+
+  const generated = [
+    dar,
+    "--workload-file",
+    workloadFile,
+    ...Object.entries(p).flatMap(([k, v]) => set(k, v)),
+    "--model",
+    "closed",
+    "--concurrency",
+    "8",
+    "--ops",
+    "240",
+    "--verdict",
+    "--verdict-noun",
+    "transfers",
+    "--verdict-subject",
+    plan.holding.name,
+  ];
+  // Boot a sandbox unless the user pointed at a participant themselves.
+  if (!rest.includes("--api") && !rest.includes("--sandbox")) generated.push("--sandbox");
+
+  // The user's flags come last, so any of them beats the inferred value.
+  await runMain([...generated, ...rest.filter((a) => a !== "--explain")]);
+}
+
 function main(argv: string[]): void {
   const [command, ...rest] = argv;
   if (command === "--version" || command === "-v" || command === "version") {
@@ -753,6 +899,12 @@ function main(argv: string[]): void {
   if (command === "report") return reportMain(rest);
   if (command === "check") return checkMain(rest);
   if (command === "trend") return trendMain(rest);
+  // `canton-stress wallet.dar` — a DAR where a subcommand would go means
+  // "just measure this", which is the common case and should need nothing else.
+  if (command && /\.dar$/i.test(command)) {
+    autoMain(command, rest).catch((e) => fail(String(e instanceof Error ? e.message : e)));
+    return;
+  }
   if (command === "worker") {
     // A load-generating worker: one job in on stdin, one result out on stdout.
     // Invoked by a coordinator's --worker-cmd, locally or over ssh/k8s.

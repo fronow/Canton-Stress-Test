@@ -76,8 +76,8 @@
   <div class="row">
     <div class="m"><div class="k">Throughput</div><div class="v">15.0<s>/s</s></div><div class="n">57 of 60 committed</div></div>
     <div class="m"><div class="k">p50 latency</div><div class="v">402<s>ms</s></div><div class="n">median</div></div>
-    <div class="m"><div class="k">p99 latency</div><div class="v">1172<s>ms</s></div><div class="n">with disclosure</div></div>
-    <div class="m"><div class="k">Scaling stops</div><div class="v">~22<s>/s</s></div><div class="n">offered, peak 17 committed</div></div>
+    <div class="m"><div class="k">p50 with disclosure</div><div class="v">402<s>ms</s></div><div class="n">identical — no median cost</div></div>
+    <div class="m"><div class="k">Same box, reservation</div><div class="v">42.1<s>/s</s></div><div class="n">240 of 240 committed</div></div>
   </div>
 
   <div class="split">
@@ -93,15 +93,17 @@
     </div>
 
     <div class="panel">
-      <div class="pt"><b>What explicit disclosure costs</b><br>~576-byte blob on every submission</div>
+      <div class="pt"><b>15/s is the selection strategy, not the ceiling</b><br>same registry, same laptop — only the input pick changes</div>
       <table>
-        <tr><th></th><th>Co-submitted</th><th>Disclosed</th></tr>
-        <tr><td>Throughput</td><td>15.5/s</td><td>15.0/s <span class="flat">−3%</span></td></tr>
-        <tr><td>p50</td><td>~400 ms</td><td>402 ms <span class="flat">flat</span></td></tr>
-        <tr><td>p99</td><td>803 ms</td><td>1172 ms <span class="delta">+45%</span></td></tr>
+        <tr><th></th><th>Random pick</th><th>Reservation</th></tr>
+        <tr><td>Committed</td><td>208 / 240</td><td>240 / 240</td></tr>
+        <tr><td>Throughput</td><td>36.6/s</td><td>42.1/s <span class="flat">+15%</span></td></tr>
+        <tr><td>Contention</td><td>11.7%</td><td>0% <span class="flat">at c32</span></td></tr>
       </table>
-      <p class="kicker">Nearly free at the median. <b>Expensive in the tail</b> — the half an SLA
-      is written against.</p>
+      <p class="kicker"><b>A correction.</b> An earlier version of this card put "scaling stops
+      ~22/s" and a "+45% p99" disclosure cost here. Both are withdrawn: ~22/s was random
+      selection shedding load, and that p99 came from a 60-op run, where p99 is the single
+      worst sample.</p>
     </div>
   </div>
 

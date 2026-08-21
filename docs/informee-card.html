@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>canton-stress — cost per stakeholder</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#0f1419;--body:#3c4753;--mute:#77828f;--line:#e4e8ed;--accent:#1c4ed8;
+        --bad:#b42318;--good:#0f7b4f}
+  body{width:1200px;height:760px;background:#fff;
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--body);-webkit-font-smoothing:antialiased;overflow:hidden}
+  .card{padding:42px 52px;height:100%;display:flex;flex-direction:column}
+
+  .eyebrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mute);
+           letter-spacing:.03em;margin-bottom:14px}
+  .eyebrow b{color:var(--ink);font-weight:640}
+  .dot{width:4px;height:4px;border-radius:50%;background:#c3cad3}
+
+  h1{font-size:35px;line-height:1.18;letter-spacing:-.022em;color:var(--ink);font-weight:690;
+     margin-bottom:10px}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{font-size:17px;line-height:1.5;color:var(--body);max-width:1010px;margin-bottom:24px}
+  .lede b{color:var(--ink);font-weight:650}
+
+  .eq{font:15px ui-monospace,Menlo,Consolas,monospace;color:var(--ink);
+      background:#f2f5f8;border:1px solid var(--line);border-radius:8px;
+      padding:11px 16px;margin-bottom:22px;display:inline-block}
+  .eq b{font-weight:700}
+
+  .split{display:grid;grid-template-columns:1.25fr 1fr;gap:26px;flex:1;min-height:0}
+  .panel{border:1px solid var(--line);border-radius:10px;padding:18px 20px;background:#fbfcfd;
+         display:flex;flex-direction:column}
+  .pt{font-size:12.5px;color:var(--mute);margin-bottom:12px}
+  .pt b{color:var(--ink);font-weight:650;font-size:14px}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td,th{text-align:left;padding:7px 4px;border-bottom:1px solid var(--line)}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);font-weight:650}
+  td{font-variant-numeric:tabular-nums;color:var(--ink)}
+  th.r,td.r{text-align:right}
+  tr:last-child td{border-bottom:none}
+  .res{color:var(--good);font-weight:640}
+
+  .big{border:1px solid var(--line);border-radius:10px;padding:18px 20px;background:#fbfcfd;
+       margin-bottom:14px}
+  .big .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-weight:650}
+  .big .v{font-size:40px;line-height:1.1;color:var(--ink);font-weight:690;margin-top:6px;
+          letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .big .n{font-size:13px;color:var(--mute);margin-top:5px;line-height:1.45}
+
+  .kicker{font-size:13.5px;line-height:1.5;color:var(--body);margin-top:12px}
+  .kicker b{color:var(--ink);font-weight:650}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;
+        margin-top:20px;padding-top:15px;border-top:1px solid var(--line);
+        font-size:12.5px;color:var(--mute)}
+  .foot b{color:var(--ink);font-weight:640}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="eyebrow">
+    <span>envelope size vs <b>informee count</b></span><span class="dot"></span>
+    <span>identical payload at every N</span><span class="dot"></span>
+    <span>only the observer list varies</span><span class="dot"></span>
+    <span>Canton 3.4.11</span>
+  </div>
+
+  <h1>Stakeholders are priced <em>linearly</em> — but not at a fixed rate.</h1>
+  <p class="lede">A confirmation request carries a view per informee, so making a party a
+  stakeholder has a price, paid on <b>every transaction, forever</b>. Varying only the stakeholder
+  count, on two different transactions:</p>
+
+  <div class="eq">create:&nbsp; 878 + <b>175.5</b> × N &nbsp;&nbsp;·&nbsp;&nbsp; transfer:&nbsp; 9,110 + <b>437.8</b> × N &nbsp;&nbsp;·&nbsp;&nbsp; both linear to within ±12 B</div>
+
+  <div class="split">
+    <div class="panel">
+      <div class="pt"><b>Two transaction shapes, 16-fold range each</b><br>prepared-transaction size, priced at $60/MB</div>
+      <table>
+        <tr><th>N</th><th class="r">Create</th><th class="r">$</th><th class="r">Transfer</th><th class="r">$</th></tr>
+        <tr><td>2</td><td class="r">1,233</td><td class="r">$0.071</td><td class="r">9,997</td><td class="r">$0.572</td></tr>
+        <tr><td>4</td><td class="r">1,581</td><td class="r">$0.091</td><td class="r">10,865</td><td class="r">$0.622</td></tr>
+        <tr><td>8</td><td class="r">2,277</td><td class="r">$0.130</td><td class="r">12,601</td><td class="r">$0.721</td></tr>
+        <tr><td>16</td><td class="r">3,681</td><td class="r">$0.211</td><td class="r">16,103</td><td class="r">$0.921</td></tr>
+        <tr><td>32</td><td class="r">6,497</td><td class="r">$0.372</td><td class="r">23,127</td><td class="r">$1.323</td></tr>
+      </table>
+      <p class="kicker" style="margin-top:12px">Fit residuals: <b class="res">±5 B</b> on the create,
+      <b class="res">±12 B</b> on the transfer — on envelopes of 1–23 KB.</p>
+    </div>
+
+    <div class="panel">
+      <div class="big">
+        <div class="k">Per stakeholder, on a transfer</div>
+        <div class="v">$0.0251</div>
+        <div class="n">437.8 bytes at $60/MB — <b>2.5× the create's $0.0100</b>. One party added
+        to a contract seeing 50,000 transfers a day is about <b>$1,250 a day</b>.</div>
+      </div>
+      <p class="kicker"><b>The rate is a property of the transaction, not a constant.</b> So there
+      is no single cost-per-stakeholder to quote: it has to be measured per operation, which is
+      the case for having a tool do it.</p>
+      <p class="kicker"><b>Cross-check.</b> The transfer fit predicts 11,737 B at six parties. An
+      independent run measured <b>11,733 B</b> — four bytes out.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Only the stakeholder count varies — payload byte-identical at every N</span>
+    <span>Prepared transaction · a <b>lower bound</b></span>
+  </div>
+
+</div>
+</body>
+</html>

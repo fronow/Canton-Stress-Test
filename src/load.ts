@@ -83,6 +83,9 @@ export interface RunOptions {
   lagSampleMs?: number;
   /** [S4] Skip the pre-run traffic cost estimation. */
   noTraffic?: boolean;
+  /** Price envelope bytes at this many USD per megabyte. Omitted reports size
+   * without a dollar figure. */
+  usdPerMb?: number;
   /** [S6] Awaited immediately BEFORE the measured window opens — after the ACS
    * snapshot and cost estimation are already done. A distributed worker uses
    * it as a start barrier, so "go" starts measuring rather than starting a
@@ -441,7 +444,14 @@ export async function runMeasured(
   const synchronizerId = await ctxs[0].api.connectedSynchronizerId?.().catch(() => undefined);
   const trafficEstimates = o.noTraffic
     ? []
-    : await estimateTraffic(ctxs[0].api, workload, buildCtx, fallbackFor, synchronizerId);
+    : await estimateTraffic(
+        ctxs[0].api,
+        workload,
+        buildCtx,
+        fallbackFor,
+        synchronizerId,
+        state.disclosures,
+      );
 
   // Everything above this line is preparation — snapshots, cost estimation,
   // connection warm-up. The barrier sits HERE so that when a coordinator says
@@ -538,6 +548,7 @@ export async function runMeasured(
         lagSamples: lag.samples,
         trafficEstimates,
         synchronizerId,
+        usdPerMb: o.usdPerMb,
       }),
       modeReport: model.modeSpec ? analyseMode(model.modeSpec, results) : undefined,
     },
@@ -587,6 +598,11 @@ async function estimateTraffic(
   buildCtx: BuildCtx,
   fallbackFor: (op: OpSpec) => string[],
   synchronizerId: string | undefined,
+  // A registry factory is typically `signatory admin` with no observers, so the
+  // sender can only reach it by explicit disclosure. Without these the prepare
+  // call fails with CONTRACT_NOT_FOUND and the run silently reports no traffic
+  // at all — which is how this was missed the first time.
+  disclosed: DisclosedContract[] = [],
 ): Promise<TrafficEstimate[]> {
   if (!api.estimateTrafficCost || !synchronizerId) return [];
   const out: TrafficEstimate[] = [];
@@ -598,13 +614,19 @@ async function estimateTraffic(
     const built = buildCommand(w.op, buildCtx);
     if (!built) continue;
     const { actAs } = submittersFor(w.op, w.submit, built.target, buildCtx, fallbackFor(w.op));
-    const cost = await api.estimateTrafficCost({ command: built.command, actAs, synchronizerId });
+    const cost = await api.estimateTrafficCost({
+      command: built.command,
+      actAs,
+      synchronizerId,
+      disclosedContracts: disclosed,
+    });
     if (cost)
       out.push({
         operation: key,
         confirmationRequest: cost.confirmationRequest,
         confirmationResponse: cost.confirmationResponse,
         total: cost.total,
+        preparedBytes: cost.preparedBytes,
       });
   }
   return out;

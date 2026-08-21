@@ -80,3 +80,91 @@ test("buildCommand: exercise args can read the target's own payload", () => {
   assert.deepEqual(cmd.ExerciseCommand.choiceArgument, { keepOwner: "OWN" });
   assert.equal(built.target?.contractId, "c1");
 });
+
+// ---------------------------------------------------------------------------
+// "[*!]" — random input selection WITHOUT replacement inside one command.
+//
+// A multi-input transfer nominates several holdings at once. With plain "[*]"
+// each nomination is drawn independently, so one command can name the same
+// holding twice: a self-duplicate that fails for reasons that have nothing to
+// do with contention, and whose likelihood grows with the number of inputs.
+// That is precisely the shape of the effect a multi-input sweep measures, so
+// the artifact would be indistinguishable from the finding.
+
+/** A pool binding of `n` synthetic contract ids. */
+const poolOf = (n: number) => ({ h: Array.from({ length: n }, (_, i) => `h${i}`) });
+
+/** Deterministic cycling rand, so a draw-with-replacement collision is certain
+ * rather than merely likely. */
+const cyclingRand = (values: number[]) => {
+  let i = 0;
+  return () => values[i++ % values.length];
+};
+
+const inputsCmd = (inputs: string[]) => ({
+  kind: "exercise" as const,
+  template: "M:Factory",
+  contract: "$ref:h[0]",
+  choice: "Transfer",
+  args: { inputHoldingCids: inputs },
+});
+
+const argOf = (built: ReturnType<typeof buildCommand>) => {
+  assert.ok(built && "ExerciseCommand" in built.command);
+  const cmd = built.command as Extract<typeof built.command, { ExerciseCommand: unknown }>;
+  return cmd.ExerciseCommand.choiceArgument as { inputHoldingCids: string[] };
+};
+
+test("[*] can nominate the same contract twice in one command — the confound", () => {
+  const built = buildCommand(inputsCmd(["$ref:h[*]", "$ref:h[*]", "$ref:h[*]"]), {
+    ...ctx,
+    bindings: poolOf(10),
+    // Every draw lands on the same index.
+    rand: () => 0.35,
+  });
+  assert.deepEqual(argOf(built).inputHoldingCids, ["h3", "h3", "h3"]);
+});
+
+test("[*!] draws distinct contracts within one command", () => {
+  const built = buildCommand(inputsCmd(["$ref:h[*!]", "$ref:h[*!]", "$ref:h[*!]"]), {
+    ...ctx,
+    bindings: poolOf(10),
+    rand: () => 0.35,
+  });
+  const got = argOf(built).inputHoldingCids;
+  assert.equal(new Set(got).size, 3, `expected 3 distinct, got ${got.join(",")}`);
+  // Random start at index 3, then probing forward for unpicked entries.
+  assert.deepEqual(got, ["h3", "h4", "h5"]);
+});
+
+test("[*!] still spreads across the pool — it is random, not sequential", () => {
+  const built = buildCommand(inputsCmd(["$ref:h[*!]", "$ref:h[*!]", "$ref:h[*!]"]), {
+    ...ctx,
+    bindings: poolOf(100),
+    rand: cyclingRand([0.9, 0.1, 0.5]),
+  });
+  assert.deepEqual(argOf(built).inputHoldingCids, ["h90", "h10", "h50"]);
+});
+
+test("[*!] is scoped to ONE command — the next command may reuse the same ids", () => {
+  const shared: BuildCtx = { ...ctx, bindings: poolOf(10), rand: () => 0.35 };
+  const a = argOf(buildCommand(inputsCmd(["$ref:h[*!]", "$ref:h[*!]"]), shared));
+  const b = argOf(buildCommand(inputsCmd(["$ref:h[*!]", "$ref:h[*!]"]), shared));
+  // Exclusion inside a submission models a wallet not naming one holding
+  // twice; it must NOT model a pool that shrinks, or the run would stop
+  // measuring double-spend contention altogether.
+  assert.deepEqual(a.inputHoldingCids, ["h3", "h4"]);
+  assert.deepEqual(b.inputHoldingCids, ["h3", "h4"]);
+});
+
+test("[*!] fails loudly when asked for more inputs than the pool holds", () => {
+  assert.throws(
+    () =>
+      buildCommand(inputsCmd(["$ref:h[*!]", "$ref:h[*!]", "$ref:h[*!]"]), {
+        ...ctx,
+        bindings: poolOf(2),
+        rand: () => 0,
+      }),
+    /more distinct contracts than the binding holds \(2\)/,
+  );
+});

@@ -1,0 +1,38 @@
+{
+  "_comment": [
+    "Informee scaling: 2 observer(s) on the created contract.",
+    "",
+    "`users` is StdTransferFactory's observer list, so this contract has",
+    "2 observers plus the admin signatory = 3 informees. The",
+    "payload is otherwise identical at every N, so any change in prepared",
+    "size is attributable to informee count alone.",
+    "",
+    "Measured via the pre-run prepare call, not the run itself — envelope",
+    "size is a property of the transaction's shape, so a handful of ops is",
+    "enough."
+  ],
+  "version": 1,
+  "parties": 2,
+  "roles": [
+    "admin"
+  ],
+  "setup": [],
+  "operations": [
+    {
+      "weight": 1,
+      "op": {
+        "kind": "create",
+        "template": "#std-spike:StdToken:StdTransferFactory",
+        "args": {
+          "admin": "$role:admin",
+          "users": "$parties"
+        }
+      },
+      "submit": {
+        "actAs": [
+          "$role:admin"
+        ]
+      }
+    }
+  ]
+}

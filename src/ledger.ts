@@ -83,10 +83,22 @@ export interface LedgerApi {
   grantRights?(userId: string, parties: string[]): Promise<void>;
   /** CIP-0104 traffic cost estimate for a command, without submitting it. */
   estimateTrafficCost?(req: {
+    disclosedContracts?: DisclosedContract[];
     command: LedgerCommand;
     actAs: string[];
     synchronizerId: string;
   }): Promise<TrafficCost | undefined>;
+}
+
+/** Decoded byte length of a base64 string, without decoding it.
+ *
+ * Every 4 base64 characters carry 3 bytes, less one byte per '=' of padding.
+ * Whitespace is tolerated because some encoders wrap long lines. */
+export function base64Bytes(s: string): number {
+  const clean = s.replace(/\s/g, "");
+  if (clean.length === 0) return 0;
+  const pad = clean.endsWith("==") ? 2 : clean.endsWith("=") ? 1 : 0;
+  return Math.max(0, Math.floor((clean.length * 3) / 4) - pad);
 }
 
 /** A CIP-0104 traffic cost estimate, in traffic units. */
@@ -94,6 +106,19 @@ export interface TrafficCost {
   confirmationRequest: number;
   confirmationResponse: number;
   total: number;
+  /** Size of the prepared transaction, in bytes.
+   *
+   * This is the one traffic figure obtainable WITHOUT a metered synchronizer.
+   * The CIP-0104 estimates above read zero on a sandbox because no traffic
+   * control is configured there, but `prepare` interprets the command and hands
+   * back the transaction itself, whose size is a real measurement on any
+   * participant.
+   *
+   * It is NOT the sequenced envelope: a confirmation request additionally
+   * carries encrypted views per informee, so the amount actually paid for is
+   * larger. Treat this as a lower bound and a comparator between designs, not
+   * as the traffic bill. */
+  preparedBytes?: number;
 }
 
 export interface SubmitRequest {
@@ -354,6 +379,7 @@ export class LedgerClient implements LedgerApi {
     command: LedgerCommand;
     actAs: string[];
     synchronizerId: string;
+    disclosedContracts?: DisclosedContract[];
   }): Promise<TrafficCost | undefined> {
     try {
       const r = (await this.req("POST", "/v2/interactive-submission/prepare", {
@@ -365,6 +391,7 @@ export class LedgerClient implements LedgerApi {
         readAs: [],
         commands: [req.command],
         packageIdSelectionPreference: [],
+        disclosedContracts: req.disclosedContracts ?? [],
         estimateTrafficCost: { disabled: false, expectedSignatures: [] },
       })) as {
         costEstimation?: {
@@ -372,13 +399,23 @@ export class LedgerClient implements LedgerApi {
           confirmationResponseTrafficCostEstimation?: number;
           totalTrafficCostEstimation?: number;
         };
+        preparedTransaction?: string;
       };
+      // The prepared transaction is base64. Decode the LENGTH rather than the
+      // payload — the bytes themselves are of no interest and can be megabytes.
+      const preparedBytes =
+        typeof r.preparedTransaction === "string" ? base64Bytes(r.preparedTransaction) : undefined;
       const c = r.costEstimation;
-      if (!c) return undefined;
+      // A participant may return the transaction without a cost estimate. That
+      // is still a usable measurement, so do not discard it.
+      if (!c) return preparedBytes === undefined
+        ? undefined
+        : { confirmationRequest: 0, confirmationResponse: 0, total: 0, preparedBytes };
       return {
         confirmationRequest: c.confirmationRequestTrafficCostEstimation ?? 0,
         confirmationResponse: c.confirmationResponseTrafficCostEstimation ?? 0,
         total: c.totalTrafficCostEstimation ?? 0,
+        preparedBytes,
       };
     } catch {
       // Cost estimation is a bonus signal: never fail a load run over it.

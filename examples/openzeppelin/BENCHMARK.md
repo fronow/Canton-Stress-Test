@@ -64,13 +64,37 @@ factory is then visible because a stakeholder is on the submission):
 | throughput | 15.5/s | 15.0/s |
 | p99 | 803 ms | **1172 ms** |
 
-**Attaching the factory's created-event blob to every submission costs ~3%
-throughput and raises p99 by ~45%.** The blob is ~576 bytes and travels with
-every transfer. For a wallet author that is a concrete, previously unmeasured
-number: disclosure is not free, and it shows up in the tail rather than the
-median (p50 is unchanged at ~400 ms).
+> **RETRACTED.** This section previously concluded that disclosure "costs ~3%
+> throughput and raises p99 by ~45%". **That was not a measurement and the
+> claim is withdrawn.**
+>
+> The run was **60 transfers**. At n=60 the "p99" is the single worst
+> observation, so 803 ms against 1172 ms compared one garbage-collection pause
+> with another. A percentile needs roughly `10 × 100/(100−p)` samples before it
+> carries information — ~1,000 for a p90, ~10,000 for a p99 — and that rule is
+> now applied throughout this project.
+>
+> The tell was in the shape and was missed: a ~576-byte marshalling cost would
+> appear at the median and in throughput proportionally, not as a tail-only
+> spike next to a 3% throughput difference. At n=60 the medians were identical
+> at ~400 ms, and that was the honest result.
+>
+> Thanks to Kevin at K2F Labs, who spotted it from the shape alone.
 
-### 2. Ramp — where it stops scaling
+What survives without overreaching: the blob is ~576 bytes on every transfer,
+and against a MainNet envelope of roughly 35 KB that is about 1.6% of the
+traffic a submission pays for — **a fee item, not a latency item**. Measuring it
+properly needs an interleaved A/B at ≥10,000 operations, which has not been run.
+
+### 2. Ramp — where RANDOM SELECTION stops scaling
+
+> **Read the ~22/s below as a property of the input-selection strategy, not as a
+> capacity limit.** This ramp uses random selection, so the load it sheds is the
+> wallet colliding with holdings it already spent. On the same machine and the
+> same registry, giving each in-flight submission a distinct input commits 240
+> of 240 at **42.1/s** (see *Selection strategy*). An earlier version of this
+> file presented ~22/s as where the system stops scaling; that was wrong, and it
+> understated the registry by roughly half.
 
 Open model, 4 → 30 transfers/s over 45 s, 1200-holding pool (deep enough that
 the pool is not the limit):

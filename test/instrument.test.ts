@@ -269,3 +269,102 @@ test("formatInstrumentation names the bottleneck and stays quiet when there is n
   const quiet = formatInstrumentation(instrument({ results: [op("committed", 5)], wallMs: 100 }));
   assert.equal(quiet, "");
 });
+
+// ---------------------------------------------------------------------------
+// Envelope size and its price.
+//
+// This is the one traffic figure obtainable without a metered synchronizer, so
+// it has to survive the case the CIP-0104 estimate does not: a sandbox where
+// every cost reads zero. The rules below are what keep it honest — size is
+// always reported, dollars only when a price was supplied, and the price is
+// carried alongside the figure it produced.
+
+import { base64Bytes } from "../src/ledger.ts";
+
+const opResult = (template: string, choice: string, outcome: "committed" | "contention") =>
+  ({
+    outcome,
+    latencyMs: 10,
+    attribution: { template, choice, parties: ["p"], contractId: "c1" },
+  }) as unknown as Parameters<typeof summarizeTraffic>[1][number];
+
+const estimate = (preparedBytes?: number) => [
+  {
+    operation: "M:T:Go",
+    confirmationRequest: 0,
+    confirmationResponse: 0,
+    total: 0,
+    preparedBytes,
+  },
+];
+
+test("base64Bytes decodes the length without decoding the payload", () => {
+  assert.equal(base64Bytes(""), 0);
+  assert.equal(base64Bytes(Buffer.from("a").toString("base64")), 1); // "YQ=="
+  assert.equal(base64Bytes(Buffer.from("ab").toString("base64")), 2); // "YWI="
+  assert.equal(base64Bytes(Buffer.from("abc").toString("base64")), 3); // "YWJj"
+  const big = Buffer.alloc(11733, 7).toString("base64");
+  assert.equal(base64Bytes(big), 11733);
+  // Some encoders wrap long output; the length must survive that.
+  assert.equal(base64Bytes(big.replace(/(.{76})/g, "$1\n")), 11733);
+});
+
+test("envelope size is reported even when the synchronizer is UNMETERED", () => {
+  const r = summarizeTraffic(
+    estimate(1000),
+    [opResult("M:T", "Go", "committed"), opResult("M:T", "Go", "committed")],
+    1000,
+  );
+  // The whole point: cost is unknown here, size is not.
+  assert.equal(r?.unmetered, true);
+  assert.equal(r?.totalForRun, 0);
+  assert.equal(r?.preparedBytesForRun, 2000);
+  assert.equal(r?.preparedBytesPerOp, 1000);
+});
+
+test("only COMMITTED operations count toward envelope bytes", () => {
+  const r = summarizeTraffic(
+    estimate(1000),
+    [
+      opResult("M:T", "Go", "committed"),
+      opResult("M:T", "Go", "contention"),
+      opResult("M:T", "Go", "contention"),
+    ],
+    1000,
+  );
+  // A rejected submission is never sequenced, so it is never paid for.
+  assert.equal(r?.preparedBytesForRun, 1000);
+  assert.equal(r?.preparedBytesPerOp, 1000);
+});
+
+test("no price means a size and NO dollar figure", () => {
+  const r = summarizeTraffic(estimate(1000), [opResult("M:T", "Go", "committed")], 1000);
+  assert.equal(r?.preparedBytesPerOp, 1000);
+  // Inventing a default price would put an unsourced number into a report
+  // people quote, so there must not be one.
+  assert.equal(r?.estimatedCostUsd, undefined);
+  assert.equal(r?.costPerOpUsd, undefined);
+  assert.equal(r?.usdPerMb, undefined);
+});
+
+test("a price yields cost per operation, and reports the price used", () => {
+  const oneMb = 1024 * 1024;
+  const r = summarizeTraffic(
+    [{ operation: "M:T:Go", confirmationRequest: 0, confirmationResponse: 0, total: 0, preparedBytes: oneMb }],
+    [opResult("M:T", "Go", "committed"), opResult("M:T", "Go", "committed")],
+    1000,
+    60,
+  );
+  assert.equal(r?.estimatedCostUsd, 120); // 2 MB at $60/MB
+  assert.equal(r?.costPerOpUsd, 60);
+  // The assumption must travel with the number it produced.
+  assert.equal(r?.usdPerMb, 60);
+});
+
+test("an estimate without preparedBytes reports no size at all", () => {
+  const r = summarizeTraffic(estimate(undefined), [opResult("M:T", "Go", "committed")], 1000);
+  // Older participants may not return the prepared transaction. Silence beats
+  // reporting zero bytes, which would read as a measurement.
+  assert.equal(r?.preparedBytesForRun, undefined);
+  assert.equal(r?.preparedBytesPerOp, undefined);
+});

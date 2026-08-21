@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pool turnover - predicted vs measured</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#0f1419;--body:#3c4753;--mute:#77828f;--line:#e4e8ed;--accent:#1c4ed8;--pred:#8b97a6}
+  body{width:1040px;height:470px;background:#fff;
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--body);-webkit-font-smoothing:antialiased;overflow:hidden}
+  .card{padding:32px 42px;height:100%;display:flex;flex-direction:column}
+
+  .cap{font-size:12.5px;color:var(--mute);margin-bottom:6px}
+  h1{font-size:21px;line-height:1.25;letter-spacing:-.015em;color:var(--ink);font-weight:670;margin-bottom:14px}
+  .eq{display:inline-block;background:#f2f5f8;border:1px solid var(--line);border-radius:6px;
+      padding:6px 13px;font-size:14.5px;color:var(--ink);font-weight:640;margin-bottom:18px}
+  .eq s{text-decoration:none;color:var(--mute);font-weight:500}
+
+  table{width:100%;border-collapse:collapse;font-size:16px}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);
+     font-weight:650;text-align:right;padding:0 14px 9px;border-bottom:1px solid var(--line)}
+  th:first-child{text-align:left}
+  td{padding:11px 14px;text-align:right;font-variant-numeric:tabular-nums;
+     border-bottom:1px solid #eef1f4}
+  td:first-child{text-align:left;color:var(--ink);font-weight:640}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#fafbfc}
+  .mult{color:var(--mute);font-weight:500;font-size:13.5px}
+  .spent{color:var(--body)}
+  .pred{color:var(--pred)}
+  .meas{color:var(--accent);font-weight:690}
+
+  .foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);
+        display:flex;justify-content:space-between;font-size:12.5px;color:var(--mute)}
+  .foot b{color:var(--ink);font-weight:640}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="cap">OpenZeppelin canton-token-template · one wallet · random selection · 240 transfers · concurrency 8</div>
+  <h1>Double the pool, halve the contention</h1>
+
+  <div class="eq">contention &asymp; <i>f</i> / 2 &nbsp;<s>where f = holdings spent ÷ pool size · predictions fixed before the runs</s></div>
+
+  <table>
+    <thead>
+      <tr><th>Pool</th><th>vs. ops</th><th>Spent (f)</th><th>Predicted f/2</th><th>Measured</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>240</td><td class="mult">1x</td><td class="spent">62.9%</td><td class="pred">31.5%</td><td class="meas">37.1%</td></tr>
+      <tr><td>480</td><td class="mult">2x</td><td class="spent">39.8%</td><td class="pred">19.9%</td><td class="meas">20.4%</td></tr>
+      <tr><td>960</td><td class="mult">4x</td><td class="spent">21.7%</td><td class="pred">10.8%</td><td class="meas">12.9%</td></tr>
+      <tr><td>1920</td><td class="mult">8x</td><td class="spent">11.9%</td><td class="pred">5.9%</td><td class="meas">5.0%</td></tr>
+    </tbody>
+  </table>
+
+  <div class="foot">
+    <span>Mean error <b>~2 points</b> across an eightfold range of pool depth</span>
+    <span>Single participant, in-memory, one laptop · <b>floor numbers</b></span>
+  </div>
+
+</div>
+</body>
+</html>
