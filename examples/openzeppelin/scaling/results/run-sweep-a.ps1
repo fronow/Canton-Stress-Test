@@ -1,10 +1,15 @@
 # Wallet-count scaling sweep against the OpenZeppelin token template.
 # Everything constant except the number of independent sending wallets.
 
+
+# Paths come from the environment so this runs anywhere. Set before running:
+#   $env:CS_JDK    = path to a JDK 21   (e.g. the one bundled with your Daml SDK)
+#   $env:CS_OZ_DAR = built simple-token DAR from OpenZeppelin/canton-token-template
+#   $env:CS_STD_DAR= built std-spike DAR (the minimal reference registry)
 $ErrorActionPreference = "Continue"
-$repo = "E:\canton-daml\canton-stress"
-$dar  = "E:/ozt/simple-token/.daml/dist/simple-token-0.1.0.dar"
-$jdk  = "E:\canton-daml\tools\jdk-21.0.11+10"
+$repo = (Resolve-Path "$PSScriptRoot\..\..\..\..").Path
+$dar  = $env:CS_OZ_DAR
+$jdk  = $env:CS_JDK
 $out  = $PSScriptRoot
 
 New-Item -ItemType Directory -Force -Path $out | Out-Null

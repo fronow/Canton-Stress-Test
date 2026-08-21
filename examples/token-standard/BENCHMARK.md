@@ -12,7 +12,7 @@ on the *interface* id, not on the implementation's template.
 3.4.11. These are **floor** numbers for a laptop, not production capacity. The
 *shape* of the result — what limits throughput — is the transferable finding.
 
-Registry under test: `E:\sp` (`std-spike`), ~90 lines implementing the standard
+Registry under test: `<your std-spike checkout>` (`std-spike`), ~90 lines implementing the standard
 interfaces with genuine transfer logic: it conserves value (archives inputs,
 creates receiver + change) and enforces that the sender owns every input.
 
@@ -111,23 +111,23 @@ registry.
 
 ```powershell
 # 1. build the registry (implements the real standard interfaces)
-cd E:\sp; daml build
+cd <your std-spike checkout>; daml build
 
 # 2. validate the workload offline
-cd E:\canton-daml\canton-stress
+cd <this repository>
 node src/cli.ts check examples/token-standard/workload.json
 
 # 3. steady state
-node src/cli.ts run E:/sp/.daml/dist/std-spike-0.1.0.dar `
+node src/cli.ts run <your std-spike checkout>/.daml/dist/std-spike-0.1.0.dar `
   --workload-file examples/token-standard/workload.json `
   --model closed --concurrency 8 --ops 100 `
-  --sandbox --java-home "E:\canton-daml\tools\jdk-21.0.11+10"
+  --sandbox --java-home "<your workspace>\tools\jdk-21.0.11+10"
 
 # 4. ramp to the cliff
-node src/cli.ts run E:/sp/.daml/dist/std-spike-0.1.0.dar `
+node src/cli.ts run <your std-spike checkout>/.daml/dist/std-spike-0.1.0.dar `
   --workload-file examples/token-standard/workload.json `
   --model open --mode ramp --from 4 --to 60 --duration 60 --bucket 4 `
-  --sandbox --java-home "E:\canton-daml\tools\jdk-21.0.11+10"
+  --sandbox --java-home "<your workspace>\tools\jdk-21.0.11+10"
 ```
 
 Vary the pool depth by editing the `holdings` step's `count` in the workload.

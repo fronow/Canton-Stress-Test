@@ -13,9 +13,9 @@ SDK** — no extra download.
 
 ```powershell
 $canton = "$env:APPDATA\daml\sdk\3.4.11\canton\canton.jar"
-$java   = "E:\canton-daml\tools\jdk-21.0.11+10\bin\java.exe"
+$java   = "<your workspace>\tools\jdk-21.0.11+10\bin\java.exe"
 
-cd E:\canton-daml\canton-stress\examples\network
+cd <this repository>\examples\network
 & $java -jar $canton daemon -c two-participants.conf --bootstrap bootstrap.canton --no-tty
 ```
 

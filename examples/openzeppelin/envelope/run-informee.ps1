@@ -7,10 +7,15 @@
 # per-informee cost lives downstream of prepare and the envelope figure is a
 # lower bound that misses it.
 
+
+# Paths come from the environment so this runs anywhere. Set before running:
+#   $env:CS_JDK    = path to a JDK 21   (e.g. the one bundled with your Daml SDK)
+#   $env:CS_OZ_DAR = built simple-token DAR from OpenZeppelin/canton-token-template
+#   $env:CS_STD_DAR= built std-spike DAR (the minimal reference registry)
 $ErrorActionPreference = "Continue"
-$repo = "E:\canton-daml\canton-stress"
-$jdk  = "E:\canton-daml\tools\jdk-21.0.11+10"
-$dar  = "E:/sp/.daml/dist/std-spike-0.1.0.dar"
+$repo = (Resolve-Path "$PSScriptRoot\..\..\..\..").Path
+$jdk  = $env:CS_JDK
+$dar  = $env:CS_STD_DAR
 $out  = "$repo\examples\openzeppelin\envelope"
 
 Set-Location $repo

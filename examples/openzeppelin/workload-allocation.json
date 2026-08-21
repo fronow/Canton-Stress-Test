@@ -13,7 +13,7 @@
     "Argument shape taken from their own tests",
     "(simple-token-test/daml/SimpleToken/Test/Allocation.daml, mkAllocationArgs).",
     "",
-    "  node src/cli.ts run E:/ozt/simple-token/.daml/dist/simple-token-0.1.0.dar \\",
+    "  node src/cli.ts run <your checkout of canton-token-template>/.daml/dist/simple-token-0.1.0.dar \\",
     "    --workload-file examples/openzeppelin/workload-allocation.json \\",
     "    --model closed --concurrency 8 --ops 60 --sandbox --java-home <jdk>"
   ],

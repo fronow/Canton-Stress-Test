@@ -209,28 +209,28 @@ lifecycle beyond allocation (`Allocation_ExecuteTransfer`).
 ## Reproducing
 
 ```powershell
-git clone --depth 1 https://github.com/OpenZeppelin/canton-token-template.git E:\ozt
-cd E:\ozt\simple-token          # set sdk-version to your installed 3.4.x
+git clone --depth 1 https://github.com/OpenZeppelin/canton-token-template.git <your checkout of canton-token-template>
+cd <your checkout of canton-token-template>          # set sdk-version to your installed 3.4.x
 daml build
 
-cd E:\canton-daml\canton-stress
+cd <this repository>
 node src/cli.ts check examples/openzeppelin/workload-transfer.json
 
-node src/cli.ts run E:/ozt/simple-token/.daml/dist/simple-token-0.1.0.dar `
+node src/cli.ts run <your checkout of canton-token-template>/.daml/dist/simple-token-0.1.0.dar `
   --workload-file examples/openzeppelin/workload-transfer.json `
   --model closed --concurrency 8 --ops 60 `
-  --sandbox --java-home "E:\canton-daml\tools\jdk-21.0.11+10"
+  --sandbox --java-home "<your workspace>\tools\jdk-21.0.11+10"
 
-node src/cli.ts run E:/ozt/simple-token/.daml/dist/simple-token-0.1.0.dar `
+node src/cli.ts run <your checkout of canton-token-template>/.daml/dist/simple-token-0.1.0.dar `
   --workload-file examples/openzeppelin/workload-transfer.json `
   --model open --mode ramp --from 4 --to 30 --duration 45 --bucket 3 `
-  --sandbox --java-home "E:\canton-daml\tools\jdk-21.0.11+10"
+  --sandbox --java-home "<your workspace>\tools\jdk-21.0.11+10"
 
 # settlement (DvP) — same flags, allocation workload
-node src/cli.ts run E:/ozt/simple-token/.daml/dist/simple-token-0.1.0.dar `
+node src/cli.ts run <your checkout of canton-token-template>/.daml/dist/simple-token-0.1.0.dar `
   --workload-file examples/openzeppelin/workload-allocation.json `
   --model closed --concurrency 8 --ops 60 `
-  --sandbox --java-home "E:\canton-daml\tools\jdk-21.0.11+10"
+  --sandbox --java-home "<your workspace>\tools\jdk-21.0.11+10"
 ```
 
 Raise the `holdings` step's `count` if you increase the rate or duration.

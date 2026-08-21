@@ -13,9 +13,9 @@
 
 - **Daml SDK 3.x** on PATH — `daml`, `damlc`. Check: `daml version`.
 - **An OpenJDK** (Temurin 21 works; **Oracle JDK does NOT** — Canton rejects it).
-  You already have a portable one at `E:\canton-daml\tools\jdk-21.0.11+10`.
+  You already have a portable one at `<your workspace>\tools\jdk-21.0.11+10`.
 - **Node ≥ 23.6** — check: `node --version`.
-- canton-stress deps installed once: `cd E:\canton-daml\canton-stress; npm install`.
+- canton-stress deps installed once: `cd <this repository>; npm install`.
 
 ---
 
@@ -57,7 +57,7 @@ load to find where latency/throughput degrade.
 
 Either build one (`daml build` in a Daml project → `.daml/dist/<name>.dar`) or
 use a prebuilt `.dar`. The bundled smoke target already exists:
-`E:\canton-daml\tool\examples\sample-token\.daml\dist\daml-fuzz-sample-0.1.0.dar`.
+`<your workspace>\tool\examples\sample-token\.daml\dist\daml-fuzz-sample-0.1.0.dar`.
 
 ### Step 2 — discover what's inside the DAR (templates, choices, arg shapes)
 
@@ -67,7 +67,7 @@ contention workload) a consuming choice + its party field. Two ways:
 **Best — reuse the daml-fuzz introspector** (prints templates, party fields,
 choices, and argument types):
 ```
-node E:\canton-daml\tool\src\cli.ts introspect <path-to.dar>
+node <your workspace>\tool\src\cli.ts introspect <path-to.dar>
 ```
 Example output line: `Dsl:TokenA — parties [issuer, owner], choices: TransferA(1), SplitA(1)`.
 
@@ -93,11 +93,11 @@ canton-stress takes `--template`. Two accepted forms:
 
 One cold-start command (boots a sandbox, runs, tears down):
 ```
-cd E:\canton-daml\canton-stress
+cd <this repository>
 node src/cli.ts run <path-to.dar> ^
   --template "#daml-fuzz-sample:SampleToken:Token" ^
   --workload create --parties 3 --ops 200 --concurrency 16 ^
-  --sandbox --java-home "E:\canton-daml\tools\jdk-21.0.11+10" ^
+  --sandbox --java-home "<your workspace>\tools\jdk-21.0.11+10" ^
   --report create-report.json
 ```
 For a template whose create args are NOT `{issuer, owner, amount}`, pass the
@@ -114,7 +114,7 @@ node src/cli.ts run <path-to.dar> ^
   --template "#daml-fuzz-sample:SampleToken:Token" ^
   --workload transfer --transfer-choice Transfer --new-owner-field newOwner ^
   --parties 3 --ops 60 --concurrency 12 ^
-  --sandbox --java-home "E:\canton-daml\tools\jdk-21.0.11+10" ^
+  --sandbox --java-home "<your workspace>\tools\jdk-21.0.11+10" ^
   --report transfer-report.json
 ```
 
@@ -187,7 +187,7 @@ One run is a data point; a test is a **curve**. Methodology:
    setup first. **Phase 2.**
 5. **Canton Network Token Standard (CIP-0056)** — the most ecosystem-relevant
    target (every serious token implements it). You already hold the DARs
-   (`E:\sp\daml\dars\splice-api-token-*`). Mint/transfer go through
+   (`<your std-spike checkout>\daml\dars\splice-api-token-*`). Mint/transfer go through
    *factories* and *interfaces*, not direct creates → **Phase 2** (scripted
    factory-driven workflow). This is also the highest-credibility target to name
    in a grant.

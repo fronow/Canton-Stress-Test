@@ -9,17 +9,22 @@
 # Both arms use the same library workload, the same party count and the same
 # single-input transfer, so the only thing differing is the registry.
 
+
+# Paths come from the environment so this runs anywhere. Set before running:
+#   $env:CS_JDK    = path to a JDK 21   (e.g. the one bundled with your Daml SDK)
+#   $env:CS_OZ_DAR = built simple-token DAR from OpenZeppelin/canton-token-template
+#   $env:CS_STD_DAR= built std-spike DAR (the minimal reference registry)
 $ErrorActionPreference = "Continue"
-$repo = "E:\canton-daml\canton-stress"
-$jdk  = "E:\canton-daml\tools\jdk-21.0.11+10"
+$repo = (Resolve-Path "$PSScriptRoot\..\..\..\..").Path
+$jdk  = $env:CS_JDK
 $out  = "$repo\examples\openzeppelin\envelope"
 
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 Set-Location $repo
 
 $targets = @(
-  @{ name = "std-spike";    dar = "E:/sp/.daml/dist/std-spike-0.1.0.dar" },
-  @{ name = "simple-token"; dar = "E:/ozt/simple-token/.daml/dist/simple-token-0.1.0.dar" }
+  @{ name = "std-spike";    dar = $env:CS_STD_DAR },
+  @{ name = "simple-token"; dar = $env:CS_OZ_DAR }
 )
 
 foreach ($t in $targets) {

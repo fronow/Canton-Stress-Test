@@ -18,7 +18,7 @@
     "shared, reusable contract every transfer touches — the question this run",
     "answers is whether that, or the holding pool, is what limits throughput.",
     "",
-    "  node src/cli.ts run E:/sp/.daml/dist/std-spike-0.1.0.dar \\",
+    "  node src/cli.ts run <your std-spike checkout>/.daml/dist/std-spike-0.1.0.dar \\",
     "    --workload-file examples/token-standard/workload.json \\",
     "    --model closed --concurrency 8 --ops 100 --sandbox --java-home <jdk>"
   ],
