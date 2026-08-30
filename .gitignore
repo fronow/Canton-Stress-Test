@@ -17,3 +17,8 @@ STATUS.md
 VALUE-AND-FUNDING.md
 INSTITUTIONAL-ROADMAP.md
 PUBLISHING.md
+
+# Saved web pages / research scraps kept locally, not part of the project
+*.2026-*Z.md
+cctools.network_*.md
+www.*.md

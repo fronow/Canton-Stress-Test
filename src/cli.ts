@@ -83,6 +83,7 @@ import {
 import { formatVerdict } from "./verdict.ts";
 import { inspectDar } from "./inspect.ts";
 import { planTransfer } from "./plan.ts";
+import { scaffold } from "./scaffold.ts";
 
 const USAGE = `usage:
   canton-stress run [<dar>] --template <templateId>
@@ -127,6 +128,11 @@ const USAGE = `usage:
 
   canton-stress report <report|sweep.json> [--out <file.html>]
     [--baseline <report.json> --max-throughput-drop pct --max-p99-rise pct]   regression gate
+
+  canton-stress scaffold <dar> [--out <file.json>] [--count n]
+    generate a STARTING workload for any DAR: setup ordered by the dependency
+    graph the DAR itself states, with TODO markers where a value could not be
+    inferred. Writes the file and stops — it does not run it.
 
   canton-stress check <workload.json>
     validate a workload file (refs, roles, weights) without touching a ledger`;
@@ -738,6 +744,61 @@ function reportMain(rest: string[]): void {
 }
 
 /** Validate a workload file offline — the fast feedback loop while writing one. */
+/**
+ * `canton-stress scaffold <dar> [--out file] [--count n]`
+ *
+ * Writes a starting workload for any DAR and stops. Deliberately does not run
+ * it: the file contains inferred values and TODO markers, and a workload nobody
+ * has read should not be driving load at anything.
+ */
+function scaffoldMain(rest: string[]): void {
+  let dar: string | null = null;
+  let out: string | null = null;
+  let count: number | undefined;
+  for (let i = 0; i < rest.length; i++) {
+    const a = rest[i];
+    if (a === "--out") out = rest[++i] ?? fail("--out needs a value");
+    else if (a === "--count") count = Number(rest[++i] ?? fail("--count needs a value"));
+    else if (!a.startsWith("--") && !dar) dar = a;
+    else fail(`unexpected argument "${a}"`);
+  }
+  if (!dar) fail("usage: canton-stress scaffold <dar> [--out <file.json>] [--count n]");
+
+  let info;
+  try {
+    info = inspectDar(dar);
+  } catch (e) {
+    fail(String(e instanceof Error ? e.message : e));
+  }
+
+  // A Token Standard registry does not need scaffolding — it is fully planned.
+  const planned = planTransfer(info);
+  if (planned.ok) {
+    console.error(
+      `${basename(dar)} implements the Token Standard, so it needs no scaffold:\n` +
+        `  canton-stress ${basename(dar)}\n` +
+        `runs it directly with no configuration. Use --explain to see the parameters.`,
+    );
+    return;
+  }
+
+  const r = scaffold(info, { holdings: count });
+  if (!r.ok) fail([`cannot scaffold ${basename(dar)}:`, ...r.reasons.map((x) => `  - ${x}`)].join("\n"));
+
+  const file = out ?? `${info.packageName}-workload.json`;
+  writeFileSync(file, JSON.stringify(r.scaffold.workload, null, 2) + "\n");
+
+  console.error(`  Read ${basename(dar)} … ${info.templates.length} templates`);
+  console.error(`  Setup order   ${r.scaffold.order.join(" → ")}`);
+  console.error(`  Measuring     ${r.scaffold.measuring}`);
+  console.error(`\nwrote ${file}`);
+  if (r.scaffold.notes.length > 0) {
+    console.error(`\n${r.scaffold.notes.length} value(s) could not be inferred — edit before running:`);
+    for (const n of r.scaffold.notes) console.error(`  ${n.where}: ${n.what}`);
+  }
+  console.error(`\nthen:  canton-stress check ${file}`);
+}
+
 function checkMain(rest: string[]): void {
   const path = rest[0];
   if (!path || path.startsWith("--")) fail("usage: canton-stress check <workload.json>");
@@ -897,6 +958,7 @@ function main(argv: string[]): void {
     return;
   }
   if (command === "report") return reportMain(rest);
+  if (command === "scaffold") return scaffoldMain(rest);
   if (command === "check") return checkMain(rest);
   if (command === "trend") return trendMain(rest);
   // `canton-stress wallet.dar` — a DAR where a subcommand would go means

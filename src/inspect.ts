@@ -33,6 +33,21 @@ export interface DarField {
   type: string;
 }
 
+/** A choice declared on a template. */
+export interface DarChoice {
+  name: string;
+  /** False for `nonconsuming` — a nonconsuming choice cannot conflict with
+   * itself, which changes what a contention measurement means. */
+  consuming: boolean;
+  /** Return type as written, e.g. "ContractId Account" or "()". */
+  returnType: string;
+  /** The choice's own arguments, from its `with` block. */
+  fields: DarField[];
+  /** Field names listed as `controller`, when they are a plain list. Empty when
+   * the controller is computed, which this does not try to evaluate. */
+  controllers: string[];
+}
+
 /** One template found in a DAR, with the interfaces it declares instances of. */
 export interface DarTemplate {
   /** Dotted module name, e.g. "SimpleToken.Holding". */
@@ -53,6 +68,12 @@ export interface DarTemplate {
    * When a registry hard-codes its instrument this way, a transfer must name
    * that exact value, and it cannot be chosen freely. */
   instrumentIdLiteral?: string;
+  /** Choices declared directly on the template (not via an interface). */
+  choices: DarChoice[];
+  /** Templates this one needs to exist first, because it holds a
+   * `ContractId <T>` field. This is the dependency graph a setup program has to
+   * respect, and the DAR states it — no domain knowledge required. */
+  dependsOn: string[];
 }
 
 export interface DarInfo {
@@ -142,6 +163,24 @@ function readZip(buf: Buffer, what: string): ZipEntry[] {
 /** `template Foo` at the start of a line — templates are always top level. */
 const TEMPLATE_RE = /^template\s+([A-Z][A-Za-z0-9_']*)/;
 
+/** `choice Name : ReturnType`, optionally prefixed by a consumption modifier.
+ * Always indented, since choices live inside a template body. */
+const CHOICE_RE =
+  /^\s+(nonconsuming\s+|preconsuming\s+|postconsuming\s+)?choice\s+([A-Z][A-Za-z0-9_']*)\s*:\s*(.+?)\s*$/;
+
+/** `controller a, b` as a plain list of names. */
+const CONTROLLER_RE = /^\s+controller\s+([a-z][A-Za-z0-9_']*(?:\s*,\s*[a-z][A-Za-z0-9_']*)*)\s*$/;
+
+/** The template a `ContractId T` field points at, however it is wrapped —
+ * `ContractId T`, `Optional (ContractId T)`, `[ContractId T]`. Returns the
+ * bare template name, or undefined when the field is not a contract reference. */
+function contractIdTarget(type: string): string | undefined {
+  const m = /\bContractId\s+\(?\s*([A-Za-z][A-Za-z0-9_'.]*)/.exec(type);
+  if (!m) return undefined;
+  const t = m[1];
+  return t.slice(t.lastIndexOf(".") + 1);
+}
+
 /** `interface instance Iface for Tpl where`, the interface possibly qualified.
  * Always indented, since it lives inside a template body. */
 const INSTANCE_RE =
@@ -161,18 +200,34 @@ const FIELD_RE = /^([a-z][A-Za-z0-9_']*(?:\s*,\s*[a-z][A-Za-z0-9_']*)*)\s*:\s*(.
  */
 function readFields(lines: string[], start: number): DarField[] {
   let i = start + 1;
-  // Between "template X" and "with" there is nothing but blank lines.
+  // Between the declaration and "with" there is nothing but blank lines.
   while (i < lines.length && lines[i].trim() === "") i++;
-  if (i >= lines.length || lines[i].trim() !== "with") return [];
-  i++;
+  if (i >= lines.length) return [];
 
   const fields: DarField[] = [];
+  const head = lines[i].trim();
+  if (head === "with") {
+    i++;
+  } else if (head.startsWith("with ")) {
+    // Daml also allows the first field on the same line as `with`, which is
+    // common for single-argument choices: `with newOwner : Party`. Missing this
+    // form produced choices with no arguments at all.
+    const inline = FIELD_RE.exec(head.slice(5).replace(/--.*$/, "").trim());
+    if (inline)
+      for (const name of inline[1].split(",")) fields.push({ name: name.trim(), type: inline[2].trim() });
+    i++;
+  } else {
+    return [];
+  }
   for (; i < lines.length; i++) {
     const raw = lines[i];
     // "where" closes the block; a non-indented line means the template ended
     // without one, which the compiler would have rejected but this must not
     // hang on.
-    if (raw.trim() === "where") break;
+    // `where` closes a template's block; `controller` and `do` close a
+    // choice's. None of them can appear as a field name, so this is safe for
+    // both callers.
+    if (/^(where|controller\b|do\b)/.test(raw.trim())) break;
     if (raw.trim() !== "" && !/^\s/.test(raw)) break;
     // Daml comments: "-- ^ field doc" lines and trailing comments alike.
     const line = raw.replace(/--.*$/, "").trim();
@@ -265,6 +320,8 @@ export function inspectDar(path: string): DarInfo {
           id: `#${packageName}:${module}:${t[1]}`,
           fields: readFields(lines, i),
           signatories: [],
+          choices: [],
+          dependsOn: [],
         };
         templates.push(tpl);
         byName.set(t[1], tpl);
@@ -290,7 +347,42 @@ export function inspectDar(path: string): DarInfo {
       }
       const lit = /\bid\s*=\s*"([^"]+)"/.exec(line);
       if (lit && open.instrumentIdLiteral === undefined) open.instrumentIdLiteral = lit[1];
+
+      const ch = CHOICE_RE.exec(line);
+      if (ch) {
+        open.choices.push({
+          name: ch[2],
+          consuming: ch[1] === undefined,
+          returnType: ch[3].trim(),
+          fields: readFields(lines, i),
+          controllers: [],
+        });
+        continue;
+      }
+      // A controller line belongs to the choice most recently opened on this
+      // template. Templates also have a `controller` in the deprecated
+      // `controller ... can` form, which this simply will not match.
+      const ctl = CONTROLLER_RE.exec(line.replace(/--.*$/, ""));
+      const lastChoice = open.choices[open.choices.length - 1];
+      if (ctl && lastChoice && lastChoice.controllers.length === 0)
+        lastChoice.controllers = ctl[1].split(",").map((s) => s.trim());
     }
+  }
+
+  // The dependency graph, read off the field types: a template holding a
+  // `ContractId T` cannot be created until a T exists. Only references to
+  // templates in THIS package are kept — a ContractId of an interface or of a
+  // dependency's template is not something a setup program here can create.
+  const known = new Set(templates.map((t) => t.name));
+  for (const t of templates) {
+    const deps = new Set<string>();
+    for (const f of t.fields) {
+      const target = contractIdTarget(f.type);
+      // Self-reference is legal in Daml (a contract pointing at its own
+      // predecessor) but is not a setup dependency, and would deadlock a sort.
+      if (target && target !== t.name && known.has(target)) deps.add(target);
+    }
+    t.dependsOn = [...deps];
   }
 
   return { packageName, packageVersion, templates, dependencies };

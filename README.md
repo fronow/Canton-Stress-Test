@@ -100,6 +100,40 @@ Templates the planner cannot build test data for are refused by name and type,
 never guessed at. Everything below still works, and every flag overrides what
 was inferred.
 
+### Any other Daml application
+
+For applications that do not implement the Token Standard, the tool cannot know
+what the data means — but it can still do most of the work:
+
+```
+node src/cli.ts scaffold <app.dar> --out workload.json
+```
+
+```
+  Read canton-stress-settlement-0.1.0.dar … 9 templates
+  Setup order   AccountFactory → Account → Instrument → Ticket → Claimed
+                → PaymentOffer → Payment → Registry → Holding
+  Measuring     Holding:Transfer
+
+wrote workload.json
+
+9 value(s) could not be inferred — edit before running:
+  Instrument.symbol: free Text — replace if the application validates it
+  PaymentOffer.to: Party with an unrecognised name — defaulted to the admin
+  …
+```
+
+**The setup order is not guessed.** A template holding a `ContractId T` field
+cannot be created before a `T` exists, so the DAR states its own dependency
+graph and the scaffold is a topological sort over it. Contract-id fields become
+`$ref:` references to the step that creates them, so a generated chain actually
+runs.
+
+Everything that could not be inferred is marked `TODO:` in the file *and*
+listed on stdout, so a scaffold cannot be run blind. It writes the file and
+stops — you read it, edit it, then `check` and `run` it. A cycle in the
+dependency graph is reported rather than broken arbitrarily.
+
 ### Or drive it yourself
 
 ```
