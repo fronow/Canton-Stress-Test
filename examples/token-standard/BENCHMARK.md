@@ -138,5 +138,11 @@ Vary the pool depth by editing the `holdings` step's `count` in the workload.
 - The registry is a faithful but **minimal** implementation of the standard
   interfaces (~90 lines). A production registry (Amulet / Canton Coin) has far
   more logic per transfer and would be slower.
-- CIP-0104 traffic cost reads **UNMETERED**: a sandbox has no traffic control,
-  so the cost-per-transfer question is still unanswered.
+- CIP-0104 traffic cost reads **UNMETERED**: a sandbox has no traffic control
+  configured, so the synchronizer reports no cost — unmeasured, not free.
+
+  **Cost per transfer is answered separately**, by measuring the prepared
+  transaction's size, which is real on any participant: this registry is
+  **11,733 B, about $0.67 per transfer** at $60/MB. A lower bound, since the
+  sequenced request adds encrypted views per informee. See
+  [../openzeppelin/envelope/BENCHMARK-ENVELOPE.md](../openzeppelin/envelope/BENCHMARK-ENVELOPE.md).

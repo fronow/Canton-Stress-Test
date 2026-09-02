@@ -267,7 +267,10 @@
     <li><strong>SDK.</strong> Their <code>daml.yaml</code> pins 3.4.10; built here against 3.4.11
     (patch-level, same <code>--target=2.1</code>).</li>
     <li><strong>CIP-0104 traffic reads UNMETERED</strong> — a sandbox has no traffic control
-    enabled, so cost-per-transfer is still unanswered.</li>
+    configured, so the synchronizer reports no cost. That is unmeasured, not free.
+    <strong>Cost per transfer is answered separately</strong> by measuring the prepared
+    transaction's size, which is real on any participant: ~13,955 B, about $0.80 per transfer
+    at $60/MB. A lower bound, since the sequenced request adds encrypted views per informee.</li>
     <li><strong>Not covered</strong>, and good follow-up workloads: self-transfer
     (merge/defragment), direct transfer via a <code>TransferPreapproval</code> in the choice
     context, and the settlement lifecycle beyond allocation

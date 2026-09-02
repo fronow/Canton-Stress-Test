@@ -203,8 +203,16 @@ lifecycle beyond allocation (`Allocation_ExecuteTransfer`).
 - **SDK.** Their `daml.yaml` pins 3.4.10; built here against 3.4.11 (patch-level,
   same `--target=2.1`).
 - One laptop, one participant, in-memory storage.
-- CIP-0104 traffic reads **UNMETERED** — a sandbox has no traffic control, so
-  cost-per-transfer is still unanswered.
+- CIP-0104 traffic reads **UNMETERED** — a sandbox has no traffic control
+  configured, so the synchronizer reports no cost. That is *unmeasured*, not
+  free, which is why it is never reported as a measured zero.
+
+  **Cost-per-transfer is no longer unanswered**, though. The prepared
+  transaction's size is a real measurement on any participant, so
+  `--traffic-price` gives a cost per operation without a metered synchronizer:
+  this registry is **13,955 B, about $0.80 per transfer** at $60/MB. It is a
+  lower bound — the sequenced confirmation request adds encrypted views per
+  informee. See [envelope/BENCHMARK-ENVELOPE.md](envelope/BENCHMARK-ENVELOPE.md).
 
 ## Reproducing
 
