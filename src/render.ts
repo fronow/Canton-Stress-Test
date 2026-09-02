@@ -12,6 +12,7 @@ import type { Summary } from "./metrics.ts";
 import type { ModeReport } from "./modes.ts";
 import type { Bucket } from "./timeseries.ts";
 import type { SweepReport } from "./sweep.ts";
+import { computeVerdict } from "./verdict.ts";
 
 const enc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -26,6 +27,14 @@ const CSS = `
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;}
   .chip{background:#fff;border:1px solid #e6eaf1;border-radius:8px;padding:5px 10px;font-size:12.5px;color:#475569;}
   .chip b{color:#0f172a;}
+  .verdict{background:#fff;border:1px solid #e6eaf1;border-radius:12px;padding:20px 22px;margin-bottom:22px;}
+  .vrow{display:flex;gap:18px;padding:10px 0;border-bottom:1px solid #eef2f7;}
+  .vrow:last-child{border-bottom:none;} .vrow:first-child{padding-top:0;}
+  .vk{flex:0 0 74px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;font-weight:700;padding-top:3px;}
+  .vv{font-size:15px;line-height:1.5;color:#334155;} .vv b{color:#0f172a;font-weight:650;}
+  .vmute{color:#64748b;font-size:13.5px;}
+  .fix{display:block;font-variant-numeric:tabular-nums;} .arrow{color:#94a3b8;}
+  .vnote{display:block;margin-top:6px;}
   .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
   .cards.two{grid-template-columns:repeat(2,1fr);margin-top:12px;}
   .panel .sub{margin:0 0 10px;} .hint{font-size:11.5px;color:#94a3b8;}
@@ -165,12 +174,29 @@ function instrumentationSection(i: Instrumentation): string {
         `max offsets behind · mean ${r1(i.readLag.meanOffsetLag)} · query p99 ${ms(i.readLag.p99QueryMs)}`,
       ),
     );
-  if (i.traffic)
+  if (i.traffic) {
     extra.push(
       i.traffic.unmetered
         ? card("Traffic cost", "unmetered", "no traffic control on this synchronizer")
         : card("Traffic cost", `${i.traffic.totalForRun}`, `units for the run · ${r1(i.traffic.perSecond)}/s`),
     );
+    // Envelope size is measurable even where CIP-0104 cost is not, which is why
+    // it is reported separately rather than folded into the card above.
+    const t = i.traffic;
+    if (t.preparedBytesPerOp !== undefined) {
+      const kb = (b: number) => (b < 1024 ? `${Math.round(b)} B` : `${r1(b / 1024)} KB`);
+      extra.push(
+        card(
+          "Envelope size",
+          kb(t.preparedBytesPerOp),
+          // card() escapes its hint, so this is plain text by necessity.
+          t.costPerOpUsd !== undefined
+            ? `$${t.costPerOpUsd.toFixed(4)} per operation at $${t.usdPerMb}/MB`
+            : "per operation · pass --traffic-price to price it",
+        ),
+      );
+    }
+  }
   if (extra.length > 0) parts.push(`<div class="cards two">${extra.join("")}</div>`);
 
   if (parts.length === 0) return "";
@@ -251,6 +277,55 @@ function modeSection(m: ModeReport): string {
   );
 }
 
+/**
+ * The answer, above the evidence.
+ *
+ * A report that opens with percentile tables asks the reader to interpret it.
+ * Most people who receive one of these did not run it and are not going to
+ * interpret anything — so the verdict, its cause and the sized remedy go first,
+ * and the distribution stays underneath for whoever wants to check the working.
+ *
+ * Rendered from the same `computeVerdict` the terminal uses, so the two cannot
+ * drift apart.
+ */
+function verdictSection(report: LoadReport): string {
+  const m = computeVerdict({
+    summary: report.summary,
+    instrumentation: report.instrumentation,
+    pool: report.shape?.pool,
+    inputs: report.shape?.inputs,
+    subject: report.shape?.subject,
+    noun: report.shape?.noun,
+  });
+
+  const rows: string[] = [
+    `<div class="vrow"><span class="vk">Verdict</span><span class="vv"><b>${enc(m.throughput)}</b>` +
+      (m.headline ? `<br>${enc(m.headline)}` : "") +
+      (m.rejected ? `<br><span class="vmute">${enc(m.rejected)}</span>` : "") +
+      `</span></div>`,
+  ];
+
+  if (m.why)
+    rows.push(
+      `<div class="vrow"><span class="vk">Why</span><span class="vv"><b>${enc(m.why.title)}</b><br>` +
+        `${enc(m.why.detail)}` +
+        (m.why.failureMode ? `<br><span class="vmute">Dominant failure: ${enc(m.why.failureMode)}</span>` : "") +
+        `</span></div>`,
+    );
+
+  if (m.fixes.length > 0)
+    rows.push(
+      `<div class="vrow"><span class="vk">Fix</span><span class="vv">` +
+        m.fixes
+          .map((f) => `<span class="fix"><b>${enc(f.action)}</b> <span class="arrow">→</span> ${enc(f.result)}</span>`)
+          .join("") +
+        (m.fixNote ? `<span class="vmute vnote">${enc(m.fixNote)}</span>` : "") +
+        `</span></div>`,
+    );
+
+  return `<div class="verdict">${rows.join("")}</div>`;
+}
+
 export function renderReport(report: LoadReport): string {
   const s = report.summary;
   const rateLine =
@@ -283,6 +358,7 @@ export function renderReport(report: LoadReport): string {
   const body = `<h1>canton-stress — load report</h1>
   <p class="sub">Throughput, latency percentiles and contention for a Canton app under load.</p>
   <div class="chips">${chips}</div>
+  ${verdictSection(report)}
   <div class="cards">
     ${card("Throughput", `${r1(s.throughputPerSec)}/s`, "committed / sec")}
     ${card("p99 latency", ms(s.latency.p99), `p50 ${ms(s.latency.p50)}`)}

@@ -61,6 +61,16 @@ export interface LoadReport {
   /** [S5] Time-series behaviour and the mode's verdict (knee/cliff, drift,
    * recovery, breaking point). */
   modeReport?: ModeReport;
+  /** What the verdict needs that the numbers alone do not carry: how deep the
+   * contract pool was, how many inputs an operation gathered, and what to call
+   * them. Stored in the report so `canton-stress report` can render the same
+   * verdict later — a saved report has to stand on its own. */
+  shape?: {
+    pool?: number;
+    inputs?: number;
+    subject?: string;
+    noun?: string;
+  };
 }
 
 export interface RunOptions {

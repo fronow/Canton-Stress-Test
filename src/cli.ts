@@ -634,19 +634,31 @@ async function runMain(rest: string[]): Promise<void> {
         const block = formatInstrumentation(rep.instrumentation);
         if (block) console.error(`\nCANTON INSTRUMENTATION:\n${block}`);
       }
+      // Record what the verdict needs BEFORE writing the report, so a saved
+      // report can render the same verdict later without the workload file.
+      // A report that only makes sense next to the file that produced it is
+      // not something anyone can forward.
+      {
+        const shape = verdictShape(workload);
+        rep.shape = {
+          pool: shape.pool,
+          inputs: shape.inputs,
+          noun: verdictNoun,
+          subject: verdictSubject,
+        };
+      }
       // The answer, for people who came with a question rather than a
       // profiler. Printed last so the evidence is above it.
       if (verdict) {
-        const shape = verdictShape(workload);
         console.error(
           "\n" +
             formatVerdict({
               summary: rep.summary,
               instrumentation: rep.instrumentation,
-              pool: shape.pool,
-              inputs: shape.inputs,
-              noun: verdictNoun,
-              subject: verdictSubject,
+              pool: rep.shape.pool,
+              inputs: rep.shape.inputs,
+              noun: rep.shape.noun,
+              subject: rep.shape.subject,
             }),
         );
       }
