@@ -19,10 +19,11 @@ const tpl = (
   ...o,
 });
 
-const info = (templates: DarTemplate[]): DarInfo => ({
+const info = (templates: DarTemplate[], records: DarInfo["records"] = []): DarInfo => ({
   packageName: "pkg",
   packageVersion: "1.0",
   templates,
+  records,
   dependencies: [],
 });
 
@@ -171,4 +172,62 @@ test("the generated workload has the shape the runner expects", () => {
   assert.equal((w.setup as unknown[]).length, 1);
   assert.equal((w.setup as { count: number }[])[0].count, 42);
   assert.equal((w.operations as unknown[]).length, 1);
+});
+
+// ---------------------------------------------------------------------------
+// Record synthesis. A DAR carries its own `data` / `newtype` declarations, so a
+// field whose type is a record can be built from the declaration rather than
+// left as a TODO. This is what makes registries carrying their own value types
+// plannable — Amulet's holding amount is three records deep.
+
+test("a declared record is built from its own declaration, recursively", () => {
+  const r = scaffold(
+    info(
+      [tpl("Amulet", { fields: [{ name: "amount", type: "ExpiringAmount" }], choices: [goChoice] })],
+      [
+        {
+          name: "ExpiringAmount",
+          fields: [
+            { name: "initialAmount", type: "Decimal" },
+            { name: "createdAt", type: "Round" },
+          ],
+        },
+        { name: "Round", fields: [{ name: "number", type: "Int" }] },
+      ],
+    ),
+  );
+  assert.ok(r.ok);
+  const steps = r.scaffold.workload.setup as { op: { args: Record<string, unknown> } }[];
+  assert.deepEqual(steps[0].op.args.amount, {
+    initialAmount: "100.0",
+    createdAt: { number: 0 },
+  });
+  // The shape came from the DAR, so there is nothing to warn about.
+  assert.equal(
+    r.scaffold.notes.filter((n) => /ExpiringAmount|Round/.test(n.what)).length,
+    0,
+    "a record read from the DAR is not a guess and needs no note",
+  );
+});
+
+test("a recursive record is reported rather than looped forever", () => {
+  const r = scaffold(
+    info(
+      [tpl("T", { fields: [{ name: "node", type: "Node" }], choices: [goChoice] })],
+      [{ name: "Node", fields: [{ name: "child", type: "Node" }] }],
+    ),
+  );
+  assert.ok(r.ok);
+  assert.ok(
+    r.scaffold.notes.some((n) => /recursive/.test(n.what)),
+    "must say the type is recursive rather than hanging or emitting nonsense",
+  );
+});
+
+test("a type from a dependency package is still a TODO, and says why", () => {
+  const r = scaffold(info([tpl("T", { fields: [{ name: "meta", type: "Metadata" }], choices: [goChoice] })]));
+  assert.ok(r.ok);
+  const steps = r.scaffold.workload.setup as { op: { args: Record<string, unknown> } }[];
+  assert.equal(steps[0].op.args.meta, "TODO:Metadata");
+  assert.ok(r.scaffold.notes.some((n) => /outside this package/.test(n.what)));
 });

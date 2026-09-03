@@ -68,7 +68,13 @@ type Synth = { value: unknown } | { unsupported: string };
 
 const isUnsupported = (s: Synth): s is { unsupported: string } => "unsupported" in s;
 
-function synthField(f: DarField, instrumentId: string, notes: string[]): Synth {
+function synthField(
+  f: DarField,
+  instrumentId: string,
+  notes: string[],
+  records: Map<string, DarField[]> = new Map(),
+  seen: string[] = [],
+): Synth {
   const t = f.type.trim();
 
   if (t === "Party") {
@@ -115,6 +121,25 @@ function synthField(f: DarField, instrumentId: string, notes: string[]): Synth {
   if (/^ContractId\b/.test(t))
     return { unsupported: `${f.name} : ${t} — needs an existing contract, so it cannot be created directly` };
 
+  // A record the package declares: build it field by field from the DAR's own
+  // `data`/`newtype` declaration rather than refusing. This is what makes
+  // registries with their own value types plannable at all — Amulet's holding
+  // carries an ExpiringAmount, which is three nested records deep.
+  const rec = records.get(t);
+  if (rec) {
+    // A record that contains itself has no finite value. Depth is bounded by
+    // the path rather than a counter so the message can name the cycle.
+    if (seen.includes(t))
+      return { unsupported: `${f.name} : ${t} — recursive type (${[...seen, t].join(" → ")})` };
+    const obj: Record<string, unknown> = {};
+    for (const sub of rec) {
+      const s = synthField(sub, instrumentId, notes, records, [...seen, t]);
+      if (isUnsupported(s)) return { unsupported: `${f.name}.${s.unsupported}` };
+      obj[sub.name] = s.value;
+    }
+    return { value: obj };
+  }
+
   return { unsupported: `${f.name} : ${t} — no rule for this type` };
 }
 
@@ -122,6 +147,7 @@ function synthArgs(
   tpl: DarTemplate,
   instrumentId: string,
   notes: string[],
+  records: Map<string, DarField[]>,
   overrides: Record<string, unknown> = {},
 ): { args: Record<string, unknown> } | { problems: string[] } {
   const args: Record<string, unknown> = {};
@@ -131,7 +157,7 @@ function synthArgs(
       args[f.name] = overrides[f.name];
       continue;
     }
-    const s = synthField(f, instrumentId, notes);
+    const s = synthField(f, instrumentId, notes, records);
     if (isUnsupported(s)) problems.push(`${tpl.name}.${s.unsupported}`);
     else args[f.name] = s.value;
   }
@@ -189,8 +215,12 @@ export function planTransfer(info: DarInfo): PlanResult {
   if (holding.instrumentIdLiteral)
     notes.push(`instrument "${instrumentId}" is fixed by ${holding.name}'s interface view`);
 
-  const h = synthArgs(holding, instrumentId, notes, { owner: "$p0" });
-  const f = synthArgs(factory, instrumentId, notes);
+  // The declared record types, so a field whose type is a record can be built
+  // rather than refused. This is what makes a registry carrying its own value
+  // types plannable at all.
+  const records = new Map(info.records.map((r) => [r.name, r.fields]));
+  const h = synthArgs(holding, instrumentId, notes, records, { owner: "$p0" });
+  const f = synthArgs(factory, instrumentId, notes, records);
   const problems = [
     ...("problems" in h ? h.problems : []),
     ...("problems" in f ? f.problems : []),

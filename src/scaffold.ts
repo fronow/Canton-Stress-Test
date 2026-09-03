@@ -95,6 +95,8 @@ function valueFor(
   owner: string,
   created: Map<string, string>,
   notes: ScaffoldNote[],
+  records: Map<string, DarField[]> = new Map(),
+  seen: string[] = [],
 ): unknown {
   const t = f.type.trim();
   const at = (what: string) => notes.push({ where: `${owner}.${f.name}`, what });
@@ -130,10 +132,24 @@ function valueFor(
   if (/^\[.*\]$/.test(t)) return [];
   if (/^(TextMap|Map|GenMap)\b/.test(t) || /\bTextMap\./.test(t)) return {};
 
-  // A record or variant from this package or a dependency. The shape is not
-  // knowable from the field type alone, so this is left for the author rather
-  // than guessed at.
-  at(`type ${t} — fill in the record shape`);
+  // A record the package declares: build it from the DAR's own `data` or
+  // `newtype` declaration rather than emitting a TODO. The values inside are
+  // still placeholders, but the SHAPE is right, which is the part an author
+  // cannot easily reconstruct by hand.
+  const rec = records.get(t);
+  if (rec && !seen.includes(t)) {
+    const obj: Record<string, unknown> = {};
+    for (const sub of rec)
+      obj[sub.name] = valueFor(sub, `${owner}.${f.name}`, created, notes, records, [...seen, t]);
+    return obj;
+  }
+  if (rec) {
+    at(`type ${t} is recursive (${[...seen, t].join(" → ")}) — supply a value by hand`);
+    return `TODO:${t}`;
+  }
+
+  // A type from a dependency package, whose sources this DAR does not carry.
+  at(`type ${t} — declared outside this package, fill in the record shape`);
   return `TODO:${t}`;
 }
 
@@ -178,6 +194,7 @@ export function scaffold(info: DarInfo, opts: { holdings?: number } = {}): Scaff
     };
 
   const byName = new Map(info.templates.map((t) => [t.name, t]));
+  const records = new Map(info.records.map((r) => [r.name, r.fields]));
   const notes: ScaffoldNote[] = [];
   const created = new Map<string, string>();
   const setup: Record<string, unknown>[] = [];
@@ -186,7 +203,7 @@ export function scaffold(info: DarInfo, opts: { holdings?: number } = {}): Scaff
   for (const name of sorted.order) {
     const t = byName.get(name)!;
     const args: Record<string, unknown> = {};
-    for (const f of t.fields) args[f.name] = valueFor(f, t.name, created, notes);
+    for (const f of t.fields) args[f.name] = valueFor(f, t.name, created, notes, records);
     const bindingId = name.charAt(0).toLowerCase() + name.slice(1);
     created.set(name, bindingId);
     setup.push({
@@ -214,7 +231,7 @@ export function scaffold(info: DarInfo, opts: { holdings?: number } = {}): Scaff
   const choice = pickChoice(target)!;
   const choiceArgs: Record<string, unknown> = {};
   for (const f of choice.fields)
-    choiceArgs[f.name] = valueFor(f, `${target.name}:${choice.name}`, created, notes);
+    choiceArgs[f.name] = valueFor(f, `${target.name}:${choice.name}`, created, notes, records);
   if (!choice.consuming)
     notes.push({
       where: `${target.name}:${choice.name}`,

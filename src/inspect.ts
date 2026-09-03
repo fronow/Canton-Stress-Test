@@ -76,11 +76,25 @@ export interface DarTemplate {
   dependsOn: string[];
 }
 
+/** A record type declared in the package, e.g.
+ * `data ExpiringAmount = ExpiringAmount with initialAmount : Decimal; …`.
+ *
+ * These are what let a generated value be built for a field whose type is not
+ * primitive: the DAR carries the declaration, so the shape can be read rather
+ * than guessed. Only the single-constructor record form is captured — a variant
+ * (`data X = A | B`) has no one right value and is left to the author. */
+export interface DarRecord {
+  name: string;
+  fields: DarField[];
+}
+
 export interface DarInfo {
   /** Main package name and version, from the DAR's own directory prefix. */
   packageName: string;
   packageVersion: string;
   templates: DarTemplate[];
+  /** Record types declared in the main package, by name. */
+  records: DarRecord[];
   /** Package names of the DALFs the DAR bundles, main package included. */
   dependencies: string[];
 }
@@ -162,6 +176,33 @@ function readZip(buf: Buffer, what: string): ZipEntry[] {
 
 /** `template Foo` at the start of a line — templates are always top level. */
 const TEMPLATE_RE = /^template\s+([A-Z][A-Za-z0-9_']*)/;
+
+/** `data X = X with` — the single-constructor record form, where the fields
+ * follow on the next lines. Type parameters are excluded deliberately: a
+ * generic record cannot be filled in without knowing the instantiation. */
+const DATA_RE = /^(?:data|newtype)\s+([A-Z][A-Za-z0-9_']*)\s*=\s*\1\s+with\b(.*)$/;
+
+/**
+ * Fields of a `data … with` declaration, which follow the declaration line
+ * directly rather than after a separate `with` line as a template's do.
+ */
+function readRecordFields(lines: string[], start: number): DarField[] {
+  const fields: DarField[] = [];
+  for (let i = start + 1; i < lines.length; i++) {
+    const raw = lines[i];
+    if (raw.trim() === "") continue;
+    // `deriving` closes the declaration; so does any dedent to column 0.
+    if (/^\s*deriving\b/.test(raw)) break;
+    if (!/^\s/.test(raw)) break;
+    const line = raw.replace(/--.*$/, "").trim();
+    if (line === "") continue;
+    const m = FIELD_RE.exec(line);
+    if (!m) continue;
+    const type = m[2].trim();
+    for (const name of m[1].split(",")) fields.push({ name: name.trim(), type });
+  }
+  return fields;
+}
 
 /** `choice Name : ReturnType`, optionally prefixed by a consumption modifier.
  * Always indented, since choices live inside a template body. */
@@ -294,6 +335,7 @@ export function inspectDar(path: string): DarInfo {
   );
 
   const templates: DarTemplate[] = [];
+  const records: DarRecord[] = [];
   const byName = new Map<string, DarTemplate>();
   for (const entry of sources) {
     const rel = entry.name.slice(root.length + 1);
@@ -328,6 +370,29 @@ export function inspectDar(path: string): DarInfo {
         open = tpl;
         continue;
       }
+      // A record declaration is top level, so it must be handled before the
+      // guard further down that skips lines outside a template body.
+      const dat = DATA_RE.exec(line);
+      if (dat) {
+        open = undefined;
+        // A newtype usually puts its single field on the same line
+        // (`newtype Round = Round with number : Int`); a data declaration
+        // usually puts them on the following lines. Both forms occur, and
+        // fields on one line are separated by semicolons.
+        const inline = dat[2].replace(/--.*$/, "").trim();
+        const fields = inline
+          ? inline
+              .split(";")
+              .map((part) => FIELD_RE.exec(part.trim()))
+              .filter((m): m is RegExpExecArray => m !== null)
+              .flatMap((m) =>
+                m[1].split(",").map((n) => ({ name: n.trim(), type: m[2].trim() })),
+              )
+          : readRecordFields(lines, i);
+        records.push({ name: dat[1], fields });
+        continue;
+      }
+
       // A new top-level declaration closes the previous template.
       if (line.trim() !== "" && !/^\s/.test(line)) open = undefined;
 
@@ -385,5 +450,5 @@ export function inspectDar(path: string): DarInfo {
     t.dependsOn = [...deps];
   }
 
-  return { packageName, packageVersion, templates, dependencies };
+  return { packageName, packageVersion, templates, records, dependencies };
 }
