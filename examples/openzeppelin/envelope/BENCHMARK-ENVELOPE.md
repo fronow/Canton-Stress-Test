@@ -110,10 +110,40 @@ is the expensive decision, and it is an order of magnitude more expensive than
 the data model choices that usually get argued about.** For registries that can
 support preapprovals, the direct path is worth real money.
 
-Caveat on the isolation: the direct path was reached via self-transfer, because
-a preapproved cross-party transfer needs a `TransferPreapproval` in the context
-and that was not built. Self-transfer takes the same completing path, but it is
-a proxy rather than the identical operation.
+### The proxy was not equivalent — measured 2026-09-05
+
+The direct path above was reached by self-transfer, because a preapproved
+cross-party transfer needs a `TransferPreapproval` in `extraArgs.context` and
+that had not been built. **It has now been built and run, and the proxy was
+materially different:**
+
+| path | envelope | at $60/MB |
+|---|---|---|
+| self-transfer *(the proxy)* | 11,446 B | $0.6549 |
+| two-step (propose/accept) | 13,955 B | $0.7985 |
+| **preapproved cross-party direct** | **15,689 B** | **$0.8977** |
+
+A real preapproved transfer is **4,243 bytes heavier than the proxy**, for two
+reasons that cannot be separated by this measurement alone: it discloses a
+second contract (the preapproval, whose signatories are the admin and the
+receiver, so the sender cannot see it otherwise), and it runs a different code
+path from the self-transfer merge.
+
+**So on a single-transaction basis the direct path is more expensive than
+two-step, not less** — the opposite of what the proxy suggested.
+
+That does not settle the comparison in the other direction either, because a
+two-step transfer is not finished: the receiver still has to accept, and that
+acceptance is a second transaction which has not been measured. If it costs more
+than 1,734 bytes — and a real transaction almost certainly does — two-step is
+still dearer per *completed* transfer. But "almost certainly" is not a
+measurement, and the honest position is that **the settlement-model comparison
+is open until the acceptance transaction is measured.**
+
+What is now established is narrower and still useful: **disclosing an additional
+contract is expensive.** Whatever share of the 4,243 bytes is disclosure rather
+than code path, it is large enough that the number of contracts a design must
+disclose belongs in the same conversation as its stakeholder count.
 
 ## What drives it: stakeholder count, linearly
 

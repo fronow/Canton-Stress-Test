@@ -1,0 +1,108 @@
+{
+  "_comment": [
+    "OpenZeppelin's DIRECT transfer path, reached properly rather than by proxy.",
+    "",
+    "The settlement-model attribution previously used a self-transfer to reach a",
+    "completing path, because a preapproved cross-party transfer needs a",
+    "TransferPreapproval in extraArgs.context and that had never been built. This",
+    "does it for real: the receiver's preapproval is created in setup, disclosed to",
+    "the sender (its signatories are admin and receiver, so the sender cannot see it",
+    "otherwise), and passed in the choice context under the key the registry looks",
+    "for.",
+    "",
+    "A context entry is a Daml variant, so a contract id is written as",
+    "  { \"tag\": \"AV_ContractId\", \"value\": \"$ref:<step>\" }",
+    "and $ref resolves inside it because placeholders are substituted throughout",
+    "the whole argument tree, not just at the top level.",
+    "",
+    "Compare against attrib-oz-xfer.json (same registry, no preapproval, so it",
+    "takes the two-step path) to price propose/accept against direct completion."
+  ],
+
+  "version": 1,
+  "parties": 6,
+  "roles": ["admin"],
+
+  "setup": [
+    {
+      "id": "factory",
+      "disclose": true,
+      "actAs": ["$role:admin"],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Rules:SimpleTokenRules",
+        "args": { "admin": "$role:admin", "supportedInstruments": ["SIMPLETOKEN"] }
+      }
+    },
+    {
+      "_comment": "The receiver pre-approves incoming transfers. Signatories are admin and receiver, so it must be disclosed for the sender to use it.",
+      "id": "preapproval",
+      "disclose": true,
+      "actAs": ["$role:admin", "$p1"],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Preapproval:TransferPreapproval",
+        "args": {
+          "admin": "$role:admin",
+          "receiver": "$p1",
+          "instrumentId": { "admin": "$role:admin", "id": "SIMPLETOKEN" },
+          "expiresAt": null,
+          "meta": { "values": {} }
+        }
+      }
+    },
+    {
+      "id": "holdings",
+      "count": 40,
+      "actAs": ["$role:admin", "$p0"],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Holding:SimpleHolding",
+        "args": {
+          "admin": "$role:admin",
+          "owner": "$p0",
+          "instrumentId": { "admin": "$role:admin", "id": "SIMPLETOKEN" },
+          "amount": "1000.0",
+          "meta": { "values": {} }
+        }
+      }
+    }
+  ],
+
+  "operations": [
+    {
+      "weight": 1,
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "contract": "$ref:factory",
+        "choice": "TransferFactory_Transfer",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "transfer": {
+            "sender": "$p0",
+            "receiver": "$p1",
+            "amount": "1.0",
+            "instrumentId": { "admin": "$role:admin", "id": "SIMPLETOKEN" },
+            "requestedAt": "$now-60s",
+            "executeBefore": "$now+1h",
+            "inputHoldingCids": ["$ref:holdings[*]"],
+            "meta": { "values": {} }
+          },
+          "extraArgs": {
+            "context": {
+              "values": {
+                "transfer-preapproval": {
+                  "tag": "AV_ContractId",
+                  "value": "$ref:preapproval"
+                }
+              }
+            },
+            "meta": { "values": {} }
+          }
+        }
+      },
+      "submit": { "actAs": ["$p0"] }
+    }
+  ]
+}
