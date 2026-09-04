@@ -182,6 +182,14 @@ const TEMPLATE_RE = /^template\s+([A-Z][A-Za-z0-9_']*)/;
  * generic record cannot be filled in without knowing the instantiation. */
 const DATA_RE = /^(?:data|newtype)\s+([A-Z][A-Za-z0-9_']*)\s*=\s*\1\s+with\b(.*)$/;
 
+/** A top-level string constant, e.g. `amuletInstrumentIdName = "Amulet"`.
+ *
+ * Registries commonly name their instrument rather than inlining it, so an
+ * interface view reads `id = amuletInstrumentIdName`. Resolving that one level
+ * of indirection is the difference between naming the instrument correctly and
+ * having every transfer rejected. */
+const STRING_CONST_RE = /^([a-z][A-Za-z0-9_']*)\s*=\s*"([^"]*)"\s*$/;
+
 /**
  * Fields of a `data … with` declaration, which follow the declaration line
  * directly rather than after a separate `with` line as a template's do.
@@ -336,6 +344,26 @@ export function inspectDar(path: string): DarInfo {
 
   const templates: DarTemplate[] = [];
   const records: DarRecord[] = [];
+  // Resolving a registry's instrument identifier takes up to three hops,
+  // because registries name things rather than inlining them. Amulet is the
+  // worst case and is worth stating in full:
+  //
+  //   interface instance Holding for Amulet:  instrumentId = amuletInstrumentId dso
+  //   amuletInstrumentId dso = InstrumentId with admin = dso; id = amuletInstrumentIdName
+  //   amuletInstrumentIdName = "Amulet"
+  //
+  // Getting this wrong is not cosmetic: every transfer is rejected by the
+  // registry's own "expected instrumentId matches actual" assertion.
+  /** Top-level string constants: name -> value. */
+  const constants = new Map<string, string>();
+  /** Top-level binding -> what its body assigns to `id`. */
+  const bindingId = new Map<string, { lit?: string; ref?: string }>();
+  /** Template -> the helper its view applies to build the instrument id. */
+  const instrumentFn = new Map<string, string>();
+  /** Template -> the identifier its view assigns directly to `id`. */
+  const instrumentRef = new Map<string, string>();
+  /** The top-level binding currently being read, for attributing `id = …`. */
+  let binding: string | undefined;
   const byName = new Map<string, DarTemplate>();
   for (const entry of sources) {
     const rel = entry.name.slice(root.length + 1);
@@ -370,6 +398,23 @@ export function inspectDar(path: string): DarInfo {
         open = tpl;
         continue;
       }
+      // Top-level string constants, collected across every source so a view in
+      // one module can reference a constant declared in another.
+      const sc = STRING_CONST_RE.exec(line);
+      if (sc) constants.set(sc[1], sc[2]);
+
+      // Track which top-level binding we are inside, so an `id = …` in a helper
+      // function body can be attributed to that helper.
+      const topBinding = /^([a-z][A-Za-z0-9_']*)\s*[^=]*=/.exec(line);
+      if (topBinding) binding = topBinding[1];
+      else if (line.trim() !== "" && !/^\s/.test(line)) binding = undefined;
+
+      if (binding) {
+        const bid = /\bid\s*=\s*(?:"([^"]*)"|([a-z][A-Za-z0-9_']*))/.exec(line);
+        if (bid && !bindingId.has(binding))
+          bindingId.set(binding, bid[1] !== undefined ? { lit: bid[1] } : { ref: bid[2] });
+      }
+
       // A record declaration is top level, so it must be handled before the
       // guard further down that skips lines outside a template body.
       const dat = DATA_RE.exec(line);
@@ -410,8 +455,18 @@ export function inspectDar(path: string): DarInfo {
         if (/^[a-z][A-Za-z0-9_']*(\s*,\s*[a-z][A-Za-z0-9_']*)*$/.test(names))
           open.signatories = names.split(",").map((s) => s.trim());
       }
-      const lit = /\bid\s*=\s*"([^"]+)"/.exec(line);
-      if (lit && open.instrumentIdLiteral === undefined) open.instrumentIdLiteral = lit[1];
+      // `id = "Amulet"` or `id = amuletInstrumentIdName`. The second form is
+      // recorded as a reference and resolved once every source has been read,
+      // since the constant is often declared in another module.
+      const lit = /\bid\s*=\s*(?:"([^"]*)"|([a-z][A-Za-z0-9_']*))/.exec(line);
+      if (lit && open.instrumentIdLiteral === undefined && !instrumentRef.has(open.name)) {
+        if (lit[1] !== undefined) open.instrumentIdLiteral = lit[1];
+        else instrumentRef.set(open.name, lit[2]);
+      }
+      // `instrumentId = amuletInstrumentId dso` — the view delegates to a
+      // helper rather than naming the id, so record the helper to follow later.
+      const fn = /\binstrumentId\s*=\s*([a-z][A-Za-z0-9_']*)\b(?!\s*$)/.exec(line);
+      if (fn && !instrumentFn.has(open.name)) instrumentFn.set(open.name, fn[1]);
 
       const ch = CHOICE_RE.exec(line);
       if (ch) {
@@ -432,6 +487,26 @@ export function inspectDar(path: string): DarInfo {
       if (ctl && lastChoice && lastChoice.controllers.length === 0)
         lastChoice.controllers = ctl[1].split(",").map((s) => s.trim());
     }
+  }
+
+  // Resolve the instrument identifier now that every source has been read: the
+  // constant and the helper are frequently in a different module from the view.
+  for (const t of templates) {
+    if (t.instrumentIdLiteral !== undefined) continue;
+
+    // `id = <constant>` directly in the view.
+    const ref = instrumentRef.get(t.name);
+    if (ref !== undefined && constants.has(ref)) {
+      t.instrumentIdLiteral = constants.get(ref);
+      continue;
+    }
+
+    // `instrumentId = <helper> …`, where the helper's body names the id.
+    const fn = instrumentFn.get(t.name);
+    const body = fn === undefined ? undefined : bindingId.get(fn);
+    if (body?.lit !== undefined) t.instrumentIdLiteral = body.lit;
+    else if (body?.ref !== undefined && constants.has(body.ref))
+      t.instrumentIdLiteral = constants.get(body.ref);
   }
 
   // The dependency graph, read off the field types: a template holding a
