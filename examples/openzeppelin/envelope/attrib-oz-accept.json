@@ -1,0 +1,101 @@
+{
+  "_comment": [
+    "The SECOND transaction of a two-step transfer — the receiver accepting.",
+    "",
+    "This is the measurement the settlement-model comparison was missing. A",
+    "propose/accept transfer is not finished when TransferFactory_Transfer",
+    "commits: it has created a TransferInstruction and a locked holding, and the",
+    "receiver still has to accept. Comparing only the first transaction against a",
+    "direct completion therefore compares half of one thing against all of",
+    "another.",
+    "",
+    "Setup runs the two-step transfers so there is a pool of instructions to",
+    "accept, binding each created SimpleTransferInstruction by name. Each transfer",
+    "is paired with its own holding via [$i] so setup does not contend with",
+    "itself. The measured operation is the standard TransferInstruction_Accept,",
+    "submitted by the receiver, drawing a distinct instruction per in-flight",
+    "submission with [seq] since accepting is consuming.",
+    "",
+    "Add to attrib-oz-xfer.json (the first transaction, 13,955 B) to get the true",
+    "cost of a completed two-step transfer, and compare that against",
+    "attrib-oz-preapproved.json (15,689 B in one transaction)."
+  ],
+
+  "version": 1,
+  "parties": 6,
+  "roles": ["admin"],
+
+  "setup": [
+    {
+      "id": "factory",
+      "disclose": true,
+      "actAs": ["$role:admin"],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Rules:SimpleTokenRules",
+        "args": { "admin": "$role:admin", "supportedInstruments": ["SIMPLETOKEN"] }
+      }
+    },
+    {
+      "id": "holdings",
+      "count": 24,
+      "actAs": ["$role:admin", "$p0"],
+      "op": {
+        "kind": "create",
+        "template": "#simple-token:SimpleToken.Holding:SimpleHolding",
+        "args": {
+          "admin": "$role:admin",
+          "owner": "$p0",
+          "instrumentId": { "admin": "$role:admin", "id": "SIMPLETOKEN" },
+          "amount": "1000.0",
+          "meta": { "values": {} }
+        }
+      }
+    },
+    {
+      "_comment": "Two-step transfers, one per holding. `bind` picks the instruction out of what the choice created, since it also creates a locked holding.",
+      "id": "instructions",
+      "count": 24,
+      "bind": "SimpleTransferInstruction",
+      "_actAs": "The admin co-submits so the factory is visible: disclosure blobs are attached to MEASURED submissions, not setup ones, and the sender is not a stakeholder of the factory. This changes the setup transaction, which is not what is being measured.",
+      "actAs": ["$role:admin", "$p0"],
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "contract": "$ref:factory",
+        "choice": "TransferFactory_Transfer",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "transfer": {
+            "sender": "$p0",
+            "receiver": "$p1",
+            "amount": "1.0",
+            "instrumentId": { "admin": "$role:admin", "id": "SIMPLETOKEN" },
+            "requestedAt": "$now-60s",
+            "executeBefore": "$now+1h",
+            "inputHoldingCids": ["$ref:holdings[$i]"],
+            "meta": { "values": {} }
+          },
+          "extraArgs": { "context": { "values": {} }, "meta": { "values": {} } }
+        }
+      }
+    }
+  ],
+
+  "operations": [
+    {
+      "weight": 1,
+      "_comment": "The receiver accepts. Signatories are admin and sender with the receiver as observer, so no disclosure is needed.",
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction",
+        "contract": "$ref:instructions[seq]",
+        "choice": "TransferInstruction_Accept",
+        "args": {
+          "extraArgs": { "context": { "values": {} }, "meta": { "values": {} } }
+        }
+      },
+      "submit": { "actAs": ["$p1"] }
+    }
+  ]
+}

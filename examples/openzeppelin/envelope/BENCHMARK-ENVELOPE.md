@@ -130,20 +130,45 @@ receiver, so the sender cannot see it otherwise), and it runs a different code
 path from the self-transfer merge.
 
 **So on a single-transaction basis the direct path is more expensive than
-two-step, not less** — the opposite of what the proxy suggested.
+two-step** — the opposite of what the proxy suggested. But a two-step transfer
+is not finished when its first transaction commits, so the honest comparison is
+per *completed* transfer, and that needed the acceptance measuring too.
 
-That does not settle the comparison in the other direction either, because a
-two-step transfer is not finished: the receiver still has to accept, and that
-acceptance is a second transaction which has not been measured. If it costs more
-than 1,734 bytes — and a real transaction almost certainly does — two-step is
-still dearer per *completed* transfer. But "almost certainly" is not a
-measurement, and the honest position is that **the settlement-model comparison
-is open until the acceptance transaction is measured.**
+### Settled: measure both transactions
 
-What is now established is narrower and still useful: **disclosing an additional
-contract is expensive.** Whatever share of the 4,243 bytes is disclosure rather
-than code path, it is large enough that the number of contracts a design must
-disclose belongs in the same conversation as its stakeholder count.
+`attrib-oz-accept.json` runs the second half — the receiver exercising the
+standard `TransferInstruction_Accept` on instructions produced in setup. 16 of
+16 committed, no contention.
+
+| | envelope | at $60/MB |
+|---|---|---|
+| two-step, 1: `TransferFactory_Transfer` | 13,955 B | $0.7985 |
+| two-step, 2: `TransferInstruction_Accept` | 12,265 B | $0.7018 |
+| **two-step, completed transfer** | **26,220 B** | **$1.5003** |
+| **direct (preapproved), completed transfer** | **15,689 B** | **$0.8977** |
+
+**Propose/accept costs +10,531 bytes, or +$0.60 per completed transfer — 67%
+more than settling directly.**
+
+That is over four times the +2,509 B this document previously reported, and the
+earlier figure was wrong twice over: it counted only the first of the two
+transactions, and it used a proxy that understated the direct path. Both halves
+are now measured end to end.
+
+**One amortisation note that matters.** The direct path requires a
+`TransferPreapproval` to exist, and creating it is itself a transaction. But a
+preapproval is created once per receiver and reused for every subsequent
+transfer to them, whereas an acceptance is paid on every single transfer. So the
+gap above is the steady-state figure, and it widens rather than narrows with
+volume — the preapproval's cost is divided by the number of transfers it serves.
+
+### What this replaces
+
+The design rule stands and is now larger than first stated: **the settlement
+model is the expensive decision.** At 26,220 against 15,689 bytes, choosing
+propose/accept over preapproved direct settlement costs about 67% more per
+completed transfer — against a data-model difference between the two registries
+of 287 bytes, under 2%.
 
 ## What drives it: stakeholder count, linearly
 
