@@ -10,7 +10,7 @@ $ErrorActionPreference = "Continue"
 $repo = (Resolve-Path "$PSScriptRoot\..\..\..\..").Path
 $dar  = $env:CS_OZ_DAR
 $jdk  = $env:CS_JDK
-$out  = $PSScriptRoot
+$out  = $PSScriptRoot   # reports land next to this script
 
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 Set-Location $repo
