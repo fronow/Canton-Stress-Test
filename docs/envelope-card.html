@@ -63,36 +63,37 @@
     <span>Canton 3.4.11</span>
   </div>
 
-  <h1>The <em>settlement model</em> costs more than the data model.</h1>
-  <p class="lede">Canton meters traffic, so every transaction is paid for by the byte. Two
-  registries differ by 2,222 bytes on the same standard call — and <b>all of it is propose/accept
-  versus completing directly</b>. Their data models are within 287 bytes.</p>
+  <h1>Propose/accept costs <em>67% more</em> than settling directly.</h1>
+  <p class="lede">Canton meters traffic, so every transaction is paid for by the byte. A two-step
+  transfer is <b>two</b> transactions — and counting both puts it 10,531 bytes above a preapproved
+  direct one. The two registries' data models differ by 287.</p>
 
   <div class="row">
-    <div class="m"><div class="k">Two-step transfer</div><div class="v">13,955<s>B</s></div><div class="n">$0.7985 · instruction + locked holding</div></div>
-    <div class="m"><div class="k">Direct completion</div><div class="v">11,446<s>B</s></div><div class="n">$0.6549 — same registry, same code</div></div>
-    <div class="m"><div class="k">Propose/accept costs</div><div class="v">+2,509<s>B</s></div><div class="n">+$0.1436 per transfer</div></div>
-    <div class="m"><div class="k">Data-model gap</div><div class="v">287<s>B</s></div><div class="n">between the two registries</div></div>
+    <div class="m"><div class="k">Two-step, completed</div><div class="v">26,220<s>B</s></div><div class="n">$1.5003 · propose + accept</div></div>
+    <div class="m"><div class="k">Direct, completed</div><div class="v">15,689<s>B</s></div><div class="n">$0.8977 · one transaction</div></div>
+    <div class="m"><div class="k">Propose/accept costs</div><div class="v">+$0.60<s>/tx</s></div><div class="n">+10,531 B, +67%</div></div>
+    <div class="m"><div class="k">Data-model gap</div><div class="v">287<s>B</s></div><div class="n">under 2%, the other way</div></div>
   </div>
 
   <div class="split">
     <div class="panel">
-      <div class="pt"><b>Same call, same six parties, same single input</b><br>prepared-transaction size, priced at $60/MB</div>
+      <div class="pt"><b>Both halves measured, same registry</b><br>prepared-transaction size, priced at $60/MB</div>
       <table>
-        <tr><th>Registry</th><th>Path</th><th class="r">Envelope</th><th class="r">Cost</th></tr>
-        <tr><td>std-spike</td><td>cross-party</td><td class="r">11,733 B</td><td class="r">$0.6714</td></tr>
-        <tr><td>std-spike</td><td>direct</td><td class="r">11,733 B</td><td class="r">$0.6714</td></tr>
-        <tr><td>OpenZeppelin</td><td>two-step</td><td class="r">13,955 B</td><td class="r delta">$0.7985</td></tr>
-        <tr><td>OpenZeppelin</td><td>direct</td><td class="r">11,446 B</td><td class="r">$0.6549</td></tr>
+        <tr><th>Path</th><th>Transaction</th><th class="r">Envelope</th><th class="r">Cost</th></tr>
+        <tr><td>two-step</td><td>1 · propose</td><td class="r">13,955 B</td><td class="r">$0.7985</td></tr>
+        <tr><td>two-step</td><td>2 · accept</td><td class="r">12,265 B</td><td class="r">$0.7018</td></tr>
+        <tr><td><b>two-step</b></td><td><b>completed</b></td><td class="r"><b>26,220 B</b></td><td class="r delta"><b>$1.5003</b></td></tr>
+        <tr><td><b>direct</b></td><td><b>preapproved</b></td><td class="r"><b>15,689 B</b></td><td class="r"><b>$0.8977</b></td></tr>
       </table>
-      <p class="kicker">std-spike always completes, so its two paths are <b>byte-identical</b>.</p>
+      <p class="kicker">The gap <b>widens with volume</b>: a preapproval is created once per
+      receiver and reused, an acceptance is paid on every transfer.</p>
     </div>
 
     <div class="panel">
-      <div class="pt"><b>And this understates it</b><br>the second transaction is not counted</div>
-      <p class="kicker" style="margin-top:0">A two-step transfer is not finished. The receiver
-      still has to accept, which is <b>another transaction with its own envelope</b>. So +$0.14 is
-      the floor on what propose/accept costs, not the total.</p>
+      <div class="pt"><b>A correction, and it made the number bigger</b><br>this replaces an earlier +2,509 B</div>
+      <p class="kicker" style="margin-top:0">The first version of this card compared <b>half of a
+      two-step transfer against all of a direct one</b>, and reached the direct path by a
+      self-transfer proxy that understated it by 4,243 B. Both halves are now measured end to end.</p>
       <p class="kicker"><b>Measurable without a metered synchronizer.</b> CIP-0104 reads zero on a
       sandbox, but <b>prepare</b> interprets a command without submitting it and returns the
       prepared transaction. Its size is real on any participant.</p>
@@ -101,7 +102,7 @@
   </div>
 
   <div class="foot">
-    <span>Direct path isolated via self-transfer — a preapproved cross-party transfer was not measured</span>
+    <span>Measured through <b>TransferFactory_Transfer</b> and <b>TransferInstruction_Accept</b></span>
     <span>$60/MB is a quoted price, not a measured one · <b>lower bound</b></span>
   </div>
 
