@@ -5,7 +5,7 @@
 //     [--workload create|transfer | --workload-file <json>]
 //     [--model closed|open] [--concurrency n] [--rate ops/sec] [--max-in-flight n]
 //     [--ops n] [--warmup n] [--parties n] [--amount d] [--seed n]
-//     [--api <url>] [--sandbox] [--java-home <dir>]
+//     [--api <url>] [--sandbox] [--java-home <dir>]   JDK is auto-detected; the flag overrides
 //     [--transfer-choice <name>] [--new-owner-field <name>] [--create-args <json>]
 //     [--report <file>]
 //
@@ -69,6 +69,7 @@ import { formatSummary } from "./metrics.ts";
 import { renderPrometheus } from "./prometheus.ts";
 import { renderReport, renderSweep } from "./render.ts";
 import { startSandbox, type SandboxHandle } from "./sandbox.ts";
+import { explainNoJdk, resolveJdk } from "./jdk.ts";
 import { runSweep, type SweepReport } from "./sweep.ts";
 import { stdioWorkerMain } from "./worker.ts";
 import {
@@ -440,7 +441,17 @@ async function runMain(rest: string[]): Promise<void> {
   let sandbox: SandboxHandle | null = null;
   if (useSandbox) {
     console.error("starting sandbox…");
-    sandbox = await startSandbox({ dar: dar!, javaHome });
+    // Find a JDK rather than requiring one to be named. Canton cannot run on
+    // an Oracle build (BouncyCastle ships unsigned there), and Windows
+    // installers leave one on PATH — so falling through silently produced a
+    // failure deep inside the JVM that said nothing about JDKs.
+    const jdk = resolveJdk(javaHome);
+    if (!jdk.chosen) fail(explainNoJdk(jdk.considered));
+    if (!javaHome)
+      console.error(`  Using JDK ${jdk.chosen.home} (Java ${jdk.chosen.major}, found via ${jdk.chosen.via})`);
+    else if (!jdk.chosen.usable)
+      console.error(`  WARNING: ${jdk.chosen.home} — ${jdk.chosen.reason}. Continuing because you named it.`);
+    sandbox = await startSandbox({ dar: dar!, javaHome: jdk.chosen.home });
     api = sandbox.apiUrl;
     endpoints = [api];
     console.error(`sandbox ready at ${api}`);

@@ -64,7 +64,7 @@ the proven ledger client + sandbox manager from `../tool`.
 For a Canton Network Token Standard registry there is nothing to configure:
 
 ```
-node src/cli.ts <registry.dar> --java-home <openjdk>
+node src/cli.ts <registry.dar>
 ```
 
 It reads the DAR, finds the templates implementing `Holding` and
@@ -73,6 +73,7 @@ the question rather than reporting percentiles:
 
 ```
   Reading simple-token-0.1.0.dar … simple-token 0.1.0, 7 templates
+  Using JDK /opt/temurin-21 (Java 21, found via installed)
   Measuring TransferFactory_Transfer on SimpleTokenRules … Token Standard registry
   Test data 480 × SimpleHolding, 6 parties, instrument "SIMPLETOKEN"
 
