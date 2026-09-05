@@ -149,25 +149,26 @@ solved in `../tool`.
 Any Canton app with DARs and a reachable participant — the market is broad:
 
 - **CIP-0056 Token Standard implementations** — transfer throughput, allocation
-  and registry contention (the many token proposals: #580, #453, #267, #232…).
-- **daml-finance-based apps** — settlement, holdings, DvP throughput.
-- **Splice / Canton Coin** flows.
-- **The DeFi cohort** that dominates the dev fund — DEXes, perps, lending,
-  payment streaming (#528, #303, #170, #73, #416…) all need latency/throughput
-  validation before institutional use.
-- **The reference wallet / quickstart** as easy first targets.
-- Our own `../tool/examples/sample-token` as the bundled smoke target.
+  and registry contention. These need no configuration at all: the registry is
+  read out of the DAR.
+- **Settlement and custody apps** — holdings, DvP, multi-step workflows, where
+  the interesting question is which contract serialises the flow.
+- **Wallets and payment apps**, where input selection governs the achievable
+  rate and traffic cost governs the bill.
+- **Anything else with a DAR**, via a generated starting workload.
 
-## 8. Relationship to existing tools (checked against the full dev-fund set)
+## 8. Scope, and what this is not
 
-- **daml-fuzz #52 / DamlCov #323** — correctness & coverage. Different axis
-  (does it break? / is it covered?) vs. (how fast? where does it degrade?).
-  Complementary, not competing.
-- **#379 Transaction Profiler** — _analyses existing_ transactions; canton-stress
-  _generates_ load. Adjacent, distinct.
-- **DA scalability/performance (accepted)** — **core-protocol** performance. This
-  must be positioned strictly as **app-developer tooling**, not protocol work,
-  to avoid overlap. (This is the main positioning risk.)
+- **Correctness and coverage are a different axis.** Property-based testing asks
+  whether a sequence breaks an invariant; coverage asks what was exercised. This
+  asks how fast it runs, where it degrades, and what it costs. Complementary
+  concerns, and this tool answers none of the first two.
+- **Protocol, synchronizer and node performance are out of scope.** Those belong
+  to Digital Asset. Everything here is the layer above: whether a given
+  application is fast enough on the network as it stands.
+- **Post-hoc analysis of transactions that already ran is a different job.** This
+  generates load and measures what happens, rather than explaining a transaction
+  after the fact.
 
 ## 9. Interface: terminal-first, with a generated visual report
 
