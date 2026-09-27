@@ -324,6 +324,27 @@ test("a worker command that cannot start is reported, not thrown", async () => {
   assert.equal(part.results.length, 0);
 });
 
+test("a worker that dies between ready and go is reported, not a crash", async () => {
+  // Each worker reports ready and exits without reading stdin, so the start
+  // barrier's write lands on a closed pipe. Node emits that EPIPE as an 'error'
+  // event on stdin; unhandled, it killed the coordinator in ~1 run in 3. Ten
+  // workers make the race near-certain to be hit on every run.
+  const job = {
+    api: "http://127.0.0.1:1",
+    workload: { parties: 1, setup: [], operations: [{ weight: 1, op: { kind: "create" as const, template: "M:T", args: {} } }] },
+    model: { kind: "closed" as const, ops: 1, warmup: 0, concurrency: 1 },
+    state: { parties: ["p"], roles: {}, bindings: {} },
+    runId: "x",
+    seed: 1,
+    amount: "1.0",
+    noTraffic: true,
+  };
+  const jobs = Array.from({ length: 10 }, (_, workerIndex) => ({ ...job, workerIndex }));
+  const parts = await runWorkersVia(jobs, "node test/fixtures/die-after-ready.cjs", { timeoutMs: 30_000 });
+  assert.equal(parts.length, 10);
+  for (const p of parts) assert.ok(p.error, `worker ${p.workerIndex} should be reported as failed`);
+});
+
 test("CAPPED samples still yield exact totals and correct percentiles", () => {
   // The institutional-scale path: a worker runs millions of operations,
   // returns a bounded sample for attribution, and describes the full

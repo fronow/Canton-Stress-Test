@@ -362,6 +362,38 @@ export async function runWorkers(
   return jobs.map((j) => results.get(j.workerIndex)!);
 }
 
+/**
+ * Send a protocol message to a worker without letting a dead pipe throw.
+ *
+ * A worker whose command does not exist has already exited by the time the
+ * first write happens, and Node can raise EPIPE synchronously from `write()`.
+ * Unguarded, that escapes the caller and takes down a run that is supposed to
+ * report the worker as failed and carry on with the rest. (The same EPIPE is
+ * also emitted as an 'error' event on stdin; runWorkersVia listens for that.)
+ *
+ * Both the synchronous throw and the asynchronous callback are routed to the
+ * same handler, since either can fire depending on how far the child got.
+ */
+function writeToWorker(
+  child: { stdin: NodeJS.WritableStream },
+  msg: unknown,
+  onFail: (reason: string) => void,
+): void {
+  let reported = false;
+  const report = (e: unknown) => {
+    if (reported) return;
+    reported = true;
+    onFail(e instanceof Error ? e.message : String(e));
+  };
+  try {
+    child.stdin.write(JSON.stringify(msg) + "\n", (err) => {
+      if (err) report(err);
+    });
+  } catch (e) {
+    report(e);
+  }
+}
+
 /** Run workers as an ARBITRARY COMMAND speaking line-delimited JSON on stdio.
  *
  * This is what makes the workers location-independent: the coordinator does not
@@ -438,6 +470,15 @@ export async function runWorkersVia(
       onReady[i]();
       onResult[i]();
     });
+    // A dead pipe ALSO surfaces as an 'error' event on stdin, independently of
+    // the write callback. With no listener, Node treats it as unhandled and
+    // kills the coordinator — seen when a worker exits between ready and go.
+    child.stdin.on("error", (e) => {
+      if (state.result) return;
+      state.result = failed(job, `worker command failed: ${e.message}`);
+      onReady[i]();
+      onResult[i]();
+    });
     child.once("exit", (code) => {
       if (!state.result) {
         state.result = failed(job, `worker command exited (code ${code}) without a result`);
@@ -445,7 +486,17 @@ export async function runWorkersVia(
         onResult[i]();
       }
     });
-    child.stdin.write(JSON.stringify({ job }) + "\n");
+    // Writing to a worker that failed to start throws EPIPE, and it throws
+    // SYNCHRONOUSLY — before the 'error' handler above ever fires — so an
+    // unguarded write here escapes runWorkersVia entirely and takes the run
+    // down. A worker that cannot start has to be reported as a failed job, not
+    // as an exception: that is the whole point of the surrounding machinery.
+    writeToWorker(child, { job }, (e) => {
+      if (state.result) return;
+      state.result = failed(job, `worker command failed: ${e}`);
+      onReady[i]();
+      onResult[i]();
+    });
   });
 
   const timeoutMs = o.timeoutMs ?? 30 * 60_000;
@@ -453,7 +504,16 @@ export async function runWorkersVia(
 
   await Promise.race([Promise.all(readyPromises), deadline]);
   o.onEvent?.(`all ${children.length} workers ready — starting together`);
-  for (const { child, state } of children) if (!state.result) child.stdin.write(JSON.stringify({ go: true }) + "\n");
+  for (const { job, child, state } of children) {
+    if (state.result) continue;
+    // Same hazard as the job write: a worker can die between reporting ready
+    // and the barrier releasing.
+    writeToWorker(child, { go: true }, (e) => {
+      if (state.result) return;
+      state.result = failed(job, `worker command failed at the start barrier: ${e}`);
+      onResult[children.findIndex((c) => c.child === child)]();
+    });
+  }
 
   await Promise.race([Promise.all(resultPromises), deadline]);
   for (const { child } of children) if (child.exitCode === null) child.kill();
