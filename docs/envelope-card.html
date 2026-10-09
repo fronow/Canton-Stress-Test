@@ -69,9 +69,9 @@
   direct one. The two registries' data models differ by 287.</p>
 
   <div class="row">
-    <div class="m"><div class="k">Two-step, completed</div><div class="v">26,220<s>B</s></div><div class="n">$1.5003 · propose + accept</div></div>
-    <div class="m"><div class="k">Direct, completed</div><div class="v">15,689<s>B</s></div><div class="n">$0.8977 · one transaction</div></div>
-    <div class="m"><div class="k">Propose/accept costs</div><div class="v">+$0.60<s>/tx</s></div><div class="n">+10,531 B, +67%</div></div>
+    <div class="m"><div class="k">Two-step, completed</div><div class="v">26,220<s>B</s></div><div class="n">$1.5732 · propose + accept</div></div>
+    <div class="m"><div class="k">Direct, completed</div><div class="v">15,689<s>B</s></div><div class="n">$0.9413 · one transaction</div></div>
+    <div class="m"><div class="k">Propose/accept costs</div><div class="v">+$0.63<s>/tx</s></div><div class="n">+10,531 B, +67%</div></div>
     <div class="m"><div class="k">Data-model gap</div><div class="v">287<s>B</s></div><div class="n">under 2%, the other way</div></div>
   </div>
 
@@ -80,10 +80,10 @@
       <div class="pt"><b>Both halves measured, same registry</b><br>prepared-transaction size, priced at $60/MB</div>
       <table>
         <tr><th>Path</th><th>Transaction</th><th class="r">Envelope</th><th class="r">Cost</th></tr>
-        <tr><td>two-step</td><td>1 · propose</td><td class="r">13,955 B</td><td class="r">$0.7985</td></tr>
-        <tr><td>two-step</td><td>2 · accept</td><td class="r">12,265 B</td><td class="r">$0.7018</td></tr>
-        <tr><td><b>two-step</b></td><td><b>completed</b></td><td class="r"><b>26,220 B</b></td><td class="r delta"><b>$1.5003</b></td></tr>
-        <tr><td><b>direct</b></td><td><b>preapproved</b></td><td class="r"><b>15,689 B</b></td><td class="r"><b>$0.8977</b></td></tr>
+        <tr><td>two-step</td><td>1 · propose</td><td class="r">13,955 B</td><td class="r">$0.8373</td></tr>
+        <tr><td>two-step</td><td>2 · accept</td><td class="r">12,265 B</td><td class="r">$0.7359</td></tr>
+        <tr><td><b>two-step</b></td><td><b>completed</b></td><td class="r"><b>26,220 B</b></td><td class="r delta"><b>$1.5732</b></td></tr>
+        <tr><td><b>direct</b></td><td><b>preapproved</b></td><td class="r"><b>15,689 B</b></td><td class="r"><b>$0.9413</b></td></tr>
       </table>
       <p class="kicker">The gap <b>widens with volume</b>: a preapproval is created once per
       receiver and reused, an acceptance is paid on every transfer.</p>

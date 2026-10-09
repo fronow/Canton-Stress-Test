@@ -263,6 +263,9 @@ export interface TrafficReport {
   usdPerMb?: number;
 }
 
+/** Bytes in the megabyte that `--traffic-price` (USD per MB) refers to. */
+export const BYTES_PER_MB = 1_000_000;
+
 /** Combine per-operation cost estimates with what the run actually committed. */
 export function summarizeTraffic(
   estimates: TrafficEstimate[],
@@ -302,7 +305,11 @@ export function summarizeTraffic(
     // because the price varies by network and inventing a default would put an
     // unsourced number in a report people quote.
     if (usdPerMb !== undefined && usdPerMb > 0) {
-      const mb = preparedForRun / (1024 * 1024);
+      // Network traffic is priced per DECIMAL megabyte: the draft Universal
+      // Burn CIP prices a "typical" 16.67 kB transaction at $1 at $60/MB,
+      // i.e. 1,000,000 / 60 bytes. Dividing by 1024² read every figure ~4.9%
+      // low against the price the network actually charges.
+      const mb = preparedForRun / BYTES_PER_MB;
       report.usdPerMb = usdPerMb;
       report.estimatedCostUsd = mb * usdPerMb;
       report.costPerOpUsd = committed > 0 ? (mb * usdPerMb) / committed : 0;

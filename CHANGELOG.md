@@ -9,6 +9,18 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **`--traffic-price` now prices per decimal megabyte (1,000,000 bytes)**, the
+  convention the network's own pricing uses (a typical 16.67 kB transaction is
+  $1 at $60/MB). It previously divided by 1,048,576, which put every dollar
+  figure about 4.9% low. Byte counts were unaffected. Published dollar figures
+  in the benchmarks and cards have been recomputed from their byte counts.
+- **A `--worker-cmd` worker that exits between ready and go** is now reported
+  as a failed worker instead of crashing the coordinator with EPIPE.
+
 ## [1.0.0] — 2026-08-01 — S6 completed: real multi-participant topology
 
 The S1–S9 roadmap is complete.

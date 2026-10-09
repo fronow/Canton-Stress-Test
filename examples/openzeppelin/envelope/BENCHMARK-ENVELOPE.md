@@ -35,9 +35,9 @@ pool. The only thing that differs is the registry.
 
 | registry | prepared transaction | at $60/MB |
 |---|---|---|
-| std-spike (minimal, ~90 LOC) | **11,733 B** | **$0.6714** per transfer |
-| OpenZeppelin `canton-token-template` | **13,955 B** | **$0.7985** per transfer |
-| difference | **+2,222 B** | **+$0.127** per transfer, +18.9% |
+| std-spike (minimal, ~90 LOC) | **11,733 B** | **$0.7040** per transfer |
+| OpenZeppelin `canton-token-template` | **13,955 B** | **$0.8373** per transfer |
+| difference | **+2,222 B** | **+$0.133** per transfer, +18.9% |
 
 ### This number does not move
 
@@ -59,7 +59,7 @@ transaction, for the life of the registry.
 
 Illustrative arithmetic, with its assumptions stated: at Kevin's observed
 network volume of 34K–67K transactions a day, a 2,222-byte difference at $60/MB
-works out to roughly **$4,300–$8,500 a day**, or **$1.6M–$3.1M a year**, for
+works out to roughly **$4,500–$8,900 a day**, or **$1.7M–$3.3M a year**, for
 what is otherwise the same standard transfer.
 
 Treat that as a sense of scale, not a bill. It assumes that volume flows through
@@ -83,10 +83,10 @@ complete immediately) separates the two effects:
 
 | registry | path | envelope | at $60/MB |
 |---|---|---|---|
-| std-spike | cross-party | 11,733 B | $0.6714 |
-| std-spike | direct | 11,733 B | $0.6714 |
-| OpenZeppelin | two-step | 13,955 B | $0.7985 |
-| OpenZeppelin | **direct** | **11,446 B** | **$0.6549** |
+| std-spike | cross-party | 11,733 B | $0.7040 |
+| std-spike | direct | 11,733 B | $0.7040 |
+| OpenZeppelin | two-step | 13,955 B | $0.8373 |
+| OpenZeppelin | **direct** | **11,446 B** | **$0.6868** |
 
 std-spike is byte-identical on both paths, because it always completes — which
 is a useful control: it shows the difference is not an artifact of self-transfer.
@@ -97,13 +97,13 @@ three — costs it nothing measurable. The entire 2,222-byte gap, and 287 bytes
 beyond it, is the settlement model:
 
 ```
-propose/accept vs direct completion:  +2,509 B  =  +$0.1436 per transfer
-data model, one registry vs another:    −287 B  =  −$0.0164 per transfer
+propose/accept vs direct completion:  +2,509 B  =  +$0.1505 per transfer
+data model, one registry vs another:    −287 B  =  −$0.0172 per transfer
 ```
 
 **And this understates propose/accept**, because a two-step transfer is not
 finished. The receiver still has to accept, which is a second transaction with
-its own envelope. $0.14 is the floor on what the pattern costs, not the total.
+its own envelope. $0.15 is the floor on what the pattern costs, not the total.
 
 The design rule that falls out: **choosing propose/accept over direct completion
 is the expensive decision, and it is an order of magnitude more expensive than
@@ -119,9 +119,9 @@ materially different:**
 
 | path | envelope | at $60/MB |
 |---|---|---|
-| self-transfer *(the proxy)* | 11,446 B | $0.6549 |
-| two-step (propose/accept) | 13,955 B | $0.7985 |
-| **preapproved cross-party direct** | **15,689 B** | **$0.8977** |
+| self-transfer *(the proxy)* | 11,446 B | $0.6868 |
+| two-step (propose/accept) | 13,955 B | $0.8373 |
+| **preapproved cross-party direct** | **15,689 B** | **$0.9413** |
 
 A real preapproved transfer is **4,243 bytes heavier than the proxy**, for two
 reasons that cannot be separated by this measurement alone: it discloses a
@@ -142,12 +142,12 @@ standard `TransferInstruction_Accept` on instructions produced in setup. 16 of
 
 | | envelope | at $60/MB |
 |---|---|---|
-| two-step, 1: `TransferFactory_Transfer` | 13,955 B | $0.7985 |
-| two-step, 2: `TransferInstruction_Accept` | 12,265 B | $0.7018 |
-| **two-step, completed transfer** | **26,220 B** | **$1.5003** |
-| **direct (preapproved), completed transfer** | **15,689 B** | **$0.8977** |
+| two-step, 1: `TransferFactory_Transfer` | 13,955 B | $0.8373 |
+| two-step, 2: `TransferInstruction_Accept` | 12,265 B | $0.7359 |
+| **two-step, completed transfer** | **26,220 B** | **$1.5732** |
+| **direct (preapproved), completed transfer** | **15,689 B** | **$0.9413** |
 
-**Propose/accept costs +10,531 bytes, or +$0.60 per completed transfer — 67%
+**Propose/accept costs +10,531 bytes, or +$0.63 per completed transfer — 67%
 more than settling directly.**
 
 That is over four times the +2,509 B this document previously reported, and the
@@ -181,12 +181,12 @@ payload**. Nothing else varies.
 
 | observers | informees | prepared bytes | at $60/MB |
 |---|---|---|---|
-| 1 | 2 | 1,056 | $0.0604 |
-| 2 | 3 | 1,233 | $0.0706 |
-| 4 | 5 | 1,581 | $0.0905 |
-| 8 | 9 | 2,277 | $0.1303 |
-| 16 | 17 | 3,681 | $0.2106 |
-| 32 | 33 | 6,497 | $0.3718 |
+| 1 | 2 | 1,056 | $0.0634 |
+| 2 | 3 | 1,233 | $0.0740 |
+| 4 | 5 | 1,581 | $0.0949 |
+| 8 | 9 | 2,277 | $0.1366 |
+| 16 | 17 | 3,681 | $0.2209 |
+| 32 | 33 | 6,497 | $0.3898 |
 
 It is linear, and unusually cleanly so:
 
@@ -198,11 +198,11 @@ Residuals across the whole 32-fold range: **+2, +4, +1, −5, −5, +3 bytes.** 
 increment measured between each adjacent pair is 177, 174, 174, 175.5, 176
 B/observer — the same number every time.
 
-**At $60/MB, 175.5 bytes is $0.0100. Each additional stakeholder costs almost
+**At $60/MB, 175.5 bytes is $0.0105. Each additional stakeholder costs almost
 exactly one cent per transaction.**
 
 That is a design rule an author can act on. Adding one observer to a contract
-that sees 50,000 transactions a day costs roughly **$500 a day, $180K a year**,
+that sees 50,000 transactions a day costs roughly **$530 a day, $190K a year**,
 for that one decision — and it is invisible at design time today.
 
 ### The slope is NOT a constant — it depends on the transaction
@@ -226,8 +226,8 @@ transfer:  9,110 + 437.8 × N   residuals ±12 B
 ```
 
 Both linear, both to within a handful of bytes over a sixteen-fold range — but
-**a stakeholder costs 2.5× more on a transfer than on a create**: $0.0251
-against $0.0100 at $60/MB.
+**a stakeholder costs 2.5× more on a transfer than on a create**: $0.0263
+against $0.0105 at $60/MB.
 
 This matters more than it looks. The create-only figure was very nearly
 published as "about a cent per stakeholder", which would have been wrong by 150%
@@ -272,6 +272,13 @@ six-party population. That difference is still unattributed.
 - **$60/MB is quoted, not measured.** It is the price Kevin cites for MainNet
   extra traffic. The tool never assumes a price: `--traffic-price` is opt-in,
   and the price used is recorded beside the figure it produced.
+- **A megabyte here is 1,000,000 bytes.** That is how the network prices
+  traffic: the draft Universal Burn CIP puts a typical 16.67 kB transaction at
+  $1 at $60/MB, and Kevin's $2.13 for 35,542 B uses the same convention. Until
+  2026-10-09 the tool divided by 1,048,576, so the dollar figures in this
+  document were about 4.9% low. They have been recomputed from the byte counts,
+  which were exact and have not changed. Raw reports saved before that date
+  still carry the old `costPerOpUsd`; trust their `preparedBytes`.
 - **Single participant, in-memory, one laptop** — though unlike throughput and
   latency, that matters far less here, because the transaction's size is not a
   property of the machine interpreting it.

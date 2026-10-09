@@ -348,7 +348,7 @@ test("no price means a size and NO dollar figure", () => {
 });
 
 test("a price yields cost per operation, and reports the price used", () => {
-  const oneMb = 1024 * 1024;
+  const oneMb = 1_000_000;
   const r = summarizeTraffic(
     [{ operation: "M:T:Go", confirmationRequest: 0, confirmationResponse: 0, total: 0, preparedBytes: oneMb }],
     [opResult("M:T", "Go", "committed"), opResult("M:T", "Go", "committed")],
@@ -359,6 +359,18 @@ test("a price yields cost per operation, and reports the price used", () => {
   assert.equal(r?.costPerOpUsd, 60);
   // The assumption must travel with the number it produced.
   assert.equal(r?.usdPerMb, 60);
+});
+
+test("price is per DECIMAL megabyte, matching the network's own example", () => {
+  // The draft Universal Burn CIP: a typical 16.67 kB transaction costs about
+  // $1 at $60/MB. Pricing per 1024² bytes would put it at $0.95.
+  const r = summarizeTraffic(
+    [{ operation: "M:T:Go", confirmationRequest: 0, confirmationResponse: 0, total: 0, preparedBytes: 16_667 }],
+    [opResult("M:T", "Go", "committed")],
+    1000,
+    60,
+  );
+  assert.ok(Math.abs(r!.costPerOpUsd! - 1) < 0.001, `got ${r?.costPerOpUsd}`);
 });
 
 test("an estimate without preparedBytes reports no size at all", () => {
