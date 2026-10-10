@@ -1,0 +1,249 @@
+{
+  "model": "closed",
+  "parties": 6,
+  "ops": 10,
+  "summary": {
+    "ops": 10,
+    "committed": 10,
+    "contention": 0,
+    "rejected": 0,
+    "wallMs": 3603.023800000001,
+    "throughputPerSec": 2.775446556861489,
+    "attemptedPerSec": 2.775446556861489,
+    "contentionRate": 0,
+    "latency": {
+      "p50": 360.3868999999995,
+      "p90": 368.23449999999866,
+      "p95": 394.9904000000006,
+      "p99": 394.9904000000006,
+      "max": 394.9904000000006,
+      "mean": 360.24320000000006
+    },
+    "latencyCurve": [
+      {
+        "p": 50,
+        "ms": 360.3868999999995
+      },
+      {
+        "p": 75,
+        "ms": 361.9223000000002
+      },
+      {
+        "p": 90,
+        "ms": 368.23449999999866
+      },
+      {
+        "p": 95,
+        "ms": 394.9904000000006
+      },
+      {
+        "p": 99,
+        "ms": 394.9904000000006
+      },
+      {
+        "p": 99.9,
+        "ms": 394.9904000000006
+      }
+    ]
+  },
+  "instrumentation": {
+    "hotspots": [
+      {
+        "key": "002229d3736bfa121c7fce21c7baab7481bd7e54f933acf5c01081b6f8970ecf8fca1212201b3d1faabee6c37693f042250b606202e14aec756510b7186fc96034818a3d60",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 394.9904000000006,
+        "p99": 394.9904000000006,
+        "maxMs": 394.9904000000006,
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00fa90ba3e07348039b1f15b053725657bb04e91fffd5eb2116f44814166d08bceca121220d7e14bd8a3eb7affa7dffb6ad92cfe4b8a13b8af3faa14edc95ae91c6577b1c9",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.7606999999989,
+        "p99": 360.7606999999989,
+        "maxMs": 360.7606999999989,
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "0084ce60403c95316c8dec0b6fb287be8ab2a009fc04a84fbc554b80c8a0f77db8ca12122085a8a21c590caa04b97276820616390550182c3c056169389761f34a75c2e270",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 355.8760000000002,
+        "p99": 355.8760000000002,
+        "maxMs": 355.8760000000002,
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00701514f900627f21245bf73c1294ab6e134594b7692422edb8d3bcd142e9b8a5ca121220707fd34ae8dfceb87546c47c69756153eb192b2f5dd70fd517f552c2e0280e69",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 359.5491999999995,
+        "p99": 359.5491999999995,
+        "maxMs": 359.5491999999995,
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00eedb35ed9709645b9293cd5609080511d41999753d00a26727f5a9686c365e45ca121220b0410742967a58ec43519449e4ac4d6515a4d00a8f17e52ede0a4f89831651c7",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 368.23449999999866,
+        "p99": 368.23449999999866,
+        "maxMs": 368.23449999999866,
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "008423f18bfa4964734aad8194d2f82539e06d9504f3eedf3cd6649a148923448dca121220232b989664d44d5fa627d8d2e86ddc20c19cf6e8fc5523e3927a39cf29e67f61",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 324.7377000000015,
+        "p99": 324.7377000000015,
+        "maxMs": 324.7377000000015,
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00f76696faf1b0735657ff8adbbb6168da338604e00de647eab8f7c79e071e23c8ca1212205db701d9ae288e8860762f5c2f5d78a33a305d8e0b43bfe73ceb51788672062b",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 361.9223000000002,
+        "p99": 361.9223000000002,
+        "maxMs": 361.9223000000002,
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "001ad23f0321ebd87565046ff7c7be115f8e032bdf33707294a6c5012b953b77ceca1212202e548552dfa0fcbf390d311d9a847af0235fbff9405eea7268ce978c229930ba",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.6346000000012,
+        "p99": 360.6346000000012,
+        "maxMs": 360.6346000000012,
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00bac1d404b98bbe6a42e76c58d3eb714f1bdc6d8e9579bcdc5642bf840ee2a037ca1212203da3a73c128e9f2db50c1682f70cbc96fe97e37bbee17b4954a9cf5642223462",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 355.33970000000045,
+        "p99": 355.33970000000045,
+        "maxMs": 355.33970000000045,
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00636c051691d02713cddb01ab72d86d955f5ae07d7540b54dd5b61aa2f74fa9afca121220066125c5b2507a839a56ca36829c3d169d48f9e5162650d6f79c6f77455c81f1",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.3868999999995,
+        "p99": 360.3868999999995,
+        "maxMs": 360.3868999999995,
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction",
+        "role": "target",
+        "ubiquitous": false
+      }
+    ],
+    "byParty": [
+      {
+        "key": "cs-mv2kjsm8-p1::12201dbcaa9008659a44107dfaa935bb53a1ce506e2db2cbbe0b247941b3f1f7d937",
+        "ops": 10,
+        "committed": 10,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.3868999999995,
+        "p99": 394.9904000000006,
+        "maxMs": 394.9904000000006
+      }
+    ],
+    "byOperation": [
+      {
+        "key": "Splice.Api.Token.TransferInstructionV1:TransferInstruction:TransferInstruction_Accept",
+        "ops": 10,
+        "committed": 10,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.3868999999995,
+        "p99": 394.9904000000006,
+        "maxMs": 394.9904000000006
+      }
+    ],
+    "traffic": {
+      "perOperation": [
+        {
+          "operation": "Splice.Api.Token.TransferInstructionV1:TransferInstruction:TransferInstruction_Accept",
+          "confirmationRequest": 3672,
+          "confirmationResponse": 415,
+          "total": 4087,
+          "preparedBytes": 12260
+        }
+      ],
+      "totalForRun": 40870,
+      "perSecond": 11343.250077892904,
+      "unmetered": false,
+      "preparedBytesForRun": 122600,
+      "preparedBytesPerOp": 12260,
+      "usdPerMb": 60,
+      "estimatedCostUsd": 7.356,
+      "costPerOpUsd": 0.7356
+    },
+    "synchronizerId": "stressnet::1220b76bcd857e0a3af6ce1c2056ce25fe7383dc919bd568f6701270d0c231dd3957"
+  },
+  "setup": {
+    "steps": 3,
+    "submitted": 49,
+    "bindings": {
+      "factory": 1,
+      "holdings": 24,
+      "instructions": 24
+    }
+  },
+  "shape": {}
+}

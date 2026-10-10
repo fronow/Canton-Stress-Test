@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>canton-stress — billed traffic</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#0f1419;--body:#3c4753;--mute:#77828f;--line:#e4e8ed;--accent:#1c4ed8;
+        --bad:#b42318;--good:#0f7b4f;--track:#eef1f5}
+  body{width:1200px;height:760px;background:#fff;
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--body);-webkit-font-smoothing:antialiased;overflow:hidden}
+  .card{padding:40px 52px;height:100%;display:flex;flex-direction:column}
+
+  .eyebrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mute);
+           letter-spacing:.03em;margin-bottom:14px}
+  .eyebrow b{color:var(--ink);font-weight:640}
+  .dot{width:4px;height:4px;border-radius:50%;background:#c3cad3}
+
+  h1{font-size:34px;line-height:1.18;letter-spacing:-.022em;color:var(--ink);font-weight:690;
+     margin-bottom:10px}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{font-size:16.5px;line-height:1.5;color:var(--body);max-width:1080px;margin-bottom:18px}
+  .lede b{color:var(--ink);font-weight:650}
+
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  .m{border:1px solid var(--line);border-radius:10px;padding:15px 18px;background:#fbfcfd}
+  .m .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-weight:650}
+  .m .v{font-size:31px;line-height:1.1;color:var(--ink);font-weight:680;margin-top:8px;
+        letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .m .v s{text-decoration:none;font-size:15px;color:var(--mute);font-weight:600}
+  .m .n{font-size:12.5px;color:var(--mute);margin-top:4px}
+
+  .split{display:grid;grid-template-columns:1.05fr 1fr;gap:26px;flex:1;min-height:0}
+  .panel{border:1px solid var(--line);border-radius:10px;padding:18px 22px;background:#fbfcfd;
+         display:flex;flex-direction:column}
+  .pt{font-size:12.5px;color:var(--mute);margin-bottom:16px}
+  .pt b{color:var(--ink);font-weight:650;font-size:14px}
+
+  /* single-series horizontal bars, zero baseline, reference line for "typical" */
+  .bars{position:relative;display:flex;flex-direction:column;gap:20px;margin-top:6px;
+        padding-right:8px}
+  .bar .lab{display:flex;justify-content:space-between;font-size:13.5px;color:var(--ink);margin-bottom:6px}
+  .bar .lab span:last-child{font-variant-numeric:tabular-nums;font-weight:650}
+  .bar .lab small{color:var(--mute);font-size:12px;font-weight:500}
+  .track{position:relative;height:16px;background:var(--track);border-radius:3px}
+  .fill{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:0 4px 4px 0}
+  .ref{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px dashed #8a95a3}
+  .reflab{position:absolute;bottom:-34px;font-size:11.5px;color:var(--mute);white-space:nowrap;
+          transform:translateX(-100%);padding-right:6px;text-align:right;line-height:1.3}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td,th{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);font-weight:650}
+  td{font-variant-numeric:tabular-nums;color:var(--ink)}
+  th.r,td.r{text-align:right}
+  tr:last-child td{border-bottom:none}
+  td.x{color:var(--mute)}
+  .kicker{margin-top:auto;padding-top:12px;font-size:13px;line-height:1.5;color:var(--body)}
+  .kicker b{color:var(--ink);font-weight:650}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;
+        margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
+        font-size:12.5px;color:var(--mute)}
+  .foot b{color:var(--ink);font-weight:640}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="eyebrow">
+    <span>CIP-0056 Token Standard</span><span class="dot"></span>
+    <span><b>billed</b> by a metered synchronizer</span><span class="dot"></span>
+    <span>two participants · traffic control on</span><span class="dot"></span>
+    <span>Canton 3.4.11</span>
+  </div>
+
+  <h1>Measured on real billing, propose/accept costs <em>92% more</em>.</h1>
+  <p class="lede">Traffic control on, reading what the sequencer actually charged. The estimate matched the
+  bill; the bill was about <b>a third of the prepared size</b> I used before, so my earlier dollar
+  figures were ~3× too high. The settlement-model gap got bigger.</p>
+
+  <div class="row">
+    <div class="m"><div class="k">A transfer is billed</div><div class="v">~4.3<s> KB</s></div>
+      <div class="n">≈ 0.26 of the CIP's "typical" tx</div></div>
+    <div class="m"><div class="k">Propose/accept vs preapproved</div><div class="v">+92<s>%</s></div>
+      <div class="n">8,554 B vs 4,448 B, both completed</div></div>
+    <div class="m"><div class="k">Estimate vs actual bill</div><div class="v">≤ 4<s>% apart</s></div>
+      <div class="n">8 transaction shapes</div></div>
+    <div class="m"><div class="k">Prepared size vs bill</div><div class="v">~3<s>× over</s></div>
+      <div class="n">not a lower bound: corrected</div></div>
+  </div>
+
+  <div class="split">
+    <div class="panel">
+      <div class="pt"><b>Bytes billed per completed transfer</b><br>same OpenZeppelin registry · participants' share</div>
+      <div class="bars">
+        <div class="bar">
+          <div class="lab"><span>Propose + accept <small>(two transactions)</small></span><span>8,554 B</span></div>
+          <div class="track"><div class="fill" style="width:51.3%"></div>
+            <div class="ref" style="left:100%"></div></div>
+        </div>
+        <div class="bar">
+          <div class="lab"><span>Preapproved direct <small>(one transaction)</small></span><span>4,448 B</span></div>
+          <div class="track"><div class="fill" style="width:26.7%"></div>
+            <div class="ref" style="left:100%"><div class="reflab">CIP "typical" tx<br>16,667 B = $1</div></div></div>
+        </div>
+      </div>
+      <div class="kicker">The gap is the <b>second transaction</b>: a two-step transfer is not finished
+      until the receiver accepts, and that acceptance is paid on every transfer. A preapproval is
+      created once per receiver and reused.</div>
+    </div>
+
+    <div class="panel">
+      <div class="pt"><b>Prepared size vs what was billed</b><br>per transaction, bytes</div>
+      <table>
+        <tr><th>Transaction</th><th class="r">Prepared</th><th class="r">Billed</th><th class="r">Estimate</th></tr>
+        <tr><td>OZ propose</td><td class="r x">13,950</td><td class="r">4,317</td><td class="r">4,279</td></tr>
+        <tr><td>OZ accept</td><td class="r x">12,260</td><td class="r">4,237</td><td class="r">4,087</td></tr>
+        <tr><td>OZ preapproved</td><td class="r x">15,684</td><td class="r">4,448</td><td class="r">4,309</td></tr>
+        <tr><td>std-spike direct</td><td class="r x">11,728</td><td class="r">4,125</td><td class="r">4,061</td></tr>
+      </table>
+      <div class="kicker"><b>Stakeholders on nodes already involved cost almost nothing</b>:
+      2 → 16 on the same two participants added ~190 B in total. The next question is how the
+      bill grows with the number of <b>participants</b>.</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Measured through <b>TransferFactory_Transfer</b> and <b>TransferInstruction_Accept</b> · github.com/fronow/Canton-Stress-Test</span>
+    <span>Gross, before rewards · local network, not MainNet</span>
+  </div>
+
+</div>
+</body>
+</html>

@@ -210,9 +210,11 @@ lifecycle beyond allocation (`Allocation_ExecuteTransfer`).
   **Cost-per-transfer is no longer unanswered**, though. The prepared
   transaction's size is a real measurement on any participant, so
   `--traffic-price` gives a cost per operation without a metered synchronizer:
-  this registry is **13,955 B, about $0.84 per transfer** at $60/MB. It is a
-  lower bound — the sequenced confirmation request adds encrypted views per
-  informee. See [envelope/BENCHMARK-ENVELOPE.md](envelope/BENCHMARK-ENVELOPE.md).
+  this registry prepares to **13,955 B**. *Corrected 2026-10-10:* that is not
+  the bill. On a metered synchronizer the same transfer was billed **4,317 B,
+  about $0.26** at $60/MB; the prepared size overstates it about 3×. See
+  [../network/metered/METERED.md](../network/metered/METERED.md) and
+  [envelope/BENCHMARK-ENVELOPE.md](envelope/BENCHMARK-ENVELOPE.md).
 
 ## Reproducing
 

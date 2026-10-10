@@ -48,12 +48,61 @@ What this shows:
    counterparty paid 348–356 B per accept, and the estimate does not include
    that. A transaction's cost is spread over every participant that confirms
    it.
-3. **The prepared transaction is a lower bound**, 6–7% under the submitter's
-   bill here, and it leaves out the counterparty's share entirely. The gap will
-   be larger for transactions with more informees.
+3. **The prepared transaction is NOT a reliable proxy for the bill.** For this
+   small settlement accept it came out 6–7% under the submitter's bill. For
+   Token Standard transfers (next section) it came out about **3× over**. The
+   prepared transaction carries full copies of input and disclosed contracts,
+   uncompressed; the sequencer bills compressed, encrypted views. Use the
+   CIP-0104 estimate or the measured bill, not the prepared size.
 4. **Creates.** Each `PaymentOffer` create cost its submitter about 3,470 B,
    with 151 B to the mediator, and almost nothing to participant 2, which hosts
    only an observer and confirms nothing.
+
+## Reference table: Token Standard transfers, billed
+
+Same metered network, `measure-table.cjs`, 10 operations per case at
+concurrency 1. Bytes billed per committed transaction. "Typical" is the draft
+Universal Burn CIP's reference transaction, 16,667 B ($1 at $60/MB). Raw rows in
+`results/table-*.row.json`, combined in `results/workload-costs.json`
+(`build-table.cjs` regenerates both).
+
+| Case | Billed to participants | Mediator | Estimate (vs bill) | Prepared | Billed ÷ prepared | × typical | $ at list |
+|---|---|---|---|---|---|---|---|
+| OpenZeppelin two-step transfer, step 1 (propose) | 4,317 | 151 | 4,279 (−0.9%) | 13,950 | 0.31 | 0.26 | $0.259 |
+| OpenZeppelin two-step transfer, step 2 (accept) | 4,237 | 151 | 4,087 (−3.5%) | 12,260 | 0.35 | 0.25 | $0.254 |
+| OpenZeppelin preapproved direct transfer | 4,448 | 151 | 4,309 (−3.1%) | 15,684 | 0.28 | 0.27 | $0.267 |
+| std-spike direct transfer, 6 parties | 4,125 | 151 | 4,061 (−1.6%) | 11,728 | 0.35 | 0.25 | $0.247 |
+| std-spike transfer, 2 stakeholders over two participants | 4,011 | 151 | 3,980 (−0.8%) | 9,992 | 0.40 | 0.24 | $0.241 |
+| std-spike transfer, 4 stakeholders over two participants | 4,147 | 151 | 4,098 (−1.2%) | 10,860 | 0.38 | 0.25 | $0.249 |
+| std-spike transfer, 8 stakeholders over two participants | 4,116 | 151 | 4,134 (+0.4%) | 12,596 | 0.33 | 0.25 | $0.247 |
+| std-spike transfer, 16 stakeholders over two participants | 4,201 | 151 | 4,201 (0.0%) | 16,098 | 0.26 | 0.25 | $0.252 |
+
+What it says:
+
+- **A completed propose/accept transfer is billed 8,554 B against 4,448 B for
+  a preapproved one: +92%.** On prepared size the same comparison said +67%.
+  The settlement-model finding survives the switch to billed bytes and gets
+  stronger.
+- **The estimate is within 4% of the bill in every case**, slightly under in
+  most. On a metered synchronizer, `--traffic-price` should be fed from the
+  estimate, not from the prepared size.
+- **Stakeholders on participants that already take part cost almost nothing.**
+  2 → 16 stakeholders over the same two participants added ~190 B in total
+  (~14 B each), against ~437 B each on prepared size. Participant 2 hosted
+  half of them and paid nothing: observers do not confirm. The sequencer
+  delivers per participant, not per party, so the likely driver of the bill is
+  the number of PARTICIPANTS involved, and the confirmers among them. That is
+  untested here: this rig has only two participants.
+- **These are far below "typical".** A local transfer is about 0.25 of the
+  CIP's reference transaction. MainNet transactions observed by an operator ran
+  around 35.5 KB median, which fits transfers that involve many more
+  participants (and more confirmers) than a two-node test network.
+
+In the sweep only 5 of 10 transfers committed (the rest lost a race for a
+holding already spent in the same run). Failed ones are refused on the
+submitting participant before sequencing and are not billed: the 5-of-10 rows
+bill the same per transfer as the 10-of-10 single-participant row. The failure
+rate itself is high for a 60-holding pool and is being looked at separately.
 
 ## Two things found on the way
 
@@ -102,8 +151,8 @@ setup-only step and subtracted.
   Synchronizer. At this value the recipients term adds well under 1% for two
   recipients, but confirm it against MainNet's published synchronizer
   parameters before quoting absolute numbers.
-- **One simple transaction shape.** A two-party, two-participant accept. More
-  informees mean more encrypted views and more confirmers; that is the next
+- **Two participants only.** More
+  participants mean more recipients and more confirmers; that is the next
   measurement, not a conclusion drawn here.
 - **Background traffic exists.** Between runs each participant gained a few
   hundred bytes with no transactions running. Small against these deltas, but

@@ -1,0 +1,251 @@
+{
+  "model": "closed",
+  "parties": 6,
+  "ops": 10,
+  "summary": {
+    "ops": 10,
+    "committed": 10,
+    "contention": 0,
+    "rejected": 0,
+    "wallMs": 3666.5794000000005,
+    "throughputPerSec": 2.727337637908509,
+    "attemptedPerSec": 2.727337637908509,
+    "contentionRate": 0,
+    "latency": {
+      "p50": 360.53690000000097,
+      "p90": 391.2493999999988,
+      "p95": 413.78979999999865,
+      "p99": 413.78979999999865,
+      "max": 413.78979999999865,
+      "mean": 366.6001399999997
+    },
+    "latencyCurve": [
+      {
+        "p": 50,
+        "ms": 360.53690000000097
+      },
+      {
+        "p": 75,
+        "ms": 361.7680999999993
+      },
+      {
+        "p": 90,
+        "ms": 391.2493999999988
+      },
+      {
+        "p": 95,
+        "ms": 413.78979999999865
+      },
+      {
+        "p": 99,
+        "ms": 413.78979999999865
+      },
+      {
+        "p": 99.9,
+        "ms": 413.78979999999865
+      }
+    ]
+  },
+  "instrumentation": {
+    "hotspots": [
+      {
+        "key": "00d25f5ac85fa2b0fe06e4673f46ef97561dfab00095a82e981077049a121f5b3eca12122008a2409b198907695ee9110e056eaefa9dcea050ff9195eca02aaa79ffeb7cd0",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 391.2493999999988,
+        "p99": 391.2493999999988,
+        "maxMs": 391.2493999999988,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "00cf971ec154cdb0a675615642f130d79afbe32aa544940af20da6acadeedc4b31ca121220706ff749b91809d9db8e5a643c05a879d893186c22d6977f4e7121d6e05d6564",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 413.78979999999865,
+        "p99": 413.78979999999865,
+        "maxMs": 413.78979999999865,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "00263b330b5539b91b09ea0722b3d86e749f84526cae871c95cca027bc12eaaca8ca121220a3238a11e5723d9dfdf364e35c022a248c9f9095c1e32cbdda4845221d72c4fd",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 352.2714999999989,
+        "p99": 352.2714999999989,
+        "maxMs": 352.2714999999989,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "00d3cf2249ffd2119072725d07d750691fd74323cc4fb6d4a2b5dfc584a3f44a08ca121220e7d3896e8411014bc6c93bbc94c88e5b4bae7ec810bccba74062013dc6ebaf22",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 359.97210000000086,
+        "p99": 359.97210000000086,
+        "maxMs": 359.97210000000086,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "00a0357c80ec5602046cd2618995959e076aecb77beec7188eb9f116c559506e9bca1212206168e73d100decbaeb4c4c926f3bfa3995ad0c03645c9b58f7270955b9162d87",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 342.96509999999944,
+        "p99": 342.96509999999944,
+        "maxMs": 342.96509999999944,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "005486e597494323a510512cf2cc76c16e36bf860eeea602b62567335c3ecea2ceca121220922ac634d1ea0a3b022638d7d9cabec7d7fe1dd74b01a867391d561ecf16140c",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 361.60689999999886,
+        "p99": 361.60689999999886,
+        "maxMs": 361.60689999999886,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "00ff899ecd2321ae1e35c0df0a2144de375f38d9b78e9f647b45e71d8f8d25886dca121220c4c01c883c4eaf895b1a07be6010242875c910d88fe448d5adcf490c1a5a36b0",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.53690000000097,
+        "p99": 360.53690000000097,
+        "maxMs": 360.53690000000097,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "00a45c24bf6c9004dbbcc69e00e8f0c5b9352e681c371ca7835b7604fa59561038ca121220e244f51e199809ecc254070eed6c65981e75ccff8a9ef22ff28aa5170a86f94b",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 361.7312000000002,
+        "p99": 361.7312000000002,
+        "maxMs": 361.7312000000002,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "0010356edad9e82cbaadbc4e57708ddfa12720f5f5d33f02021f955b56568aee81ca121220565a397537d4a82b01c28ffb1e3c5da13ae5c44547d80fd1499f0d32b1337c40",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.1104000000014,
+        "p99": 360.1104000000014,
+        "maxMs": 360.1104000000014,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "00cd9ac8301ae8ca1ca401e70b6dee745ba83185a9101f44427eadaa688bb4f480ca1212205c4717ba3de3b6ae1f98b3d110ecc23dc92a1214a7276c76eb4f682414835c69",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 361.7680999999993,
+        "p99": 361.7680999999993,
+        "maxMs": 361.7680999999993,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      }
+    ],
+    "byParty": [
+      {
+        "key": "cs-mv2kicyb-p0::12201dbcaa9008659a44107dfaa935bb53a1ce506e2db2cbbe0b247941b3f1f7d937",
+        "ops": 10,
+        "committed": 10,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.53690000000097,
+        "p99": 413.78979999999865,
+        "maxMs": 413.78979999999865
+      }
+    ],
+    "byOperation": [
+      {
+        "key": "Splice.Api.Token.TransferInstructionV1:TransferFactory:TransferFactory_Transfer",
+        "ops": 10,
+        "committed": 10,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.53690000000097,
+        "p99": 413.78979999999865,
+        "maxMs": 413.78979999999865
+      }
+    ],
+    "traffic": {
+      "perOperation": [
+        {
+          "operation": "Splice.Api.Token.TransferInstructionV1:TransferFactory:TransferFactory_Transfer",
+          "confirmationRequest": 3864,
+          "confirmationResponse": 415,
+          "total": 4279,
+          "preparedBytes": 13950
+        }
+      ],
+      "totalForRun": 42790,
+      "perSecond": 11670.27775261051,
+      "unmetered": false,
+      "preparedBytesForRun": 139500,
+      "preparedBytesPerOp": 13950,
+      "usdPerMb": 60,
+      "estimatedCostUsd": 8.370000000000001,
+      "costPerOpUsd": 0.8370000000000001
+    },
+    "synchronizerId": "stressnet::1220b76bcd857e0a3af6ce1c2056ce25fe7383dc919bd568f6701270d0c231dd3957"
+  },
+  "setup": {
+    "steps": 2,
+    "submitted": 41,
+    "bindings": {
+      "factory": 1,
+      "holdings": 40
+    }
+  },
+  "shape": {
+    "pool": 40,
+    "inputs": 1
+  }
+}

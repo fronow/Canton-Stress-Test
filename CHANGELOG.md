@@ -35,6 +35,18 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   `examples/network/metered/` to read what the sequencer actually bills each
   node. First result: the CIP-0104 estimate is within 1% of the submitter's
   real bill, and the confirming counterparty pays too.
+- **A billed reference table** (`examples/network/metered/measure-table.cjs`,
+  `build-table.cjs`, results in `METERED.md`): Token Standard transfers on the
+  metered network, split by who pays. Card: `docs/billed-card.png`.
+
+### Corrected
+
+- **The prepared-transaction size is not a lower bound on the bill.** For
+  Token Standard transfers it overstated the billed bytes about 3×, so every
+  dollar figure derived from it was about 3× high. The benchmarks and both
+  cost cards now say so where the figures appear. The propose/accept finding
+  survives on billed bytes and grows (+92%, was +67%); the per-stakeholder
+  slope does not hold on the bill when stakeholders share participants.
 
 ## [1.0.0] — 2026-08-01 — S6 completed: real multi-participant topology
 

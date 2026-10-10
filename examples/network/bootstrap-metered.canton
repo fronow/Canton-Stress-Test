@@ -3,8 +3,9 @@
 // Run via: canton daemon -c two-participants.conf --bootstrap bootstrap-metered.canton
 //
 // Why: a plain sandbox has no traffic control, so the CIP-0104 estimate reads
-// zero and the only size the tool can report is the prepared transaction — a
-// lower bound. With traffic control on, the sequencer charges each member for
+// zero and the only size the tool can report is the prepared transaction, which
+// turned out NOT to track the bill (about 3x over for token transfers; see
+// metered/METERED.md). With traffic control on, the sequencer charges each member for
 // what it actually sends (EventCostCalculator in Canton 3.4.11):
 //
 //   cost = size + size × recipients × readVsWriteScalingFactor / 10,000

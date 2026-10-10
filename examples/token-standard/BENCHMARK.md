@@ -143,6 +143,8 @@ Vary the pool depth by editing the `holdings` step's `count` in the workload.
 
   **Cost per transfer is answered separately**, by measuring the prepared
   transaction's size, which is real on any participant: this registry is
-  **11,733 B, about $0.70 per transfer** at $60/MB. A lower bound, since the
-  sequenced request adds encrypted views per informee. See
+  **11,733 B** prepared. *Corrected 2026-10-10:* on a metered synchronizer the
+  same registry's transfer was billed **4,125 B, about $0.25** at $60/MB; the
+  prepared size overstates the bill about 3×
+  ([../network/metered/METERED.md](../network/metered/METERED.md)). See
   [../openzeppelin/envelope/BENCHMARK-ENVELOPE.md](../openzeppelin/envelope/BENCHMARK-ENVELOPE.md).

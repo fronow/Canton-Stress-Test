@@ -1,0 +1,19 @@
+{
+  "case": "std-direct",
+  "what": "std-spike direct transfer, 6 parties",
+  "committed": 10,
+  "ops": 10,
+  "billedPerOp": {
+    "MED::mediator1": 151,
+    "PAR::participant1": 4125,
+    "PAR::participant2": 0
+  },
+  "participantsTotal": 4125,
+  "estimate": {
+    "request": 3646,
+    "response": 415,
+    "total": 4061
+  },
+  "preparedBytes": 11728,
+  "failed": []
+}

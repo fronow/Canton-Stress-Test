@@ -1,0 +1,19 @@
+{
+  "case": "oz-preapproved",
+  "what": "OpenZeppelin preapproved direct transfer",
+  "committed": 10,
+  "ops": 10,
+  "billedPerOp": {
+    "MED::mediator1": 151,
+    "PAR::participant1": 4448,
+    "PAR::participant2": 0
+  },
+  "participantsTotal": 4448,
+  "estimate": {
+    "request": 3894,
+    "response": 415,
+    "total": 4309
+  },
+  "preparedBytes": 15684,
+  "failed": []
+}

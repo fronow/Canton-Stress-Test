@@ -1,0 +1,19 @@
+{
+  "case": "oz-accept",
+  "what": "OpenZeppelin two-step transfer, step 2 (accept)",
+  "committed": 10,
+  "ops": 10,
+  "billedPerOp": {
+    "MED::mediator1": 151,
+    "PAR::participant1": 4237,
+    "PAR::participant2": 0
+  },
+  "participantsTotal": 4237,
+  "estimate": {
+    "request": 3672,
+    "response": 415,
+    "total": 4087
+  },
+  "preparedBytes": 12260,
+  "failed": []
+}

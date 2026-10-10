@@ -193,7 +193,10 @@ of which this reports:
 - **What it costs** — CIP-0104 traffic estimation per operation and per second,
   taken out-of-band so it cannot perturb the run. Honest caveat: a sandbox has
   no traffic control, so it reports **UNMETERED** rather than a fake zero; real
-  figures need a traffic-metered synchronizer.
+  figures need a traffic-metered synchronizer. `examples/network/` boots one
+  in a single command, and [examples/network/metered/METERED.md](examples/network/metered/METERED.md)
+  measures what it bills: the estimate came within 4% of the real bill, while
+  the prepared-transaction size overstated it about 3× for token transfers.
 
 ## Gating CI, and getting results into your dashboards
 

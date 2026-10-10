@@ -10,6 +10,26 @@ that *"at these prices, envelope size dominates the economics of a registry long
 before latency does"* — median paid traffic ~35.5 KB per transaction, about
 **$2.13** at the current $60/MB extra-traffic price.
 
+> **Correction, 2026-10-10: measured on a metered synchronizer.** Everything
+> below uses the *prepared-transaction* size, which this document called a
+> lower bound on the bill. With traffic control on and the sequencer's own
+> counters read back ([../../network/metered/METERED.md](../../network/metered/METERED.md)),
+> the bill for these transfers is about **a third** of the prepared size:
+> 4,125–4,448 B billed against 11,728–15,684 B prepared. So the dollar figures
+> here are about **3× too high**. Two things change and one survives:
+>
+> - **Survives, and grows:** a completed propose/accept transfer is billed
+>   8,554 B against 4,448 B for a preapproved one, **+92%** (+67% on prepared
+>   size below).
+> - **Does not hold on the bill:** the per-stakeholder slope. 2 → 16
+>   stakeholders over the same two participants added ~190 B in total, not
+>   ~438 B each; a participant hosting only observers paid nothing.
+> - **Use the CIP-0104 estimate instead:** it came within 4% of the bill in
+>   every case measured.
+>
+> The measurements below are left as they were, so the correction can be
+> checked against them.
+
 ---
 
 ## The measurement, and why it was thought impossible
@@ -256,11 +276,14 @@ six-party population. That difference is still unattributed.
 
 ## Honest limits
 
-- **This is a lower bound, not the traffic bill.** The prepared transaction is
-  not the sequenced confirmation request, which additionally carries encrypted
-  views per informee. The metered figure will be larger. Ours are 2.6–3.1×
-  below Kevin's 35.5 KB MainNet median, which is the right direction and a
-  plausible multiplier — but that is consistency, not confirmation.
+- **This is not the traffic bill, and it is not a lower bound either.** This
+  section originally said the metered figure would be larger. Measured on a
+  metered synchronizer (see the correction at the top), the bill for these
+  transfers is about a third of the prepared size: the prepared transaction
+  carries full input and disclosed contracts, uncompressed, while the sequencer
+  bills compressed, encrypted views. The gap to Kevin's 35.5 KB MainNet median
+  is therefore not a multiplier on these numbers; it most likely reflects
+  MainNet transactions involving many more participants.
 - **The direct path was reached by self-transfer**, not by a preapproved
   cross-party transfer. Both complete in one transaction, but they are not the
   identical operation, and building a `TransferPreapproval` into the context

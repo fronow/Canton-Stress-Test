@@ -1,0 +1,19 @@
+{
+  "case": "std-spread-16",
+  "what": "std-spike transfer, 16 stakeholders over two participants",
+  "committed": 5,
+  "ops": 10,
+  "billedPerOp": {
+    "MED::mediator1": 151,
+    "PAR::participant1": 4201,
+    "PAR::participant2": -64
+  },
+  "participantsTotal": 4137,
+  "estimate": {
+    "request": 3786,
+    "response": 415,
+    "total": 4201
+  },
+  "preparedBytes": 16098,
+  "failed": []
+}
