@@ -1,0 +1,242 @@
+{
+  "model": "closed",
+  "parties": 4,
+  "ops": 60,
+  "summary": {
+    "ops": 60,
+    "committed": 50,
+    "contention": 10,
+    "rejected": 0,
+    "wallMs": 17765.7049,
+    "throughputPerSec": 2.8144112649310076,
+    "attemptedPerSec": 3.3772935179172094,
+    "contentionRate": 0.16666666666666666,
+    "latency": {
+      "p50": 352.6222000000016,
+      "p90": 361.20990000000165,
+      "p95": 362.72309999999925,
+      "p99": 374.04989999999816,
+      "max": 374.04989999999816,
+      "mean": 296.0701133333333
+    },
+    "latencyCurve": [
+      {
+        "p": 50,
+        "ms": 352.6222000000016
+      },
+      {
+        "p": 75,
+        "ms": 359.5182999999997
+      },
+      {
+        "p": 90,
+        "ms": 361.20990000000165
+      },
+      {
+        "p": 95,
+        "ms": 362.72309999999925
+      },
+      {
+        "p": 99,
+        "ms": 374.04989999999816
+      },
+      {
+        "p": 99.9,
+        "ms": 374.04989999999816
+      }
+    ]
+  },
+  "instrumentation": {
+    "hotspots": [
+      {
+        "key": "00385795d7b7f7c7b0e79d739c18c400dfae5df3893fc775dd434590afd47d91ffca121220d7c721b7176bc69942360abf3b513c4a225f38e673b16d5c60bf60314b3f9e42",
+        "ops": 3,
+        "committed": 1,
+        "contention": 2,
+        "rejected": 0,
+        "contentionRate": 0.6666666666666666,
+        "p50": 8.521500000002561,
+        "p99": 353.10050000000047,
+        "maxMs": 353.10050000000047,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00b03f415e47cd29af16d01918258072969a3a3a8f992454b2b52d4eaf8f7b64a3ca12122033deb2d2a502dade6f1c1f2bb152570f3859fbbb2af5924f6e8e9a7092bd37c5",
+        "ops": 3,
+        "committed": 1,
+        "contention": 2,
+        "rejected": 0,
+        "contentionRate": 0.6666666666666666,
+        "p50": 9.213999999999942,
+        "p99": 358.9545999999973,
+        "maxMs": 358.9545999999973,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "004cce3ac7308dd4d065e893ddfc5f34ec40c978fd6caf2cb24f9c23ad22e74cb6ca1212208394f51d9f36eb63b47d7187fa3e90f6511e9c5399440940b16e605556584e56",
+        "ops": 3,
+        "committed": 1,
+        "contention": 2,
+        "rejected": 0,
+        "contentionRate": 0.6666666666666666,
+        "p50": 8.810700000001816,
+        "p99": 356.5131999999976,
+        "maxMs": 356.5131999999976,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "008b345e13a38697f3507b64b15f4890dc96aaea562b017110b22c01bd679658bcca1212200b1f13893fde142f49db3e43b03478b9dfcc9586caf33a37e57bd4725f9e3e6a",
+        "ops": 2,
+        "committed": 1,
+        "contention": 1,
+        "rejected": 0,
+        "contentionRate": 0.5,
+        "p50": 7.940500000000611,
+        "p99": 301.21080000000075,
+        "maxMs": 301.21080000000075,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "003605d7443c1dc9a4838611b4f3b895cf2c1514610786423f37d6a586d515ee5fca121220ccfadf3b4d920d8643a6e86b6de3b57d8cad35411f4a82f6985ce1400ca4d566",
+        "ops": 2,
+        "committed": 1,
+        "contention": 1,
+        "rejected": 0,
+        "contentionRate": 0.5,
+        "p50": 11.048299999998562,
+        "p99": 358.27160000000003,
+        "maxMs": 358.27160000000003,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "0021c1ed6a1ee8e154464315be1ccdbf2bc0dbbcbc81a28bf7a945984588006278ca12122097e913f8e8f7d78fe8ee9600af08f52133e5ebb951b704288843627b8659b094",
+        "ops": 2,
+        "committed": 1,
+        "contention": 1,
+        "rejected": 0,
+        "contentionRate": 0.5,
+        "p50": 29.553400000000693,
+        "p99": 356.0629000000008,
+        "maxMs": 356.0629000000008,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00f87d9dd0398d34623bf468832344c0270c6887631ac10af1a46a02ba6dc40f7fca121220a7c0b35c9d1fd62a15af48a520c0ecdb593ac3c1299b621b89874d7eb7d3545e",
+        "ops": 2,
+        "committed": 1,
+        "contention": 1,
+        "rejected": 0,
+        "contentionRate": 0.5,
+        "p50": 9.627700000000914,
+        "p99": 358.66240000000107,
+        "maxMs": 358.66240000000107,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00fe63d4a9073ba667220db51dc95a4ed02ac9f61752b2079c7abf2b81dc1438f2ca1212201e5f17f34c70929f2e119f4b02999cc0f1743859d642d2fbdf8a92c014175162",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 359.0617999999995,
+        "p99": 359.0617999999995,
+        "maxMs": 359.0617999999995,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00a4c425677ab14fe122277bbf334633ec04361c97e86046d389ebae779c14e649ca1212209cb0d931f31eb13f1b3233b68a9b020924553c2130ab544f48d757187b3a7b69",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 348.790500000001,
+        "p99": 348.790500000001,
+        "maxMs": 348.790500000001,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "0069c9e8527e593690983c6e6215b731dfc8b24d19283a01a1292bf54abf8299c2ca121220d8f7f000a70e84ba1e87bcdb578626f354ccd1e861f1fb1a8743e3cbed1445ca",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 359.4966000000004,
+        "p99": 359.4966000000004,
+        "maxMs": 359.4966000000004,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      }
+    ],
+    "contentionConcentration": 0.2,
+    "byParty": [
+      {
+        "key": "cs-mv2i61z9-p1::12201a001a9a2d4af1ddf12c377ec1578b9cc155866ce56cefe23b843290ce63bf72",
+        "ops": 60,
+        "committed": 50,
+        "contention": 10,
+        "rejected": 0,
+        "contentionRate": 0.16666666666666666,
+        "p50": 352.6222000000016,
+        "p99": 374.04989999999816,
+        "maxMs": 374.04989999999816
+      }
+    ],
+    "byOperation": [
+      {
+        "key": "Settlement:PaymentOffer:Accept",
+        "ops": 60,
+        "committed": 50,
+        "contention": 10,
+        "rejected": 0,
+        "contentionRate": 0.16666666666666666,
+        "p50": 352.6222000000016,
+        "p99": 374.04989999999816,
+        "maxMs": 374.04989999999816
+      }
+    ],
+    "traffic": {
+      "perOperation": [],
+      "totalForRun": 0,
+      "perSecond": 0,
+      "unmetered": true,
+      "failed": [
+        {
+          "operation": "Settlement:PaymentOffer:Accept",
+          "error": "/v2/interactive-submission/prepare -> HTTP 400: {\"code\":\"FAILED_TO_PREPARE_TRANSACTION\",\"cause\":\"The participant failed to prepare the transaction: ParticipantAuthorizationError(PAR::participant1::122046f55659... does not host cs-mv2i61z9-p1::12201a001a9a2d4af1ddf12c377ec1578b9cc155866ce56cefe23b843290ce63bf72 or is not active.)\",\"correlationId\":null,\"traceId\":\"86e4a217e93fbf7492aa4a00ce193207\",\"context\":{\"participant\":\"'participant1'\",\"categor"
+        }
+      ]
+    },
+    "synchronizerId": "stressnet::122095eb8a72eff3cb7576afe92d566c486c75b4e98dcbe6db3bee858b5e160459fb",
+    "failureMode": "CONTRACT_NOT_FOUND (10×)"
+  },
+  "setup": {
+    "steps": 1,
+    "submitted": 150,
+    "bindings": {
+      "offers": 150
+    }
+  },
+  "shape": {}
+}

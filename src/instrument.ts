@@ -235,11 +235,19 @@ export interface TrafficEstimate {
   /** Prepared-transaction size in bytes — measurable without traffic control.
    * See TrafficCost.preparedBytes for what it is and is not. */
   preparedBytes?: number;
+  /** Why no estimate could be obtained for this operation. An entry carrying
+   * an error has zero in every numeric field and is never counted as a cost:
+   * it exists so the report says the estimate FAILED rather than going quiet. */
+  error?: string;
 }
 
 export interface TrafficReport {
   /** Per-operation estimates, sampled once each before the measured window. */
   perOperation: TrafficEstimate[];
+  /** Operations whose estimate failed, with the reason. Without this a failed
+   * prepare call left the report with no traffic section at all, which reads
+   * exactly like "nothing to report". */
+  failed?: { operation: string; error: string }[];
   /** Traffic units for the whole measured window (estimate × committed ops). */
   totalForRun: number;
   /** Traffic units per second at the achieved throughput. */
@@ -274,6 +282,10 @@ export function summarizeTraffic(
   usdPerMb?: number,
 ): TrafficReport | undefined {
   if (estimates.length === 0) return undefined;
+  const failed = estimates
+    .filter((e) => e.error !== undefined)
+    .map((e) => ({ operation: e.operation, error: e.error! }));
+  estimates = estimates.filter((e) => e.error === undefined);
   const byOp = new Map(estimates.map((e) => [e.operation, e]));
   let totalForRun = 0;
   let preparedForRun = 0;
@@ -298,6 +310,7 @@ export function summarizeTraffic(
     perSecond: secs > 0 ? totalForRun / secs : 0,
     unmetered: estimates.every((e) => e.total === 0),
   };
+  if (failed.length > 0) report.failed = failed;
   if (sawPrepared) {
     report.preparedBytesForRun = preparedForRun;
     report.preparedBytesPerOp = committed > 0 ? preparedForRun / committed : 0;
@@ -416,11 +429,16 @@ export function formatInstrumentation(i: Instrumentation): string {
     );
 
   if (i.traffic) {
-    out.push(
-      i.traffic.unmetered
-        ? "  traffic cost: UNMETERED on this synchronizer (no traffic control configured — a sandbox reports 0)"
-        : `  traffic cost: ${i.traffic.totalForRun} units for the run, ${r1(i.traffic.perSecond)}/s`,
-    );
+    // With every estimate failed there is no cost to describe — "UNMETERED"
+    // would claim something about the synchronizer that was never observed.
+    if (i.traffic.perOperation.length > 0)
+      out.push(
+        i.traffic.unmetered
+          ? "  traffic cost: UNMETERED on this synchronizer (no traffic control configured — a sandbox reports 0)"
+          : `  traffic cost: ${i.traffic.totalForRun} units for the run, ${r1(i.traffic.perSecond)}/s`,
+      );
+    for (const f of i.traffic.failed ?? [])
+      out.push(`  traffic estimate FAILED for ${f.operation}: ${f.error}`);
     // Envelope size is measurable even when the cost is not, which is the whole
     // reason it is reported separately from the CIP-0104 figure above.
     const t = i.traffic;

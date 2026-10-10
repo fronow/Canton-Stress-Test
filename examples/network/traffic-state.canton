@@ -1,0 +1,13 @@
+// Print the traffic each participant has actually been billed, as the
+// sequencer sees it. Read it before and after a run: the difference, divided
+// by committed transactions, is billed bytes per transaction.
+// Run via: canton run traffic-state.canton -c remote.conf
+
+val sync = sequencer1.synchronizer_id
+for (p <- Seq(participant1, participant2)) {
+  val s = p.traffic_control.traffic_state(sync)
+  println(
+    s"TRAFFIC ${p.name} extraConsumed=${s.extraTrafficConsumed.value} " +
+      s"baseRemainder=${s.baseTrafficRemainder.value} lastCost=${s.lastConsumedCost.value}"
+  )
+}

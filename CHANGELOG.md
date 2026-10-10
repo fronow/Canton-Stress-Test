@@ -20,6 +20,21 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   in the benchmarks and cards have been recomputed from their byte counts.
 - **A `--worker-cmd` worker that exits between ready and go** is now reported
   as a failed worker instead of crashing the coordinator with EPIPE.
+- **A failed traffic-cost estimate is reported, not dropped.** A refused
+  `prepare` call, or an unknown synchronizer, used to leave the report with no
+  traffic section at all. The reason is now printed in the text and HTML
+  reports.
+- **Cost is estimated on the participant that hosts the submitter.** Every
+  estimate went to the first participant, which refuses to prepare for a party
+  it does not host, so multi-participant runs never had a cost figure.
+
+### Added
+
+- **A metered network** (`examples/network/bootstrap-metered.canton`): the
+  two-participant network with traffic control on, booted in one command, plus
+  `examples/network/metered/` to read what the sequencer actually bills each
+  node. First result: the CIP-0104 estimate is within 1% of the submitter's
+  real bill, and the confirming counterparty pays too.
 
 ## [1.0.0] — 2026-08-01 — S6 completed: real multi-participant topology
 

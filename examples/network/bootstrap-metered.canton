@@ -1,0 +1,100 @@
+// The two-participant network WITH TRAFFIC CONTROL, so every sequenced message
+// is billed the way a production synchronizer bills it.
+// Run via: canton daemon -c two-participants.conf --bootstrap bootstrap-metered.canton
+//
+// Why: a plain sandbox has no traffic control, so the CIP-0104 estimate reads
+// zero and the only size the tool can report is the prepared transaction — a
+// lower bound. With traffic control on, the sequencer charges each member for
+// what it actually sends (EventCostCalculator in Canton 3.4.11):
+//
+//   cost = size + size × recipients × readVsWriteScalingFactor / 10,000
+//
+// The submitting participant pays for the confirmation request, and each
+// confirming participant pays for its own response.
+//
+// Settings, and why:
+// - maxBaseTrafficAmount = 0: no free base traffic, so every byte consumed
+//   shows up in extra_traffic_consumed and can be read back exactly.
+// - enforceRateLimiting = true, with a balance far larger than any test can
+//   spend set for every node. MEASURED 2026-10-10: with enforcement OFF the
+//   sequencer records no consumption at all — 150 committed transactions left
+//   every counter at zero. Enforcement plus a balance is also what production
+//   looks like: a validator buys traffic and spends it.
+// - readVsWriteScalingFactor = 4: ASSUMED to match the Global Synchronizer
+//   (Splice's default). Confirm against MainNet's published parameters before
+//   quoting absolute numbers; the recipients term is small at this value.
+
+import com.digitalasset.canton.config.NonNegativeDuration
+import com.digitalasset.canton.config.PositiveFiniteDuration
+import com.digitalasset.canton.config.RequireTypes.{NonNegativeLong, PositiveInt}
+import com.digitalasset.canton.admin.api.client.data.TrafficControlParameters
+
+bootstrap.synchronizer(
+  synchronizerName = "stressnet",
+  sequencers = Seq(sequencer1),
+  mediators = Seq(mediator1),
+  synchronizerOwners = Seq(sequencer1),
+  synchronizerThreshold = PositiveInt.one,
+  staticSynchronizerParameters =
+    com.digitalasset.canton.admin.api.client.data.StaticSynchronizerParameters.defaultsWithoutKMS(
+      com.digitalasset.canton.version.ProtocolVersion.latest
+    ),
+)
+
+val metered = TrafficControlParameters(
+  maxBaseTrafficAmount = NonNegativeLong.tryCreate(0L),
+  readVsWriteScalingFactor = PositiveInt.tryCreate(4),
+  maxBaseTrafficAccumulationDuration = PositiveFiniteDuration.ofSeconds(1),
+  setBalanceRequestSubmissionWindowSize = PositiveFiniteDuration.ofMinutes(5),
+  // Off while the nodes connect: they have no balance yet. Switched on below
+  // once every node holds one — the order that was verified live.
+  enforceRateLimiting = false,
+  baseEventCost = NonNegativeLong.tryCreate(0L),
+  freeConfirmationResponses = false,
+)
+
+sequencer1.topology.synchronizer_parameters.propose_update(
+  sequencer1.synchronizer_id,
+  _.copy(trafficControl = Some(metered)),
+)
+
+participant1.synchronizers.connect_local(sequencer1, alias = "stressnet")
+participant2.synchronizers.connect_local(sequencer1, alias = "stressnet")
+
+utils.retry_until_true(NonNegativeDuration.tryFromDuration(scala.concurrent.duration.Duration("60s"))) {
+  participant1.synchronizers.list_connected().nonEmpty &&
+  participant2.synchronizers.list_connected().nonEmpty
+}
+
+// Every node that sends to the sequencer needs traffic once enforcement is on —
+// the mediator included, or verdicts stop. Billed bytes are read from
+// extraTrafficConsumed, so the size of this balance never affects a result.
+Seq(participant1.id.member, participant2.id.member, mediator1.id.member).foreach(m =>
+  sequencer1.traffic_control.set_traffic_balance(m, PositiveInt.one, NonNegativeLong.tryCreate(10000000000L))
+)
+utils.retry_until_true(NonNegativeDuration.tryFromDuration(scala.concurrent.duration.Duration("60s"))) {
+  sequencer1.traffic_control
+    .traffic_state_of_members(Seq(participant1.id.member, participant2.id.member, mediator1.id.member))
+    .trafficStatesOrErrors
+    .values
+    .forall(_.exists(_.extraTrafficPurchased.value > 0))
+}
+
+sequencer1.topology.synchronizer_parameters.propose_update(
+  sequencer1.synchronizer_id,
+  _.copy(trafficControl = Some(metered.copy(enforceRateLimiting = true))),
+)
+utils.retry_until_true(NonNegativeDuration.tryFromDuration(scala.concurrent.duration.Duration("60s"))) {
+  sequencer1.topology.synchronizer_parameters
+    .get_dynamic_synchronizer_parameters(sequencer1.synchronizer_id)
+    .trafficControl
+    .exists(_.enforceRateLimiting)
+}
+
+println(
+  "=== TRAFFIC CONTROL: " +
+    sequencer1.topology.synchronizer_parameters
+      .get_dynamic_synchronizer_parameters(sequencer1.synchronizer_id)
+      .trafficControl
+)
+println("=== STRESSNET READY (METERED): participant1 + participant2 on synchronizer 'stressnet' ===")

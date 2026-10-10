@@ -455,7 +455,10 @@ export async function runMeasured(
   const trafficEstimates = o.noTraffic
     ? []
     : await estimateTraffic(
-        ctxs[0].api,
+        // Same routing rule as the measured submissions: a participant can
+        // only prepare for parties it hosts, so asking node 0 for an operation
+        // submitted on node 1 is refused (ParticipantAuthorizationError).
+        (actAs) => (actAs.length > 0 ? apis[hostIndex(actAs[0])] ?? ctxs[0].api : ctxs[0].api),
         workload,
         buildCtx,
         fallbackFor,
@@ -603,7 +606,7 @@ function startLagSampler(
 
 /** [S4] One CIP-0104 cost estimate per distinct operation in the mix. */
 async function estimateTraffic(
-  api: LedgerApi,
+  apiFor: (actAs: string[]) => LedgerApi,
   workload: Workload,
   buildCtx: BuildCtx,
   fallbackFor: (op: OpSpec) => string[],
@@ -614,7 +617,20 @@ async function estimateTraffic(
   // at all — which is how this was missed the first time.
   disclosed: DisclosedContract[] = [],
 ): Promise<TrafficEstimate[]> {
-  if (!api.estimateTrafficCost || !synchronizerId) return [];
+  const failure = (operation: string, error: string): TrafficEstimate => ({
+    operation,
+    confirmationRequest: 0,
+    confirmationResponse: 0,
+    total: 0,
+    error,
+  });
+  // A client that cannot estimate at all (a test double, say) has nothing to
+  // report — that is not a failure. Every participant uses the same client.
+  if (!apiFor([]).estimateTrafficCost) return [];
+  // Without a synchronizer id there is nothing to prepare against. Say so,
+  // rather than returning nothing and leaving the report silent about cost.
+  if (!synchronizerId)
+    return [failure("(all operations)", "could not determine the connected synchronizer")];
   const out: TrafficEstimate[] = [];
   const seen = new Set<string>();
   for (const w of workload.operations) {
@@ -624,13 +640,22 @@ async function estimateTraffic(
     const built = buildCommand(w.op, buildCtx);
     if (!built) continue;
     const { actAs } = submittersFor(w.op, w.submit, built.target, buildCtx, fallbackFor(w.op));
-    const cost = await api.estimateTrafficCost({
-      command: built.command,
-      actAs,
-      synchronizerId,
-      disclosedContracts: disclosed,
-    });
-    if (cost)
+    const api = apiFor(actAs);
+    let cost;
+    try {
+      cost = await api.estimateTrafficCost!({
+        command: built.command,
+        actAs,
+        synchronizerId,
+        disclosedContracts: disclosed,
+      });
+    } catch (e) {
+      // Never fail the run over cost, but never hide that it failed either.
+      out.push(failure(key, e instanceof Error ? e.message : String(e)));
+      continue;
+    }
+    if (!cost) out.push(failure(key, "the participant returned neither a cost estimate nor a prepared transaction"));
+    else
       out.push({
         operation: key,
         confirmationRequest: cost.confirmationRequest,

@@ -1,0 +1,247 @@
+{
+  "model": "closed",
+  "parties": 4,
+  "ops": 20,
+  "summary": {
+    "ops": 20,
+    "committed": 20,
+    "contention": 0,
+    "rejected": 0,
+    "wallMs": 7101.635699999999,
+    "throughputPerSec": 2.816252599383548,
+    "attemptedPerSec": 2.816252599383548,
+    "contentionRate": 0,
+    "latency": {
+      "p50": 358.20390000000043,
+      "p90": 366.21500000000015,
+      "p95": 367.1876000000011,
+      "p99": 367.65520000000106,
+      "max": 367.65520000000106,
+      "mean": 355.04642000000047
+    },
+    "latencyCurve": [
+      {
+        "p": 50,
+        "ms": 358.20390000000043
+      },
+      {
+        "p": 75,
+        "ms": 362.64380000000165
+      },
+      {
+        "p": 90,
+        "ms": 366.21500000000015
+      },
+      {
+        "p": 95,
+        "ms": 367.1876000000011
+      },
+      {
+        "p": 99,
+        "ms": 367.65520000000106
+      },
+      {
+        "p": 99.9,
+        "ms": 367.65520000000106
+      }
+    ]
+  },
+  "instrumentation": {
+    "hotspots": [
+      {
+        "key": "008bc7638a62c1360cda6957fc0ef8bf91f2c6bd217566dff44094dc2d298bd907ca1212208b0fae4b12f7878d2bff7861ee1b983a11a34c175ffba02816582943ccb26a5d",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 336.4116000000013,
+        "p99": 336.4116000000013,
+        "maxMs": 336.4116000000013,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00fb3d8781bf9e8ab0380768434ad02dc7adaf8ecbc9833b82ad9cd726e5a6719cca1212202d88d44d2486fb15c8045c843ed2b70d531e800443d6986754b216bcef13ea68",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.97570000000087,
+        "p99": 360.97570000000087,
+        "maxMs": 360.97570000000087,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00a5453c774daf297ad2be060f0df683af4731e9105b4e77af5da80894a9598241ca121220257aafb5a7c6a58c6d926e5086ef33aa22766b8d82a3f04f0b66ef1902eb193b",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 355.03210000000036,
+        "p99": 355.03210000000036,
+        "maxMs": 355.03210000000036,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00711f0ac3ef4f885b667e5aaa305d1080390f15b7f78fd09a89ee36fb509017beca1212209a13f48fa96d2c6dda2ae8b8b6d8e850e16e0f9b9432c2dbb47148478a30b085",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 367.1876000000011,
+        "p99": 367.1876000000011,
+        "maxMs": 367.1876000000011,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00785911958cc450e8db47af2a65ddf356b948ad72eb6723611c5fa6bb8ad62b77ca1212209fba6534b593cb598880bc317039fe2a4f0b8d7b2b6cc3f59abe4beea45f1c38",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 344.4997000000003,
+        "p99": 344.4997000000003,
+        "maxMs": 344.4997000000003,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "001f6be1614a5c820f915438b9eed378a0dd5e7c48d770718ed9c83aec85cc5df9ca121220ffcfd57efef7e9d2723c816a00d3ba4f9b0eded61844262670d0669d7d7f53ec",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 361.08920000000035,
+        "p99": 361.08920000000035,
+        "maxMs": 361.08920000000035,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00443dfaa10b3c050aa924c02d796d82e9356fe229586704bf18a017e4171a2987ca12122052f572627bcf4c13cb525444972658092f42038ebc615dbef59000bc9ccbd1ff",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 367.65520000000106,
+        "p99": 367.65520000000106,
+        "maxMs": 367.65520000000106,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "007ce4d5442052d44ea746585a5522eddd48b87f1f343fad95ff7eae1ac1641b09ca121220464983dbfff3d6bfac98c4b9c9bcc4ed20ea79d5b7534389c52689419ddd34c2",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 343.07670000000144,
+        "p99": 343.07670000000144,
+        "maxMs": 343.07670000000144,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "006795ea8c654258f93eb7630184bb6d437d1be7d11854e89b29e5d54f9aeca38fca121220311b9477611ef4c142b855ebfe3a0b55a8d3ad1d2013544b580f085d73435c12",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 358.00900000000183,
+        "p99": 358.00900000000183,
+        "maxMs": 358.00900000000183,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "004f94b6f795b2374f8b89eccb7585dc0f7b4b4ce6d401359ab114773d799424f0ca1212207e499f98daed215f7e0d3fb01c6b1f5a27829716bee021f7f0633dce851f1a43",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 362.64380000000165,
+        "p99": 362.64380000000165,
+        "maxMs": 362.64380000000165,
+        "template": "#canton-stress-settlement:Settlement:PaymentOffer",
+        "role": "target",
+        "ubiquitous": false
+      }
+    ],
+    "byParty": [
+      {
+        "key": "cs-mv2i93ta-p1::12201a001a9a2d4af1ddf12c377ec1578b9cc155866ce56cefe23b843290ce63bf72",
+        "ops": 20,
+        "committed": 20,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 358.20390000000043,
+        "p99": 367.65520000000106,
+        "maxMs": 367.65520000000106
+      }
+    ],
+    "byOperation": [
+      {
+        "key": "Settlement:PaymentOffer:Accept",
+        "ops": 20,
+        "committed": 20,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 358.20390000000043,
+        "p99": 367.65520000000106,
+        "maxMs": 367.65520000000106
+      }
+    ],
+    "traffic": {
+      "perOperation": [
+        {
+          "operation": "Settlement:PaymentOffer:Accept",
+          "confirmationRequest": 3261,
+          "confirmationResponse": 415,
+          "total": 3676,
+          "preparedBytes": 3424
+        }
+      ],
+      "totalForRun": 73520,
+      "perSecond": 10352.544555333923,
+      "unmetered": false,
+      "preparedBytesForRun": 68480,
+      "preparedBytesPerOp": 3424,
+      "usdPerMb": 60,
+      "estimatedCostUsd": 4.1088,
+      "costPerOpUsd": 0.20543999999999998
+    },
+    "synchronizerId": "stressnet::122095eb8a72eff3cb7576afe92d566c486c75b4e98dcbe6db3bee858b5e160459fb"
+  },
+  "setup": {
+    "steps": 1,
+    "submitted": 150,
+    "bindings": {
+      "offers": 150
+    }
+  },
+  "shape": {}
+}

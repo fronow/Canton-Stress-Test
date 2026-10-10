@@ -81,7 +81,10 @@ export interface LedgerApi {
    * than from the token, so a token alone does not let you submit for a party
    * that was just allocated — the user needs rights over it. */
   grantRights?(userId: string, parties: string[]): Promise<void>;
-  /** CIP-0104 traffic cost estimate for a command, without submitting it. */
+  /** CIP-0104 traffic cost estimate for a command, without submitting it.
+   * Throws when the participant refuses the prepare call, so the caller can
+   * report WHY there is no estimate; resolves undefined when the participant
+   * answered but returned nothing measurable. */
   estimateTrafficCost?(req: {
     disclosedContracts?: DisclosedContract[];
     command: LedgerCommand;
@@ -381,46 +384,45 @@ export class LedgerClient implements LedgerApi {
     synchronizerId: string;
     disclosedContracts?: DisclosedContract[];
   }): Promise<TrafficCost | undefined> {
-    try {
-      const r = (await this.req("POST", "/v2/interactive-submission/prepare", {
-        userId: this.userId,
-        commandId: `cs-cost-${Math.random().toString(36).slice(2, 10)}`,
-        synchronizerId: req.synchronizerId,
-        verboseHashing: false,
-        actAs: req.actAs,
-        readAs: [],
-        commands: [req.command],
-        packageIdSelectionPreference: [],
-        disclosedContracts: req.disclosedContracts ?? [],
-        estimateTrafficCost: { disabled: false, expectedSignatures: [] },
-      })) as {
-        costEstimation?: {
-          confirmationRequestTrafficCostEstimation?: number;
-          confirmationResponseTrafficCostEstimation?: number;
-          totalTrafficCostEstimation?: number;
-        };
-        preparedTransaction?: string;
+    // No catch here on purpose. Cost estimation must never fail a load run, but
+    // swallowing the error made a refused prepare call indistinguishable from
+    // "nothing to report"; estimateTraffic in load.ts catches it and records
+    // the reason in the report instead.
+    const r = (await this.req("POST", "/v2/interactive-submission/prepare", {
+      userId: this.userId,
+      commandId: `cs-cost-${Math.random().toString(36).slice(2, 10)}`,
+      synchronizerId: req.synchronizerId,
+      verboseHashing: false,
+      actAs: req.actAs,
+      readAs: [],
+      commands: [req.command],
+      packageIdSelectionPreference: [],
+      disclosedContracts: req.disclosedContracts ?? [],
+      estimateTrafficCost: { disabled: false, expectedSignatures: [] },
+    })) as {
+      costEstimation?: {
+        confirmationRequestTrafficCostEstimation?: number;
+        confirmationResponseTrafficCostEstimation?: number;
+        totalTrafficCostEstimation?: number;
       };
-      // The prepared transaction is base64. Decode the LENGTH rather than the
-      // payload — the bytes themselves are of no interest and can be megabytes.
-      const preparedBytes =
-        typeof r.preparedTransaction === "string" ? base64Bytes(r.preparedTransaction) : undefined;
-      const c = r.costEstimation;
-      // A participant may return the transaction without a cost estimate. That
-      // is still a usable measurement, so do not discard it.
-      if (!c) return preparedBytes === undefined
-        ? undefined
-        : { confirmationRequest: 0, confirmationResponse: 0, total: 0, preparedBytes };
-      return {
-        confirmationRequest: c.confirmationRequestTrafficCostEstimation ?? 0,
-        confirmationResponse: c.confirmationResponseTrafficCostEstimation ?? 0,
-        total: c.totalTrafficCostEstimation ?? 0,
-        preparedBytes,
-      };
-    } catch {
-      // Cost estimation is a bonus signal: never fail a load run over it.
-      return undefined;
-    }
+      preparedTransaction?: string;
+    };
+    // The prepared transaction is base64. Decode the LENGTH rather than the
+    // payload — the bytes themselves are of no interest and can be megabytes.
+    const preparedBytes =
+      typeof r.preparedTransaction === "string" ? base64Bytes(r.preparedTransaction) : undefined;
+    const c = r.costEstimation;
+    // A participant may return the transaction without a cost estimate. That
+    // is still a usable measurement, so do not discard it.
+    if (!c) return preparedBytes === undefined
+      ? undefined
+      : { confirmationRequest: 0, confirmationResponse: 0, total: 0, preparedBytes };
+    return {
+      confirmationRequest: c.confirmationRequestTrafficCostEstimation ?? 0,
+      confirmationResponse: c.confirmationResponseTrafficCostEstimation ?? 0,
+      total: c.totalTrafficCostEstimation ?? 0,
+      preparedBytes,
+    };
   }
 
   async submitAndWaitForTree(req: SubmitRequest): Promise<SubmitTreeResult> {

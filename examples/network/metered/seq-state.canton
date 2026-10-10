@@ -1,0 +1,2 @@
+// The sequencer's view of traffic billed to every member. read.sh parses it.
+println("SEQVIEW " + sequencer1.traffic_control.traffic_state_of_all_members(true))

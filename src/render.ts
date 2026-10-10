@@ -175,11 +175,21 @@ function instrumentationSection(i: Instrumentation): string {
       ),
     );
   if (i.traffic) {
-    extra.push(
-      i.traffic.unmetered
-        ? card("Traffic cost", "unmetered", "no traffic control on this synchronizer")
-        : card("Traffic cost", `${i.traffic.totalForRun}`, `units for the run · ${r1(i.traffic.perSecond)}/s`),
-    );
+    if (i.traffic.perOperation.length > 0)
+      extra.push(
+        i.traffic.unmetered
+          ? card("Traffic cost", "unmetered", "no traffic control on this synchronizer")
+          : card("Traffic cost", `${i.traffic.totalForRun}`, `units for the run · ${r1(i.traffic.perSecond)}/s`),
+      );
+    const failed = i.traffic.failed ?? [];
+    if (failed.length > 0)
+      extra.push(
+        card(
+          "Traffic estimate failed",
+          `${failed.length} operation${failed.length === 1 ? "" : "s"}`,
+          failed.map((f) => `${f.operation}: ${f.error}`).join(" · "),
+        ),
+      );
     // Envelope size is measurable even where CIP-0104 cost is not, which is why
     // it is reported separately rather than folded into the card above.
     const t = i.traffic;
