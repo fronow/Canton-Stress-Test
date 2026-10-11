@@ -2,9 +2,11 @@
 
 Every cost figure canton-stress published before this came from a sandbox with
 no traffic control, so the only size it could report was the prepared
-transaction: a lower bound. This directory measures what a synchronizer
-actually **bills**, by turning traffic control on in the two-participant
-network and reading each node's consumed traffic from the sequencer.
+transaction, which was described as a lower bound on the bill. It is not: for
+token transfers it turned out to be about 3x the bill (see the reference table
+below). This directory measures what a synchronizer actually **bills**, by
+turning traffic control on in the two-participant network and reading each
+node's consumed traffic from the sequencer.
 
 Measured 2026-10-10, Canton 3.4.11 (the distribution bundled with the Daml SDK),
 two participants + sequencer + mediator, all in memory on one machine.
@@ -41,9 +43,10 @@ What this shows:
 
 1. **The estimate matches the bill.** The CIP-0104 estimate that canton-stress
    reads from `interactive-submission/prepare` came within 1% of what the
-   submitter was actually charged (3,676 vs 3,663; 3,681 vs 3,649). On a
-   metered synchronizer the tool's cost figure can be trusted for the
-   submitter's share.
+   submitter was actually charged for this transaction (3,676 vs 3,663; 3,681
+   vs 3,649), and within 4% across all eight cases in the reference table
+   below. On a metered synchronizer the tool's cost figure can be trusted for
+   the submitter's share.
 2. **The submitter is not the only one who pays.** The confirming
    counterparty paid 348–356 B per accept, and the estimate does not include
    that. A transaction's cost is spread over every participant that confirms
