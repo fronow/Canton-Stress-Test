@@ -1,0 +1,21 @@
+{
+  "case": "obs-3",
+  "what": "8 parties over 3 participants, one confirming",
+  "committed": 10,
+  "ops": 10,
+  "billedPerOp": {
+    "PAR::participant3": 97,
+    "PAR::participant4": 0,
+    "MED::mediator1": 151,
+    "PAR::participant2": 0,
+    "PAR::participant1": 6252
+  },
+  "participantsTotal": 6349,
+  "estimate": {
+    "request": 5632,
+    "response": 415,
+    "total": 6047
+  },
+  "preparedBytes": 12596,
+  "failed": []
+}

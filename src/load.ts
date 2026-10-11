@@ -370,7 +370,15 @@ export async function runMeasured(
     const payloadCtx: PayloadCtx = {
       issuer: pool[0],
       party: () => pool[Math.floor(rng() * pool.length)],
-      parties: pool,
+      // Positional references ($p0, $pi, $parties) name the SAME party on every
+      // participant, as they do in setup. Resolving them against this node's
+      // local pool made "$p0" a different party on each node: on a 4-node run,
+      // 3 of every 4 transfers were submitted by a party that could not see the
+      // holding, failed as CONTRACT_NOT_FOUND and were counted as contention.
+      // The submission is routed to whichever node hosts the party anyway.
+      // Only the random "$party" draw stays local, so it picks a party this
+      // node can sign for.
+      parties,
       amount: o.amount,
       // Roles stay globally visible for payload substitution — an argument may
       // legitimately name a party this node does not host. Only SUBMITTERS are

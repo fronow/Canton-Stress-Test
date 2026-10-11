@@ -93,19 +93,63 @@ What it says:
   2 → 16 stakeholders over the same two participants added ~190 B in total
   (~14 B each), against ~437 B each on prepared size. Participant 2 hosted
   half of them and paid nothing: observers do not confirm. The sequencer
-  delivers per participant, not per party, so the likely driver of the bill is
-  the number of PARTICIPANTS involved, and the confirmers among them. That is
-  untested here: this rig has only two participants.
+  delivers per participant, not per party. *Superseded by the participant
+  series below:* in this sweep every committed transfer had its receiver on
+  the submitter's node (a bug in how `$p1` was resolved, see below), so it
+  measured observers only. With the receiver on another node the picture
+  changes: what matters is each participant's ROLE.
 - **These are far below "typical".** A local transfer is about 0.25 of the
   CIP's reference transaction. MainNet transactions observed by an operator ran
   around 35.5 KB median, which fits transfers that involve many more
   participants (and more confirmers) than a two-node test network.
 
-In the sweep only 5 of 10 transfers committed (the rest lost a race for a
-holding already spent in the same run). Failed ones are refused on the
-submitting participant before sequencing and are not billed: the 5-of-10 rows
-bill the same per transfer as the 10-of-10 single-participant row. The failure
-rate itself is high for a 60-holding pool and is being looked at separately.
+In the sweep only 5 of 10 transfers committed. That was not contention: it was
+a canton-stress bug, found and fixed while running the participant series
+below. Failed transfers are refused on the submitting participant before
+sequencing and are not billed, so the per-transfer bills above stand, but they
+describe a transfer whose receiver sits on the sender's node.
+
+## Participant series: what each participant's role costs
+
+Measured 2026-10-11 on `../four-participants.conf` (four participants, same
+metered settings), std-spike transfer, 8 parties placed round-robin, 120
+holdings, 10 transfers per case, all 10 committed in every case. Bytes billed
+per transfer. Cases `obs-*` and `conf-*` in `measure-table.cjs`.
+
+| Case | Submitter billed | Estimate | What the other nodes paid |
+|---|---|---|---|
+| all 8 parties on 1 participant | 4,033 | 4,085 | — |
+| receiver (and some observers) on a 2nd participant | 6,133 | 5,991 | 0 |
+| + observers on a 3rd participant | 6,252 | 6,047 | 0 |
+| + observers on a 4th participant | 6,308 | 6,090 | 0 |
+| admin (a signatory) on a 2nd participant, parties over 2 | 4,317 | 4,355 | admin's node 441 |
+| admin on a 2nd participant, parties over 4 | 4,501 | 4,441 | admin's node 437 |
+
+(Nodes with no role show ±97 B per transfer: Canton's background traffic,
+spread over 10 transfers.)
+
+What it says:
+
+- **The receiver's participant is the expensive one.** Putting the receiver on
+  another node added about 1.9–2.1 KB to the submitter's bill, roughly +47%.
+- **Observer-only participants are cheap.** Each one added about 50 B to the
+  submitter's bill and paid nothing itself.
+- **A confirming participant pays its own way.** With the registry admin on
+  another node, that node paid ~440 B per transfer for its confirmation, and
+  the submitter's bill rose ~300 B.
+- **The estimate held** within 4% of the submitter's bill in every case.
+
+So "the bill follows the participants" is too coarse. It follows what each
+participant has to receive or confirm. That is the kind of rule a design-time
+cost model needs, and the next thing to establish is why the receiver's node
+costs so much more than an observer's.
+
+The bug: operations rotate across participants, and each participant resolved
+`$p0`/`$p1` against its own local parties, so on node 2 "`$p0`" was a
+different party. On a 4-node run 3 of every 4 transfers failed as
+CONTRACT_NOT_FOUND and were reported as contention. Positional references now
+resolve to the same party on every node (test: "positional parties" in
+`test/placement.test.ts`).
 
 ## Two things found on the way
 
@@ -154,9 +198,9 @@ setup-only step and subtracted.
   Synchronizer. At this value the recipients term adds well under 1% for two
   recipients, but confirm it against MainNet's published synchronizer
   parameters before quoting absolute numbers.
-- **Two participants only.** More
-  participants mean more recipients and more confirmers; that is the next
-  measurement, not a conclusion drawn here.
+- **Up to four participants, one transaction family.** The participant series
+  covers 1–4 nodes and one signatory; transactions with several confirming
+  signatories, or many more nodes (MainNet), are not measured here.
 - **Background traffic exists.** Between runs each participant gained a few
   hundred bytes with no transactions running. Small against these deltas, but
   measure over enough transactions that it stays negligible.

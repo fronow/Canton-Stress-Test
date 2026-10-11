@@ -171,3 +171,39 @@ test("party choices stay local to the submitting participant", async () => {
   // Both nodes actually drove load.
   assert.ok(p1.submissions.length > 0 && p2.submissions.length > 0);
 });
+
+test("positional parties ($p0) mean the same party on every participant", async () => {
+  // Found on a metered four-participant network: operations rotate across
+  // participants, and each participant resolved "$p0" against its OWN parties.
+  // On node 2 "$p0" became a different party from the holdings' owner, so on a
+  // 4-node run 3 of every 4 transfers failed as CONTRACT_NOT_FOUND and were
+  // reported as contention.
+  const p1 = new FakeParticipant("p1");
+  const p2 = new FakeParticipant("p2");
+  const workload: Workload = {
+    parties: 2, // p0 -> node 0, p1 -> node 1
+    placement: "round-robin",
+    setup: [],
+    operations: [
+      {
+        weight: 1,
+        submit: { actAs: ["$p0"] },
+        op: { kind: "create", template: "M:T", args: { owner: "$p0", other: "$p1" } },
+      },
+    ],
+  };
+  const prep = await prepareRun([p1, p2], workload, base);
+  await runWorkload([p1, p2], workload, { kind: "closed", ops: 8, warmup: 0, concurrency: 1 }, base);
+
+  const ops = [...p1.submissions, ...p2.submissions].filter((s) => s.commandId.includes("-op-"));
+  assert.equal(ops.length, 8);
+  for (const s of ops) {
+    assert.deepEqual(s.actAs, [prep.parties[0]], "every op must be signed by party 0");
+    const args = (s.commands[0] as { CreateCommand: { createArguments: Record<string, unknown> } })
+      .CreateCommand.createArguments;
+    assert.equal(args.owner, prep.parties[0]);
+    assert.equal(args.other, prep.parties[1]);
+  }
+  // And all of them went to the node that hosts party 0.
+  assert.equal(p2.submissions.filter((s) => s.commandId.includes("-op-")).length, 0);
+});

@@ -27,12 +27,14 @@ fs.mkdirSync(results, { recursive: true });
 const OPS = Number(process.env.OPS ?? 10);
 const P1 = "http://localhost:7011";
 const BOTH = "http://localhost:7011,http://localhost:7021";
+// The first n participants of four-participants.conf.
+const NODES = (n) => [7011, 7021, 7031, 7041].slice(0, n).map((p) => `http://localhost:${p}`).join(",");
 const env = "examples/openzeppelin/envelope";
 
 // std-spike parameters as `canton-stress <dar> --explain` generates them.
 const std = (parties) => [
   "--set-json", `parties=${parties}`,
-  "--set-json", "holdings=60",
+  "--set-json", `holdings=${process.env.HOLDINGS ?? 60}`,
   "--set", "instrumentId=StdToken",
   "--set", "transferAmount=1.0",
   "--set", "factoryTemplate=#std-spike:StdToken:StdTransferFactory",
@@ -47,6 +49,10 @@ const std = (parties) => [
 const spread = path.join(results, "token-standard-transfer.spread.json");
 const lib = JSON.parse(fs.readFileSync(path.join(repo, "workloads/token-standard-transfer.json"), "utf8"));
 fs.writeFileSync(spread, JSON.stringify({ ...lib, placement: "round-robin" }, null, 2));
+// Same, but the registry admin (the signatory, so a CONFIRMING party) lives on
+// the second participant instead of the submitter's.
+const spreadAdmin = path.join(results, "token-standard-transfer.spread-admin2.json");
+fs.writeFileSync(spreadAdmin, JSON.stringify({ ...lib, placement: "round-robin", rolePlacement: { admin: 1 } }, null, 2));
 
 const cases = {
   "oz-propose": { file: `${env}/attrib-oz-xfer.json`, api: P1, args: [],
@@ -61,6 +67,19 @@ const cases = {
 for (const n of [2, 4, 8, 16])
   cases[`std-spread-${n}`] = { file: spread, api: BOTH, args: std(n),
     what: `std-spike transfer, ${n} stakeholders over two participants` };
+
+// Participant series (needs four-participants.conf). Series O: 8 parties
+// spread over 1..4 participants; only the submitter's node confirms, the
+// others host observers and the receiver. Series C: the admin, a signatory,
+// moved to another node, which must then confirm.
+cases["obs-1"] = { file: "workloads/token-standard-transfer.json", api: NODES(1), args: std(8),
+  what: "8 parties on 1 participant" };
+for (const k of [2, 3, 4])
+  cases[`obs-${k}`] = { file: spread, api: NODES(k), args: std(8),
+    what: `8 parties over ${k} participants, one confirming` };
+for (const k of [2, 4])
+  cases[`conf-${k}`] = { file: spreadAdmin, api: NODES(k), args: std(8),
+    what: `8 parties over ${k} participants, admin confirming on another node` };
 
 function bill() {
   const out = execFileSync("bash", [path.join(here, "read.sh"), "x"], { encoding: "utf8" });

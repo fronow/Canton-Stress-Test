@@ -1,0 +1,21 @@
+{
+  "case": "conf-4",
+  "what": "8 parties over 4 participants, admin confirming on another node",
+  "committed": 10,
+  "ops": 10,
+  "billedPerOp": {
+    "PAR::participant3": 0,
+    "PAR::participant4": 0,
+    "MED::mediator1": 151,
+    "PAR::participant2": 437,
+    "PAR::participant1": 4501
+  },
+  "participantsTotal": 4938,
+  "estimate": {
+    "request": 4026,
+    "response": 415,
+    "total": 4441
+  },
+  "preparedBytes": 12596,
+  "failed": []
+}

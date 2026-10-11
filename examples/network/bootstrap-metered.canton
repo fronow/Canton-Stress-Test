@@ -1,6 +1,8 @@
 // The two-participant network WITH TRAFFIC CONTROL, so every sequenced message
 // is billed the way a production synchronizer bills it.
 // Run via: canton daemon -c two-participants.conf --bootstrap bootstrap-metered.canton
+//      or: canton daemon -c four-participants.conf --bootstrap bootstrap-metered.canton
+// (it connects and funds every participant in the config, however many there are)
 //
 // Why: a plain sandbox has no traffic control, so the CIP-0104 estimate reads
 // zero and the only size the tool can report is the prepared transaction, which
@@ -59,23 +61,22 @@ sequencer1.topology.synchronizer_parameters.propose_update(
   _.copy(trafficControl = Some(metered)),
 )
 
-participant1.synchronizers.connect_local(sequencer1, alias = "stressnet")
-participant2.synchronizers.connect_local(sequencer1, alias = "stressnet")
+participants.local.foreach(_.synchronizers.connect_local(sequencer1, alias = "stressnet"))
 
 utils.retry_until_true(NonNegativeDuration.tryFromDuration(scala.concurrent.duration.Duration("60s"))) {
-  participant1.synchronizers.list_connected().nonEmpty &&
-  participant2.synchronizers.list_connected().nonEmpty
+  participants.local.forall(_.synchronizers.list_connected().nonEmpty)
 }
 
 // Every node that sends to the sequencer needs traffic once enforcement is on —
 // the mediator included, or verdicts stop. Billed bytes are read from
 // extraTrafficConsumed, so the size of this balance never affects a result.
-Seq(participant1.id.member, participant2.id.member, mediator1.id.member).foreach(m =>
+val metered_members = participants.local.map(_.id.member) :+ mediator1.id.member
+metered_members.foreach(m =>
   sequencer1.traffic_control.set_traffic_balance(m, PositiveInt.one, NonNegativeLong.tryCreate(10000000000L))
 )
 utils.retry_until_true(NonNegativeDuration.tryFromDuration(scala.concurrent.duration.Duration("60s"))) {
   sequencer1.traffic_control
-    .traffic_state_of_members(Seq(participant1.id.member, participant2.id.member, mediator1.id.member))
+    .traffic_state_of_members(metered_members)
     .trafficStatesOrErrors
     .values
     .forall(_.exists(_.extraTrafficPurchased.value > 0))
@@ -98,4 +99,4 @@ println(
       .get_dynamic_synchronizer_parameters(sequencer1.synchronizer_id)
       .trafficControl
 )
-println("=== STRESSNET READY (METERED): participant1 + participant2 on synchronizer 'stressnet' ===")
+println(s"=== STRESSNET READY (METERED): ${participants.local.size} participants on synchronizer 'stressnet' ===")

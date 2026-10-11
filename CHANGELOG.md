@@ -24,6 +24,11 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   `prepare` call, or an unknown synchronizer, used to leave the report with no
   traffic section at all. The reason is now printed in the text and HTML
   reports.
+- **`$p0`, `$pi` and `$parties` mean the same party on every participant.**
+  Each participant resolved them against its own local parties, so in
+  multi-participant runs most operations were signed by the wrong party,
+  failed as CONTRACT_NOT_FOUND and were reported as contention (3 of 4 on a
+  four-node run). The random `$party` pick stays local by design.
 - **Cost is estimated on the participant that hosts the submitter.** Every
   estimate went to the first participant, which refuses to prepare for a party
   it does not host, so multi-participant runs never had a cost figure.
@@ -35,6 +40,10 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   `examples/network/metered/` to read what the sequencer actually bills each
   node. First result: the CIP-0104 estimate is within 1% of the submitter's
   real bill, and the confirming counterparty pays too.
+- **A participant series** on a new four-participant metered network
+  (`examples/network/four-participants.conf`): what a participant costs depends
+  on its role. A receiver on another node added ~2 KB to the submitter's bill,
+  an observer-only node ~50 B, and a confirming node paid ~440 B itself.
 - **A billed reference table** (`examples/network/metered/measure-table.cjs`,
   `build-table.cjs`, results in `METERED.md`): Token Standard transfers on the
   metered network, split by who pays. Card: `docs/billed-card.png`.
