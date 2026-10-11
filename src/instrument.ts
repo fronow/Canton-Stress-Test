@@ -271,7 +271,7 @@ export interface TrafficReport {
   usdPerMb?: number;
   /** Which bytes were priced. "estimate" = the CIP-0104 estimate, available
    * only on a synchronizer with traffic control, which matched the billed
-   * traffic within 4% on a metered network. "prepared" = the prepared
+   * traffic within about 4% (worst 4.3%) on a metered network. "prepared" = the prepared
    * transaction, the only size a plain sandbox offers, which is NOT the bill
    * (it overstated token transfers about 3x). */
   costBasis?: "estimate" | "prepared";
@@ -326,7 +326,7 @@ export function summarizeTraffic(
   // unsourced number in a report people quote.
   //
   // Price the best bytes available. On a metered synchronizer that is the
-  // CIP-0104 estimate (measured within 4% of the bill); only where the
+  // CIP-0104 estimate (measured within about 4% of the bill); only where the
   // synchronizer is unmetered does the prepared size stand in, and the report
   // says which it was, because the two differ by about 3x for token transfers.
   const basis = !report.unmetered && estimates.length > 0 ? "estimate" : sawPrepared ? "prepared" : undefined;
@@ -472,7 +472,7 @@ export function formatInstrumentation(i: Instrumentation): string {
         `  cost at ${t.usdPerMb}/MB: ${t.costPerOpUsd.toFixed(4)} per operation, ` +
           `${(t.estimatedCostUsd ?? 0).toFixed(2)} for the run ` +
           (t.costBasis === "estimate"
-            ? "(CIP-0104 estimate; within 4% of billed traffic where measured)"
+            ? "(CIP-0104 estimate; within about 4% of billed traffic where measured, worst 4.3%, tends to read low)"
             : "(from prepared size: NOT the bill, see above)"),
       );
   }

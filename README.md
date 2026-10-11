@@ -195,7 +195,7 @@ of which this reports:
   no traffic control, so it reports **UNMETERED** rather than a fake zero; real
   figures need a traffic-metered synchronizer. `examples/network/` boots one
   in a single command, and [examples/network/metered/METERED.md](examples/network/metered/METERED.md)
-  measures what it bills: the estimate came within 4% of the real bill, while
+  measures what it bills: the estimate came within about 4% of the real bill (worst case 4.3%), while
   the prepared-transaction size overstated it about 3× for token transfers.
 
 ## Gating CI, and getting results into your dashboards

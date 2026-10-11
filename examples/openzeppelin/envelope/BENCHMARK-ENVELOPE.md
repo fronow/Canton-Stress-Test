@@ -24,8 +24,9 @@ before latency does"* — median paid traffic ~35.5 KB per transaction, about
 > - **Does not hold on the bill:** the per-stakeholder slope. 2 → 16
 >   stakeholders over the same two participants added ~190 B in total, not
 >   ~438 B each; a participant hosting only observers paid nothing.
-> - **Use the CIP-0104 estimate instead:** it came within 4% of the bill in
->   every case measured.
+> - **Use the CIP-0104 estimate instead:** it came within 4% of the bill in all 8
+>   cases of the reference table, and within about 4% (worst 4.3%) across
+>   everything measured since.
 >
 > The measurements below are left as they were, so the correction can be
 > checked against them.
