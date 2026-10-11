@@ -77,8 +77,10 @@ time — proof that you're allowed. It's small, about half a page of writing.
 
 We measured what carrying that envelope costs.
 
-The answer: for most people, nothing. But for the unluckiest ones, it makes the
-wait **45% longer**. Nobody had ever measured this. Now it's written down.
+An early run said it made the unluckiest waits **45% longer**. That turned out
+to be wrong: the test was too small to measure the slowest waits properly, so
+the claim is withdrawn. What is true is simpler: the envelope adds a little to
+the cost of every transaction.
 
 ### Why does any of this matter?
 
@@ -165,8 +167,10 @@ Canton е начин банките да си строят машини, кои�
 
 Измерихме колко струва носенето на този плик.
 
-Отговорът: за повечето хора — нищо. Но за най-нещастните прави чакането с
-**45% по-дълго**. Никой не беше измервал това досега. Сега е записано.
+Едно ранно измерване показа, че прави най-бавните чакания с **45% по-дълги**.
+Това се оказа грешно: тестът беше твърде малък, за да измери правилно
+най-бавните чакания, затова твърдението е оттеглено. Вярното е по-просто:
+пликът добавя малко към цената на всяка транзакция.
 
 ### Защо всичко това има значение?
 

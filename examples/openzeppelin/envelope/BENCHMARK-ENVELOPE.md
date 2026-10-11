@@ -83,8 +83,9 @@ works out to roughly **$4,500–$8,900 a day**, or **$1.7M–$3.3M a year**, for
 what is otherwise the same standard transfer.
 
 Treat that as a sense of scale, not a bill. It assumes that volume flows through
-one registry, assumes the $60/MB price holds, and uses a lower bound for the
-bytes (below). But the direction is not in doubt: **envelope size is a
+one registry, assumes the $60/MB price holds, and uses prepared bytes, which
+overstate the bill about 3x (see the correction at the top), so the billed
+figure would be roughly a third of this. But the direction is not in doubt: **envelope size is a
 first-order economic decision and it is currently invisible at design time.**
 
 ## The gap is the settlement model, not the data model

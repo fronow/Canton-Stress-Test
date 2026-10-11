@@ -195,11 +195,11 @@ contention guarantee. The code is correct. What the measurement adds is the
 price of that guarantee under concurrency — which is a design trade-off, and one
 you can only see under load.
 
-Along the way it also put a number on something that had no published figure:
-reaching a registry's factory requires **explicit disclosure**, and carrying
-that ~576-byte blob on every submission costs about 3% throughput while raising
-p99 by ~45%. Nearly free at the median, expensive in the tail — which is the
-part your SLA is written against.
+Along the way it also looked at **explicit disclosure**: reaching a registry's
+factory means carrying a ~576-byte blob on every submission. An early run
+suggested this raised p99 by ~45%. That figure is **withdrawn**: the run had
+only 60 operations, so its "p99" was a single sample. What does hold is that
+disclosure is a traffic-cost item, a few hundred bytes on every transaction.
 
 ---
 
