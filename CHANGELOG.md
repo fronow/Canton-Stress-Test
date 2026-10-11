@@ -40,6 +40,10 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   `examples/network/metered/` to read what the sequencer actually bills each
   node. First result: the CIP-0104 estimate is within 1% of the submitter's
   real bill, and the confirming counterparty pays too.
+- **Canton Coin (Amulet) on the metered network**
+  (`examples/network/metered/amulet/`): the first Amulet transfer run end to
+  end, by supplying the DSO's `ExternalPartyConfigState` in the choice context.
+  Billed 4,693 B on one participant, 6,986 B with the receiver elsewhere.
 - **A participant series** on a new four-participant metered network
   (`examples/network/four-participants.conf`): what a participant costs depends
   on its role. A receiver on another node added ~2 KB to the submitter's bill,

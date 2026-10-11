@@ -1,0 +1,21 @@
+{
+  "case": "amulet-1",
+  "what": "Canton Coin (Amulet) transfer, 1 participant",
+  "committed": 10,
+  "ops": 10,
+  "billedPerOp": {
+    "PAR::participant3": 0,
+    "PAR::participant4": 0,
+    "MED::mediator1": 151,
+    "PAR::participant2": 0,
+    "PAR::participant1": 4693
+  },
+  "participantsTotal": 4693,
+  "estimate": {
+    "request": 4120,
+    "response": 415,
+    "total": 4535
+  },
+  "preparedBytes": 22307,
+  "failed": []
+}
