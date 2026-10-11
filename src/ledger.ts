@@ -117,10 +117,11 @@ export interface TrafficCost {
    * back the transaction itself, whose size is a real measurement on any
    * participant.
    *
-   * It is NOT the sequenced envelope: a confirmation request additionally
-   * carries encrypted views per informee, so the amount actually paid for is
-   * larger. Treat this as a lower bound and a comparator between designs, not
-   * as the traffic bill. */
+   * It is NOT the sequenced envelope and NOT the bill. Measured on a metered
+   * network (examples/network/metered), token transfers were billed about a
+   * third of their prepared size: the prepared transaction carries full input
+   * and disclosed contracts, uncompressed. Where traffic control is on, the
+   * CIP-0104 estimate above is the figure to use. */
   preparedBytes?: number;
 }
 

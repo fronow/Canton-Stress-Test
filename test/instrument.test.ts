@@ -380,3 +380,31 @@ test("an estimate without preparedBytes reports no size at all", () => {
   assert.equal(r?.preparedBytesForRun, undefined);
   assert.equal(r?.preparedBytesPerOp, undefined);
 });
+
+test("on a metered synchronizer the price comes from the estimate, not the prepared size", () => {
+  // Measured on a metered network: a token transfer prepared to ~14 KB but was
+  // billed ~4.3 KB, and the CIP-0104 estimate was within 4% of the bill.
+  // Pricing the prepared size there would overstate cost about 3x.
+  const r = summarizeTraffic(
+    [{ operation: "M:T:Go", confirmationRequest: 3864, confirmationResponse: 415, total: 4279, preparedBytes: 13950 }],
+    [opResult("M:T", "Go", "committed")],
+    1000,
+    60,
+  )!;
+  assert.equal(r.costBasis, "estimate");
+  assert.ok(Math.abs(r.costPerOpUsd! - (4279 * 60) / 1e6) < 1e-9);
+  assert.match(formatInstrumentation({ ...instrument({ results: [], wallMs: 1 }), traffic: r }), /CIP-0104 estimate/);
+});
+
+test("on an unmetered sandbox the prepared size is priced and labelled as NOT the bill", () => {
+  const r = summarizeTraffic(
+    [{ operation: "M:T:Go", confirmationRequest: 0, confirmationResponse: 0, total: 0, preparedBytes: 13950 }],
+    [opResult("M:T", "Go", "committed")],
+    1000,
+    60,
+  )!;
+  assert.equal(r.costBasis, "prepared");
+  const text = formatInstrumentation({ ...instrument({ results: [], wallMs: 1 }), traffic: r });
+  assert.match(text, /NOT the bill/);
+  assert.doesNotMatch(text, /lower bound/);
+});

@@ -262,13 +262,19 @@ export interface TrafficReport {
   preparedBytesForRun?: number;
   /** Mean prepared bytes per committed operation. */
   preparedBytesPerOp?: number;
-  /** Cost of `preparedBytesForRun` at the configured price, in USD. */
+  /** Cost of the run at the configured price, in USD, from `costBasis`. */
   estimatedCostUsd?: number;
   /** Cost per committed operation, in USD. */
   costPerOpUsd?: number;
   /** The price used, in USD per megabyte. Reported so the figure above can
    * never be quoted without the assumption that produced it. */
   usdPerMb?: number;
+  /** Which bytes were priced. "estimate" = the CIP-0104 estimate, available
+   * only on a synchronizer with traffic control, which matched the billed
+   * traffic within 4% on a metered network. "prepared" = the prepared
+   * transaction, the only size a plain sandbox offers, which is NOT the bill
+   * (it overstated token transfers about 3x). */
+  costBasis?: "estimate" | "prepared";
 }
 
 /** Bytes in the megabyte that `--traffic-price` (USD per MB) refers to. */
@@ -314,19 +320,26 @@ export function summarizeTraffic(
   if (sawPrepared) {
     report.preparedBytesForRun = preparedForRun;
     report.preparedBytesPerOp = committed > 0 ? preparedForRun / committed : 0;
-    // Pricing is opt-in. Without a price there is a size and no dollar figure,
-    // because the price varies by network and inventing a default would put an
-    // unsourced number in a report people quote.
-    if (usdPerMb !== undefined && usdPerMb > 0) {
-      // Network traffic is priced per DECIMAL megabyte: the draft Universal
-      // Burn CIP prices a "typical" 16.67 kB transaction at $1 at $60/MB,
-      // i.e. 1,000,000 / 60 bytes. Dividing by 1024² read every figure ~4.9%
-      // low against the price the network actually charges.
-      const mb = preparedForRun / BYTES_PER_MB;
-      report.usdPerMb = usdPerMb;
-      report.estimatedCostUsd = mb * usdPerMb;
-      report.costPerOpUsd = committed > 0 ? (mb * usdPerMb) / committed : 0;
-    }
+  }
+  // Pricing is opt-in. Without a price there is a size and no dollar figure,
+  // because the price varies by network and inventing a default would put an
+  // unsourced number in a report people quote.
+  //
+  // Price the best bytes available. On a metered synchronizer that is the
+  // CIP-0104 estimate (measured within 4% of the bill); only where the
+  // synchronizer is unmetered does the prepared size stand in, and the report
+  // says which it was, because the two differ by about 3x for token transfers.
+  const basis = !report.unmetered && estimates.length > 0 ? "estimate" : sawPrepared ? "prepared" : undefined;
+  if (basis && usdPerMb !== undefined && usdPerMb > 0) {
+    // Network traffic is priced per DECIMAL megabyte: the draft Universal
+    // Burn CIP prices a "typical" 16.67 kB transaction at $1 at $60/MB,
+    // i.e. 1,000,000 / 60 bytes. Dividing by 1024² read every figure ~4.9%
+    // low against the price the network actually charges.
+    const mb = (basis === "estimate" ? totalForRun : preparedForRun) / BYTES_PER_MB;
+    report.usdPerMb = usdPerMb;
+    report.costBasis = basis;
+    report.estimatedCostUsd = mb * usdPerMb;
+    report.costPerOpUsd = committed > 0 ? (mb * usdPerMb) / committed : 0;
   }
   return report;
 }
@@ -447,16 +460,21 @@ export function formatInstrumentation(i: Instrumentation): string {
         `  envelope size: ${kb(t.preparedBytesPerOp)} per operation, ` +
           `${kb(t.preparedBytesForRun ?? 0)} for the run`,
       );
-      if (t.costPerOpUsd !== undefined)
+      if (t.costBasis === "prepared")
         out.push(
-          `    at $${t.usdPerMb}/MB: $${t.costPerOpUsd.toFixed(4)} per operation, ` +
-            `$${(t.estimatedCostUsd ?? 0).toFixed(2)} for the run`,
+          "    (prepared-transaction size, NOT the bill: on a metered network it overstated",
+          "     token transfers about 3x. For billed cost run against a synchronizer with",
+          "     traffic control; see examples/network/metered)",
         );
-      out.push(
-        "    (prepared-transaction size — a lower bound: the sequenced request also",
-        "     carries encrypted views per informee, so the metered figure is larger)",
-      );
     }
+    if (t.costPerOpUsd !== undefined)
+      out.push(
+        `  cost at ${t.usdPerMb}/MB: ${t.costPerOpUsd.toFixed(4)} per operation, ` +
+          `${(t.estimatedCostUsd ?? 0).toFixed(2)} for the run ` +
+          (t.costBasis === "estimate"
+            ? "(CIP-0104 estimate; within 4% of billed traffic where measured)"
+            : "(from prepared size: NOT the bill, see above)"),
+      );
   }
 
   return out.join("\n");

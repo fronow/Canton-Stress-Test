@@ -200,9 +200,11 @@ function instrumentationSection(i: Instrumentation): string {
           "Envelope size",
           kb(t.preparedBytesPerOp),
           // card() escapes its hint, so this is plain text by necessity.
-          t.costPerOpUsd !== undefined
-            ? `$${t.costPerOpUsd.toFixed(4)} per operation at $${t.usdPerMb}/MB`
-            : "per operation · pass --traffic-price to price it",
+          t.costPerOpUsd === undefined
+            ? "prepared size per operation · pass --traffic-price to price it"
+            : t.costBasis === "estimate"
+              ? `${t.costPerOpUsd.toFixed(4)} per operation at ${t.usdPerMb}/MB · from the CIP-0104 estimate`
+              : `prepared size, NOT the bill (about 3x over for token transfers) · ${t.costPerOpUsd.toFixed(4)} per operation at ${t.usdPerMb}/MB`,
         ),
       );
     }
