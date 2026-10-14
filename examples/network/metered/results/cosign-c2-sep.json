@@ -1,0 +1,59 @@
+{
+  "_comment": [
+    "Transfer of a CoAsset signed by an issuer plus N co-signers, so 1 + N",
+    "parties confirm every transfer. Co-signer roles c1..c3 are passed in with",
+    "--role-party (parties hosted on chosen extra participants, created by",
+    "run-cosign.sh). The cosigners list is set per case by run-cosign.sh."
+  ],
+  "version": 1,
+  "parties": 2,
+  "roles": [
+    "issuer",
+    "c1",
+    "c2",
+    "c3"
+  ],
+  "setup": [
+    {
+      "id": "assets",
+      "count": 40,
+      "actAs": [
+        "$role:issuer",
+        "$role:c1",
+        "$role:c2"
+      ],
+      "op": {
+        "kind": "create",
+        "template": "#cosign:CoSign:CoAsset",
+        "args": {
+          "issuer": "$role:issuer",
+          "cosigners": [
+            "$role:c1",
+            "$role:c2"
+          ],
+          "owner": "$p0",
+          "amount": "100.0"
+        }
+      }
+    }
+  ],
+  "operations": [
+    {
+      "weight": 1,
+      "op": {
+        "kind": "exercise",
+        "template": "#cosign:CoSign:CoAsset",
+        "contract": "$ref:assets[seq]",
+        "choice": "Transfer",
+        "args": {
+          "newOwner": "$p1"
+        }
+      },
+      "submit": {
+        "actAs": [
+          "$p0"
+        ]
+      }
+    }
+  ]
+}

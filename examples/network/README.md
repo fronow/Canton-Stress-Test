@@ -89,9 +89,34 @@ shared synchronizer.
 - Each participant gets its **own** view: the party pool `$party` draws from,
   and the contract snapshot targets are picked from, are both node-local —
   because a participant only sees its own parties' projections.
+- Positional references (`$p0`, `$p1`, `$parties`) name the **same** party on
+  every node. (They used to resolve per node, which made "`$p0`" a different
+  party on each participant; fixed, with a test.)
 - Every operation is submitted to **the participant hosting its submitter**,
   not to a rotating node. When `actAsFrom` reads the signer off the target
   contract, the contract decides where the transaction must go.
 
 Measured on this rig (60 accepts, concurrency 6): **52 committed, 8 contention,
 0 rejected, 15.4 committed/s** — all of them cross-participant.
+
+## More participants, and traffic control
+
+| File | Use |
+|---|---|
+| `four-participants.conf` | Four participants, same layout and ports pattern |
+| `gen-network.cjs` | `node gen-network.cjs N` writes `participants-N.conf` and `remote-N.conf` for any N up to 99. Participant i: ledger API 5000+10·i+1, admin 5000+10·i+2, JSON API 7000+10·i+1 |
+| `bootstrap-metered.canton` | Boots **any** of these configs with traffic control on: every participant and the mediator get a traffic balance, then rate limiting is enforced, so the sequencer records exactly what each node is billed |
+| `remote.conf`, `remote-4.conf`, `remote-N.conf` | Console configs that attach to a running network (for reading the bill, or creating a party hosted on several nodes) |
+
+```powershell
+node gen-network.cjs 8
+& $java -Xmx4500m -jar $canton daemon -c participants-8.conf --bootstrap bootstrap-metered.canton --no-tty
+```
+
+Allow roughly 0.6 GB of heap per participant. Two things that cost time to
+find: with rate limiting **off**, Canton records no consumption at all, which
+is why the bootstrap funds every node and turns enforcement on; and once
+enforcement is on, uploading a DAR is billed too.
+
+Everything measured on these networks, and how to reproduce it, is in
+[metered/METERED.md](metered/METERED.md).

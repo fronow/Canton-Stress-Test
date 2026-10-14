@@ -348,10 +348,26 @@ accepts them. Measured: **52 committed, 8 contention, 0 rejected, 15.4/s**,
 every accept crossing participants.
 
 The tool places and routes accordingly — `"placement": "round-robin"` spreads
-parties across nodes, each participant gets its own party pool and contract
-snapshot (it only sees its own parties' projections), and every operation is
-submitted to **the participant hosting its submitter** rather than a rotating
-node.
+parties across nodes, each participant gets its own contract snapshot (it only
+sees its own parties' projections), a random `$party` pick stays local to the
+node, positional references like `$p0` name the same party on every node, and
+every operation is submitted to **the participant hosting its submitter**
+rather than a rotating node.
+
+**Bigger and metered networks.** `examples/network/four-participants.conf`
+gives four participants, and `node examples/network/gen-network.cjs N`
+generates a config for any N up to 99. Booted with
+`bootstrap-metered.canton`, any of them has traffic control on, so you can read
+what the sequencer actually bills each node. Results so far, how to reproduce
+them, and a first cost model tested by predicting before measuring:
+[examples/network/metered/METERED.md](examples/network/metered/METERED.md).
+[`docs/cost-comparator.html`](docs/cost-comparator.html) turns those measurements into
+a design cost comparator: two designs side by side, priced under the draft
+Universal Burn CIP, every term marked measured or extrapolated.
+
+**Parties set up outside the tool.** `--role-party admin=<party id>` uses an
+existing party for a role instead of allocating a new one, for example a party
+hosted on several participants, which allocation cannot create.
 
 ## Workers on other machines
 

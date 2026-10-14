@@ -84,6 +84,12 @@ export interface RunOptions {
    * until they are allocated — so this is where an auth provider widens its
    * claims. */
   onPartiesAllocated?: (parties: string[]) => void | Promise<void>;
+  /** Use these EXISTING parties for roles instead of allocating new ones
+   * (role name → party id). For parties set up outside the tool, such as one
+   * hosted on several participants, which allocation cannot create. The role's
+   * submissions still go to its `rolePlacement` node, which must host it with
+   * submission rights. */
+  roleParties?: Record<string, string>;
   /** [scale] Repetitions of a setup step to run concurrently. Setup is not
    * measured, so serialising it buys nothing and costs hours at scale. */
   setupConcurrency?: number;
@@ -224,7 +230,7 @@ export async function prepareRun(
   const roles: Record<string, string> = {};
   for (const name of workload.roles ?? []) {
     const host = Math.min(apis.length - 1, Math.max(0, workload.rolePlacement?.[name] ?? 0));
-    const p = await apis[host].allocateParty(`cs-${o.runId}-${name}`);
+    const p = o.roleParties?.[name] ?? (await apis[host].allocateParty(`cs-${o.runId}-${name}`));
     roles[name] = p;
     hostOf[p] = host;
   }

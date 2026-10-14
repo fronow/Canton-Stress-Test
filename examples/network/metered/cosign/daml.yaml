@@ -1,0 +1,13 @@
+# A minimal asset signed by an issuer plus a list of co-signers, used to measure
+# how the traffic bill grows with the number of CONFIRMING PARTIES versus the
+# number of CONFIRMING PARTICIPANTS. Not a token standard; just the smallest
+# transaction where the set of confirmers can be chosen freely.
+sdk-version: 3.4.11
+name: cosign
+version: 0.1.0
+source: daml
+dependencies:
+  - daml-prim
+  - daml-stdlib
+build-options:
+  - --target=2.1

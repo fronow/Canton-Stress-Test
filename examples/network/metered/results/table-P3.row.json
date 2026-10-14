@@ -1,0 +1,21 @@
+{
+  "case": "P3",
+  "what": "P3: admin node 0, receiver node 2, node 1 empty",
+  "committed": 10,
+  "ops": 10,
+  "billedPerOp": {
+    "MED::mediator1": 151,
+    "PAR::participant4": 0,
+    "PAR::participant3": 0,
+    "PAR::participant1": 6052,
+    "PAR::participant2": 64
+  },
+  "participantsTotal": 6116,
+  "estimate": {
+    "request": 5546,
+    "response": 415,
+    "total": 5961
+  },
+  "preparedBytes": 9998,
+  "failed": []
+}

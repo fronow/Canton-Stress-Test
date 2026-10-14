@@ -35,6 +35,33 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`--role-party role=partyId`**: use an existing party for a role instead
+  of allocating one, e.g. a party hosted on several participants.
+- **`examples/network/gen-network.cjs`**: a metered network of any size (N
+  participants, one sequencer, one mediator); `bootstrap-metered.canton` funds
+  every participant it finds.
+- **DSO hosted on 1-8 participants** (`metered/multihost-dso.canton.tmpl`,
+  `metered/run-dso-series.sh`): each extra confirming host adds ~233 B to the
+  submitter's bill and ~636 B across the network, linearly (R² 0.995).
+- **Inputs per transfer** (cases `in-1`…`in-8`): ~120 B per extra input,
+  linear; three pre-registered predictions passed.
+- **Confirming parties vs confirming participants**
+  (`examples/network/metered/cosign/`, a co-signed asset): the submitter pays
+  per confirming participant, the confirming node per party it confirms for.
+- **`examples/network/metered/cloud/run-scale.sh`**: the DSO series on an
+  N-participant network in one command (for 43 participants on a rented
+  machine), tested end to end on four.
+- **`docs/cost-comparator.html`**: a design cost comparator. Two designs side
+  by side, bytes per transfer from the measured model, priced under the draft
+  Universal Burn CIP (volume tiers counted in MB, commitment and loyalty
+  discounts), each term marked measured or extrapolated. `test/comparator.test.ts`
+  pins it to the CIP's own price examples and to measured bills.
+- **`TAG` for result files** (`measure-table.cjs`): keeps runs of the same
+  case on different networks from overwriting each other.
+- **A first cost model, tested by predicting before measuring**
+  (`metered/PREDICTIONS.md`): role grid, data-size runs, nine pre-registered
+  predictions with results and misses.
+
 - **A metered network** (`examples/network/bootstrap-metered.canton`): the
   two-participant network with traffic control on, booted in one command, plus
   `examples/network/metered/` to read what the sequencer actually bills each

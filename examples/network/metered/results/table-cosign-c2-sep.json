@@ -1,0 +1,248 @@
+{
+  "model": "closed",
+  "parties": 2,
+  "ops": 10,
+  "summary": {
+    "ops": 10,
+    "committed": 10,
+    "contention": 0,
+    "rejected": 0,
+    "wallMs": 3571.040399999999,
+    "throughputPerSec": 2.800304359480224,
+    "attemptedPerSec": 2.800304359480224,
+    "contentionRate": 0,
+    "latency": {
+      "p50": 360.1373000000003,
+      "p90": 361.52809999999954,
+      "p95": 370.1366999999991,
+      "p99": 370.1366999999991,
+      "max": 370.1366999999991,
+      "mean": 357.0455399999999
+    },
+    "latencyCurve": [
+      {
+        "p": 50,
+        "ms": 360.1373000000003
+      },
+      {
+        "p": 75,
+        "ms": 361.3886999999995
+      },
+      {
+        "p": 90,
+        "ms": 361.52809999999954
+      },
+      {
+        "p": 95,
+        "ms": 370.1366999999991
+      },
+      {
+        "p": 99,
+        "ms": 370.1366999999991
+      },
+      {
+        "p": 99.9,
+        "ms": 370.1366999999991
+      }
+    ]
+  },
+  "instrumentation": {
+    "hotspots": [
+      {
+        "key": "00fb1bc5dd86deb06f6e4bfc46fcf84e897de1ca9a5de6006975bbec837313ead2ca12122068a5a6038667e8686dda91833a94fc1aa1750d3dd9ea4b74ed276ddda212f47e",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 322.0738000000001,
+        "p99": 322.0738000000001,
+        "maxMs": 322.0738000000001,
+        "template": "#cosign:CoSign:CoAsset",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "0022f4ff69f56294559466be3dd24bfa9081ebb601784f66d7643f6d9ff6ff799bca12122091b9af5c42c391401d10aa6d072070f423fb8e59afb6cf151692607c6cf13646",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.1373000000003,
+        "p99": 360.1373000000003,
+        "maxMs": 360.1373000000003,
+        "template": "#cosign:CoSign:CoAsset",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "0057039cfe9479f36a6d95f1b8e8c8d81c14264b31a235affc0300d2c6b28a24aaca121220a248405e10b77c3069408f19dc40466796950d9137a17379e3338ecc1615d729",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 357.3837000000003,
+        "p99": 357.3837000000003,
+        "maxMs": 357.3837000000003,
+        "template": "#cosign:CoSign:CoAsset",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00c41d9487db90a6dff610d1a4aabafa0d777a661645c87be14be149f2e8caee9cca121220ed856d2b629f493d150093a598e38d616d87619580d5c8a517dc8c6210555064",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 361.52809999999954,
+        "p99": 361.52809999999954,
+        "maxMs": 361.52809999999954,
+        "template": "#cosign:CoSign:CoAsset",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "006ff269e59d3a61beea324c260cade0392d476aeddd5894bb46ff9ecfa2b101c7ca121220d1590b0d68de362872d8c834b1209512a0fa65d02cfa2ea8fee2dcf7b9c3465f",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 359.2404999999999,
+        "p99": 359.2404999999999,
+        "maxMs": 359.2404999999999,
+        "template": "#cosign:CoSign:CoAsset",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "0006c272b3adeda004064c42b1edab99f7e593f6da04e3ac8506c4612388789875ca121220a7aec4e655e6eea68cab807665919ee346c5a71d7d83f8b7a55b5f7bdcfee42f",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.3140999999996,
+        "p99": 360.3140999999996,
+        "maxMs": 360.3140999999996,
+        "template": "#cosign:CoSign:CoAsset",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00128b65faef57273b040eb226695757a878b05cae7fed1c892a2d8457c32e72b5ca1212201c1a8a84fbebdeee857d89c92cce8c02be792953fb6c7fb3f0cc365f630da045",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.9441000000006,
+        "p99": 360.9441000000006,
+        "maxMs": 360.9441000000006,
+        "template": "#cosign:CoSign:CoAsset",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00ca81a6d5d23f0b4a6c79176f4d2a6d5e9e52cad3770d58d1d4c4e9a04c47fdf9ca1212205c337cd3f5ec406ff8b88db8e25b945ed2ead81aa52cc526bf9cf627b169ea4b",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 361.3886999999995,
+        "p99": 361.3886999999995,
+        "maxMs": 361.3886999999995,
+        "template": "#cosign:CoSign:CoAsset",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "006705c7722c00014acfc30a9231df588d75d6946a3e3181901a6a0c1d6ab61484ca1212209ca74d2d6306cbf88fa3f91a68b29dc9573779eee6f7b212b91d668c79d2572c",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 357.3083999999999,
+        "p99": 357.3083999999999,
+        "maxMs": 357.3083999999999,
+        "template": "#cosign:CoSign:CoAsset",
+        "role": "target",
+        "ubiquitous": false
+      },
+      {
+        "key": "00678cf2913d4efaddabc1c4cc133b8b13c5a60f5509d04344f405029261a11494ca121220fcfaaf0a3a58a1676f96ac7ffd8d49d2b6a113ed74ffb7333067c57960edc2cd",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 370.1366999999991,
+        "p99": 370.1366999999991,
+        "maxMs": 370.1366999999991,
+        "template": "#cosign:CoSign:CoAsset",
+        "role": "target",
+        "ubiquitous": false
+      }
+    ],
+    "byParty": [
+      {
+        "key": "cs-mv62sul5-p0::12204176d71d1f569de5a6651cc5eb32dfcafa6f8b677f8a85e7b9957971910d8521",
+        "ops": 10,
+        "committed": 10,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.1373000000003,
+        "p99": 370.1366999999991,
+        "maxMs": 370.1366999999991
+      }
+    ],
+    "byOperation": [
+      {
+        "key": "CoSign:CoAsset:Transfer",
+        "ops": 10,
+        "committed": 10,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 360.1373000000003,
+        "p99": 370.1366999999991,
+        "maxMs": 370.1366999999991
+      }
+    ],
+    "traffic": {
+      "perOperation": [
+        {
+          "operation": "CoSign:CoAsset:Transfer",
+          "confirmationRequest": 3814,
+          "confirmationResponse": 415,
+          "total": 4229,
+          "preparedBytes": 5381
+        }
+      ],
+      "totalForRun": 42290,
+      "perSecond": 11842.487136241867,
+      "unmetered": false,
+      "preparedBytesForRun": 53810,
+      "preparedBytesPerOp": 5381,
+      "usdPerMb": 60,
+      "costBasis": "estimate",
+      "estimatedCostUsd": 2.5374,
+      "costPerOpUsd": 0.25373999999999997
+    },
+    "synchronizerId": "stressnet::122012c6a2904ae1994b05e6f142a2557c5c95500a93066577cb8fe740dfaccd5637"
+  },
+  "setup": {
+    "steps": 1,
+    "submitted": 40,
+    "bindings": {
+      "assets": 40
+    }
+  },
+  "shape": {}
+}

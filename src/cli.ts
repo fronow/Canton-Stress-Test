@@ -118,6 +118,8 @@ const USAGE = `usage:
     [--no-traffic]         skip the CIP-0104 traffic cost estimation
     [--traffic-price usd]  price envelope bytes at USD per MB (e.g. 60), giving
                            a cost per operation alongside the size
+    [--role-party role=id] use an existing party for a role instead of allocating
+                           one (e.g. a party hosted on several participants)
     [--min-throughput n] [--max-p99 ms] [--max-contention pct]   SLA gate → non-zero exit on breach
     [--max-hotspot-share pct] [--max-read-lag offsets]           SLA gate on Canton instrumentation
 
@@ -212,6 +214,7 @@ async function runMain(rest: string[]): Promise<void> {
   let workloadName: "create" | "transfer" = "create";
   let workloadFile: string | null = null;
   const params: WorkloadParams = {};
+  const roleParties: Record<string, string> = {};
   let modelKind: "closed" | "open" = "closed";
   let parties = 3;
   let ops = 200;
@@ -270,7 +273,13 @@ async function runMain(rest: string[]): Promise<void> {
       if (w !== "create" && w !== "transfer") fail("--workload must be create|transfer");
       workloadName = w;
     } else if (a === "--workload-file") workloadFile = val();
-    else if (a === "--set") {
+    else if (a === "--role-party") {
+      // name=partyId: use an existing party for a role instead of allocating one.
+      const raw = val();
+      const eq = raw.indexOf("=");
+      if (eq < 1) fail(`--role-party needs <role>=<partyId> (got: ${raw})`);
+      roleParties[raw.slice(0, eq)] = raw.slice(eq + 1);
+    } else if (a === "--set") {
       const raw = val();
       const eq = raw.indexOf("=");
       if (eq < 1) fail(`--set needs <name>=<value> (got: ${raw})`);
@@ -495,7 +504,7 @@ async function runMain(rest: string[]): Promise<void> {
       console.error(`  warning: could not grant rights to ${authUserId}: ${String(e).slice(0, 200)}`);
     }
   };
-  const runOpts = { amount, seed, runId, onPartiesAllocated, setupConcurrency };
+  const runOpts = { amount, seed, runId, onPartiesAllocated, setupConcurrency, roleParties };
   const onSetupStep = (i: number, label: string, bound: number) =>
     console.error(`  setup ${i + 1}: ${label}${bound > 0 ? ` → bound ${bound}` : ""}`);
 

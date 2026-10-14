@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canton design cost comparator</title>
+<style>
+  :root{--bg:#ffffff;--panel:#f7f9fb;--ink:#0f1419;--body:#3c4753;--mute:#6b7682;--line:#e1e6eb;
+        --accent:#1c4ed8;--good:#0f7b4f;--warn:#9a6700;--bad:#b42318;--chip:#eef2f7}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){--bg:#0f1318;--panel:#171c22;--ink:#eef2f6;--body:#c4ccd5;--mute:#8d97a3;
+      --line:#2a323b;--accent:#7aa2ff;--good:#4cc38a;--warn:#e3b341;--bad:#ff7b72;--chip:#222a33}
+  }
+  :root[data-theme="dark"]{--bg:#0f1318;--panel:#171c22;--ink:#eef2f6;--body:#c4ccd5;--mute:#8d97a3;
+      --line:#2a323b;--accent:#7aa2ff;--good:#4cc38a;--warn:#e3b341;--bad:#ff7b72;--chip:#222a33}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--body);
+       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  main{max-width:1120px;margin:0 auto;padding:28px 16px 60px}
+  h1{color:var(--ink);font-size:28px;line-height:1.2;margin:0 0 6px;letter-spacing:-.01em}
+  .lede{max-width:820px;margin:0 0 18px}
+  .note{font-size:13px;color:var(--mute)}
+  .presets{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 18px}
+  button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+         border-radius:8px;padding:6px 10px;cursor:pointer}
+  button:hover{border-color:var(--accent)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:760px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h2{font-size:16px;color:var(--ink);margin:0 0 10px}
+  label{display:block;font-size:13px;color:var(--mute);margin:10px 0 3px}
+  select,input[type=number]{width:100%;font:inherit;color:var(--ink);background:var(--bg);
+         border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .out{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  .kv{display:flex;justify-content:space-between;gap:8px;padding:3px 0;font-variant-numeric:tabular-nums}
+  .kv b{color:var(--ink);font-weight:650}
+  .big{font-size:22px;color:var(--ink);font-weight:700}
+  .chip{display:inline-block;font-size:11px;border-radius:999px;padding:1px 7px;background:var(--chip);color:var(--mute);
+        margin-left:6px;vertical-align:1px}
+  .chip.m{color:var(--good)} .chip.x{color:var(--warn)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+  th,td{text-align:left;padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--mute);font-weight:600;font-size:12px}
+  td.r,th.r{text-align:right}
+  .diff{margin-top:16px}
+  .diff .big{font-size:26px}
+  .pos{color:var(--bad)} .neg{color:var(--good)}
+  a{color:var(--accent)}
+  .settings{margin-top:16px}
+  .toggle{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px}
+  footer{margin-top:28px;font-size:12.5px;color:var(--mute)}
+  details{margin-top:8px}
+  summary{cursor:pointer;color:var(--ink);font-weight:600}
+</style>
+</head>
+<body>
+<main>
+  <h1>Canton design cost comparator</h1>
+  <p class="lede">Compare what two designs of the same transaction cost in Canton traffic, before
+  building either. Every term comes from bills read off a metered Canton 3.4.11 network, and each one
+  says whether it was <span class="chip m">measured</span> or is an
+  <span class="chip x">extrapolation</span>. Prices follow the draft Universal Burn CIP and are
+  illustrative until its parameters are approved.</p>
+
+  <div class="presets" role="group" aria-label="Examples">
+    <button data-preset="settlement">Propose/accept vs preapproved</button>
+    <button data-preset="receiver">Receiver on its own node vs co-hosted</button>
+    <button data-preset="mainnet">Canton Coin: 1 vs 43 DSO hosts</button>
+    <button data-preset="inputs">1 input vs 3 inputs</button>
+  </div>
+
+  <div class="grid">
+    <section class="card" id="A"><h2>Design A</h2></section>
+    <section class="card" id="B"><h2>Design B</h2></section>
+  </div>
+
+  <section class="card diff" id="diff"></section>
+
+  <section class="card settings">
+    <h2>Volume and pricing</h2>
+    <div class="row">
+      <div><label for="tps">Sustained transfers per second</label>
+        <input id="tps" type="number" min="0.001" step="any" value="10"></div>
+      <div><label for="sync">Synchronizer</label>
+        <select id="sync">
+          <option value="global">Global Synchronizer (list price at any volume)</option>
+          <option value="dedicated" selected>Dedicated synchronizer (volume pricing)</option>
+        </select></div>
+    </div>
+    <div class="row">
+      <div><label for="collateral">Commitment (dedicated only)</label>
+        <select id="collateral">
+          <option value="0">None</option>
+          <option value="0.2">Committed, 20% collateral</option>
+          <option value="0.4">Committed, 40% collateral</option>
+          <option value="0.8">Committed, 80% collateral</option>
+          <option value="1">Committed, 100% collateral</option>
+        </select></div>
+      <div><label for="years">Years the commitment has been held</label>
+        <input id="years" type="number" min="0" max="10" step="1" value="0"></div>
+    </div>
+    <div class="row">
+      <div><label for="price">List price, USD per MB</label>
+        <input id="price" type="number" min="0" step="any" value="60"></div>
+      <div><label for="net">Show</label>
+        <select id="net">
+          <option value="gross" selected>Gross (what is burned)</option>
+          <option value="net">Net of rewards (long-run 9.75% of gross, CIP assumption)</option>
+        </select></div>
+    </div>
+    <p class="note">Volume tiers are counted in MB, as in the draft CIP: your TPS is converted into
+    "typical" 16.7 KB transactions before the tier is applied, so a smaller transaction also lands in
+    a lower tier. The Global Synchronizer keeps one price at every volume.</p>
+  </section>
+
+  <details class="card" style="margin-top:16px">
+    <summary>How each number is derived</summary>
+    <div id="sources"></div>
+  </details>
+
+  <footer>
+    Bytes are what the sequencer billed on a local metered network (one sequencer, one mediator, up to
+    eight participants, in memory); the estimate Canton returns at prepare time came within about 4% of
+    them. MainNet transactions carry more (featured-app markers, rewards bookkeeping), so read absolute
+    figures as a floor and differences between designs as the robust part.
+    Method, raw data and every caveat:
+    <a href="https://github.com/fronow/Canton-Stress-Test/blob/main/examples/network/metered/METERED.md">METERED.md</a>
+    · predictions tested before measuring:
+    <a href="https://github.com/fronow/Canton-Stress-Test/blob/main/examples/network/metered/PREDICTIONS.md">PREDICTIONS.md</a>
+  </footer>
+</main>
+
+<script>
+// MODEL START
+// Every constant: billed bytes per transaction from METERED.md (Canton 3.4.11,
+// metered local network). "m" = measured in that range, "x" = extrapolated.
+const SRC = "https://github.com/fronow/Canton-Stress-Test/blob/main/examples/network/metered/METERED.md";
+const MODEL = {
+  families: {
+    std: { label: "Token Standard transfer, minimal registry (std-spike)", base: 4100, receiver: 1930,
+           settlements: { direct: { label: "Direct (completes in one transaction)", bytes: 4100 } },
+           src: "#a-first-cost-model-tested-by-predicting-before-measuring" },
+    oz:  { label: "Token Standard transfer, OpenZeppelin registry", base: 4448, receiver: 1930, receiverFrom: "std",
+           settlements: {
+             direct: { label: "Preapproved direct (one transaction)", bytes: 4448 },
+             twostep: { label: "Propose + accept (two transactions)", bytes: 4317 + 4237 } },
+           src: "#reference-table-token-standard-transfers-billed" },
+    amulet: { label: "Canton Coin (Amulet) transfer", base: 4601, receiver: 2290,
+           settlements: { direct: { label: "Direct (completes in one transaction)", bytes: 4601 } },
+           src: "#canton-coin-amulet" },
+  },
+  perConfirmingNode: 233,   // submitter, per extra node hosting a confirming party (DSO series, 1-8 nodes)
+  perConfirmingNodeMeasuredUpTo: 7, // extra nodes measured: 0..7
+  confirmingNodeOwn: 340,   // what each such node pays itself
+  confirmingNodePerExtraParty: 160,
+  perObserverNode: 50,      // node hosting only observers
+  perExtraInput: 120,       // per input holding beyond the first (1-8 measured)
+  inputsMeasuredUpTo: 8,
+  dataFactor: 1.31,         // billed bytes per byte of incompressible data (random hex test)
+  mediator: 151,
+  typicalBytes: 1e6 / 60,   // draft CIP: median transaction, $1 at $60/MB
+  netShare: 0.0975,         // draft CIP: long-run net cost after rewards
+};
+
+// Submitter's billed bytes, the whole network's billed bytes, and which terms
+// are extrapolated.
+function txBytes(d) {
+  const f = MODEL.families[d.family];
+  const s = f.settlements[d.settlement] ?? f.settlements.direct;
+  const parts = []; const flags = [];
+  let sub = s.bytes;
+  parts.push([s.label, s.bytes, "m"]);
+  const steps = d.settlement === "twostep" ? 2 : 1;
+  if (d.receiverRemote) {
+    const r = f.receiver * steps;
+    sub += r; parts.push(["Receiver on a node of its own", r, f.receiverFrom ? "x" : "m"]);
+    if (f.receiverFrom) flags.push("receiver cost for this registry is taken from std-spike");
+  }
+  const n = Math.max(0, d.confirmingNodes | 0);
+  if (n > 0) {
+    // Each extra confirming node costs ~233 B per separate part of the
+    // transaction it receives; a remote receiver adds one more part.
+    const per = MODEL.perConfirmingNode * (d.receiverRemote ? 2 : 1) * steps;
+    const c = per * n;
+    const extrap = n > MODEL.perConfirmingNodeMeasuredUpTo;
+    sub += c; parts.push([`${n} extra confirming node(s)`, c, extrap ? "x" : "m"]);
+    if (extrap) flags.push(`extra confirming nodes measured up to ${MODEL.perConfirmingNodeMeasuredUpTo}`);
+  }
+  const o = Math.max(0, d.observerNodes | 0);
+  if (o > 0) { const c = MODEL.perObserverNode * o * steps; sub += c; parts.push([`${o} observer-only node(s)`, c, o > 2 ? "x" : "m"]); }
+  const i = Math.max(1, d.inputs | 0);
+  if (i > 1) {
+    const c = MODEL.perExtraInput * (i - 1);
+    sub += c; parts.push([`${i} input holdings`, c, i > MODEL.inputsMeasuredUpTo ? "x" : "m"]);
+    if (i > MODEL.inputsMeasuredUpTo) flags.push(`inputs measured up to ${MODEL.inputsMeasuredUpTo}`);
+  }
+  const data = Math.max(0, +d.dataBytes || 0);
+  if (data > 0) { const c = Math.round(MODEL.dataFactor * data); sub += c; parts.push(["Extra incompressible data", c, "m"]); }
+  // What everyone else pays: the mediator, and each confirming node itself.
+  const others = (MODEL.mediator + n * (MODEL.confirmingNodeOwn + MODEL.confirmingNodePerExtraParty * Math.max(0, (d.partiesPerNode | 0) - 1))) * steps;
+  return { submitter: sub, network: sub + others, parts, flags };
+}
+
+// Draft Universal Burn price per MB for a sustained volume.
+function pricePerMb(o) {
+  let price = o.listPrice;
+  if (o.sync === "dedicated") {
+    // Volume tiers count throughput in MB: TPS converted to typical transactions.
+    const typicalTps = o.tps * o.bytesPerTx / MODEL.typicalBytes;
+    if (typicalTps > 1) price *= Math.pow(0.5, Math.log10(typicalTps));
+    if (o.collateral > 0) {
+      // 50% off at 20% collateral, a further 25% off per doubling, loyalty 15%/year (max 60%).
+      price *= 0.5 * Math.pow(0.75, Math.log2(o.collateral / 0.2));
+      price *= Math.max(0.4, 1 - 0.15 * (o.years | 0));
+    }
+  }
+  return price;
+}
+
+function cost(bytes, o) {
+  const perMb = pricePerMb({ ...o, bytesPerTx: bytes });
+  let usd = bytes / 1e6 * perMb;
+  if (o.net) usd *= MODEL.netShare;
+  return { perTx: usd, perYear: usd * o.tps * 365 * 24 * 3600, perMb };
+}
+// MODEL END
+
+if (typeof document !== "undefined") {
+  const fmtB = (b) => Math.round(b).toLocaleString("en-US") + " B";
+  const fmtUsd = (u) => u >= 1e6 ? "$" + (u / 1e6).toFixed(2) + "M" : u >= 1e3 ? "$" + Math.round(u).toLocaleString("en-US")
+                    : u >= 1 ? "$" + u.toFixed(2) : "$" + u.toFixed(4);
+  const designs = {
+    A: { family: "oz", settlement: "twostep", receiverRemote: false, confirmingNodes: 0, partiesPerNode: 1, observerNodes: 0, inputs: 1, dataBytes: 0 },
+    B: { family: "oz", settlement: "direct", receiverRemote: false, confirmingNodes: 0, partiesPerNode: 1, observerNodes: 0, inputs: 1, dataBytes: 0 },
+  };
+  const presets = {
+    settlement: [{ family: "oz", settlement: "twostep" }, { family: "oz", settlement: "direct" }],
+    receiver: [{ family: "std", receiverRemote: true }, { family: "std", receiverRemote: false }],
+    mainnet: [{ family: "amulet", confirmingNodes: 0 }, { family: "amulet", confirmingNodes: 42 }],
+    inputs: [{ family: "std", inputs: 1 }, { family: "std", inputs: 3 }],
+  };
+  const base = { settlement: "direct", receiverRemote: false, confirmingNodes: 0, partiesPerNode: 1, observerNodes: 0, inputs: 1, dataBytes: 0 };
+
+  function controls(id) {
+    const d = designs[id];
+    const f = MODEL.families[d.family];
+    const famOpts = Object.entries(MODEL.families).map(([k, v]) => `<option value="${k}"${k === d.family ? " selected" : ""}>${v.label}</option>`).join("");
+    const setOpts = Object.entries(f.settlements).map(([k, v]) => `<option value="${k}"${k === d.settlement ? " selected" : ""}>${v.label}</option>`).join("");
+    return `
+      <label>Transaction</label><select data-k="family">${famOpts}</select>
+      <label>Settlement</label><select data-k="settlement">${setOpts}</select>
+      <div class="row">
+        <div><label>Receiver hosted</label><select data-k="receiverRemote">
+          <option value="0"${!d.receiverRemote ? " selected" : ""}>With the sender or the registry</option>
+          <option value="1"${d.receiverRemote ? " selected" : ""}>On a node of its own</option></select></div>
+        <div><label>Input holdings per transfer</label><input data-k="inputs" type="number" min="1" step="1" value="${d.inputs}"></div>
+      </div>
+      <div class="row">
+        <div><label>Extra nodes confirming (e.g. DSO hosts − 1)</label><input data-k="confirmingNodes" type="number" min="0" step="1" value="${d.confirmingNodes}"></div>
+        <div><label>Confirming parties per such node</label><input data-k="partiesPerNode" type="number" min="1" step="1" value="${d.partiesPerNode}"></div>
+      </div>
+      <div class="row">
+        <div><label>Observer-only nodes</label><input data-k="observerNodes" type="number" min="0" step="1" value="${d.observerNodes}"></div>
+        <div><label>Extra incompressible data (bytes)</label><input data-k="dataBytes" type="number" min="0" step="100" value="${d.dataBytes}"></div>
+      </div>
+      <div class="out" id="out-${id}"></div>`;
+  }
+
+  function settings() {
+    const v = (id) => document.getElementById(id).value;
+    return { tps: Math.max(0.001, +v("tps") || 0.001), sync: v("sync"), collateral: +v("collateral"),
+             years: +v("years") || 0, listPrice: +v("price") || 0, net: v("net") === "net" };
+  }
+
+  function render() {
+    const o = settings();
+    const r = {};
+    for (const id of ["A", "B"]) {
+      const t = txBytes(designs[id]); const c = cost(t.submitter, o); const cn = cost(t.network, o);
+      r[id] = { t, c, cn };
+      const rows = t.parts.map(([k, b, m]) => `<tr><td>${k}<span class="chip ${m}">${m === "m" ? "measured" : "extrapolated"}</span></td><td class="r">${fmtB(b)}</td></tr>`).join("");
+      document.getElementById("out-" + id).innerHTML = `
+        <div class="kv"><span>Sender's bill per transfer</span><span class="big">${fmtB(t.submitter)}</span></div>
+        <div class="kv"><span>× the CIP's typical transaction</span><b>${(t.submitter / MODEL.typicalBytes).toFixed(2)}</b></div>
+        <div class="kv"><span>Cost to the sender, per transfer</span><b>${fmtUsd(c.perTx)}</b></div>
+        <div class="kv"><span>Cost to the sender, per year</span><b>${fmtUsd(c.perYear)}</b></div>
+        <div class="kv"><span>Whole network (incl. confirmers, mediator), per transfer</span><b>${fmtB(t.network)} · ${fmtUsd(cn.perTx)}</b></div>
+        <table style="margin-top:8px"><tr><th>Where the sender's bytes come from</th><th class="r">Bytes</th></tr>${rows}</table>
+        ${t.flags.length ? `<p class="note">Beyond the measured range: ${t.flags.join("; ")}.</p>` : ""}`;
+    }
+    const dTx = r.B.c.perTx - r.A.c.perTx, dYr = r.B.c.perYear - r.A.c.perYear, dB = r.B.t.submitter - r.A.t.submitter;
+    const pct = (r.B.t.submitter / r.A.t.submitter - 1) * 100;
+    const cls = dB > 0 ? "pos" : "neg";
+    document.getElementById("diff").innerHTML = `
+      <h2>B compared with A</h2>
+      <div class="kv"><span>Sender's bytes per transfer</span><span class="big ${cls}">${dB >= 0 ? "+" : "−"}${fmtB(Math.abs(dB))} (${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%)</span></div>
+      <div class="kv"><span>Per transfer, at ${o.tps} transfers/s</span><b class="${cls}">${dTx >= 0 ? "+" : "−"}${fmtUsd(Math.abs(dTx))}</b></div>
+      <div class="kv"><span>Per year, at ${o.tps} transfers/s</span><b class="${cls}">${dYr >= 0 ? "+" : "−"}${fmtUsd(Math.abs(dYr))}</b></div>
+      <p class="note">Price per MB applied: A ${fmtUsd(r.A.c.perMb)}, B ${fmtUsd(r.B.c.perMb)}${o.net ? " (then 9.75% net)" : ""}.
+      ${o.sync === "dedicated" && Math.abs(r.A.c.perMb - r.B.c.perMb) > 1e-9 ? "On a dedicated synchronizer the volume tier counts MB, so the bigger design also reaches a cheaper tier: the dollar gap is smaller than the byte gap. " : ""}
+      Byte figures carry about ±4% (how closely Canton's estimate matched the bill); the difference between two
+      designs is the most reliable number on this page.</p>`;
+  }
+
+  function bind(id) {
+    const el = document.getElementById(id);
+    el.innerHTML = `<h2>Design ${id}</h2>` + controls(id);
+    el.querySelectorAll("[data-k]").forEach((c) => c.addEventListener("input", () => {
+      const k = c.dataset.k; const d = designs[id];
+      d[k] = k === "family" || k === "settlement" ? c.value : k === "receiverRemote" ? c.value === "1" : +c.value;
+      if (k === "family" && !MODEL.families[d.family].settlements[d.settlement]) d.settlement = "direct";
+      if (k === "family") bind(id);
+      render();
+    }));
+  }
+
+  document.querySelectorAll("[data-preset]").forEach((b) => b.addEventListener("click", () => {
+    const [a, bb] = presets[b.dataset.preset];
+    designs.A = { ...base, ...a }; designs.B = { ...base, ...bb };
+    bind("A"); bind("B"); render();
+  }));
+  ["tps", "sync", "collateral", "years", "price", "net"].forEach((id) => document.getElementById(id).addEventListener("input", render));
+
+  document.getElementById("sources").innerHTML = `
+    <table>
+      <tr><th>Term</th><th>Value</th><th>Evidence</th></tr>
+      <tr><td>Token Standard transfer, std-spike</td><td>4,100 B</td><td><a href="${SRC}#inputs-per-transfer">inputs per transfer</a></td></tr>
+      <tr><td>OpenZeppelin: preapproved / propose + accept</td><td>4,448 / 8,554 B</td><td><a href="${SRC}#reference-table-token-standard-transfers-billed">reference table</a></td></tr>
+      <tr><td>Canton Coin (Amulet) transfer</td><td>4,601 B</td><td><a href="${SRC}#canton-coin-amulet">Amulet</a></td></tr>
+      <tr><td>Receiver on a node of its own</td><td>+1,930 B (std-spike), +2,290 B (Amulet); independent of data size</td><td><a href="${SRC}#a-first-cost-model-tested-by-predicting-before-measuring">cost model</a></td></tr>
+      <tr><td>Each extra confirming node (sender's bill)</td><td>+233 B, linear over 1-8 nodes; ×2 when a remote-receiver part exists</td><td><a href="${SRC}#amulet-with-the-dso-hosted-on-several-participants">DSO series</a>, <a href="${SRC}#confirming-parties-or-confirming-participants">parties vs participants</a></td></tr>
+      <tr><td>Each confirming node pays itself</td><td>~340 B, +~160 B per extra party it confirms for</td><td><a href="${SRC}#confirming-parties-or-confirming-participants">parties vs participants</a></td></tr>
+      <tr><td>Observer-only node</td><td>+~50 B</td><td><a href="${SRC}#participant-series-what-each-participants-role-costs">participant series</a></td></tr>
+      <tr><td>Each input holding beyond the first</td><td>+120 B, linear over 1-8</td><td><a href="${SRC}#inputs-per-transfer">inputs per transfer</a></td></tr>
+      <tr><td>Incompressible data</td><td>×1.31 billed bytes per byte; repeated data costs almost nothing</td><td><a href="${SRC}#a-first-cost-model-tested-by-predicting-before-measuring">cost model</a></td></tr>
+      <tr><td>Mediator</td><td>151 B per transaction</td><td><a href="${SRC}#reference-table-token-standard-transfers-billed">reference table</a></td></tr>
+      <tr><td>Price per MB and discounts</td><td>Draft Universal Burn CIP (illustrative)</td><td><a href="https://dach-ny.github.io/universal-burn-cip/">CIP explainer</a></td></tr>
+    </table>`;
+
+  bind("A"); bind("B"); render();
+}
+if (typeof module !== "undefined") module.exports = { MODEL, txBytes, pricePerMb, cost };
+</script>
+</body>
+</html>

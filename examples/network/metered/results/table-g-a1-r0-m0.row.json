@@ -1,0 +1,21 @@
+{
+  "case": "g-a1-r0-m0",
+  "what": "admin on node 1, receiver on node 0, metadata 0 chars",
+  "committed": 10,
+  "ops": 10,
+  "billedPerOp": {
+    "MED::mediator1": 151,
+    "PAR::participant4": 0,
+    "PAR::participant3": 0,
+    "PAR::participant1": 4309,
+    "PAR::participant2": 292
+  },
+  "participantsTotal": 4601,
+  "estimate": {
+    "request": 3899,
+    "response": 415,
+    "total": 4314
+  },
+  "preparedBytes": 9998,
+  "failed": []
+}

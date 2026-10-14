@@ -1,0 +1,25 @@
+{
+  "case": "amulet-dso-7",
+  "what": "Canton Coin (Amulet) transfer, DSO hosted on 7 participant(s)",
+  "committed": 10,
+  "ops": 10,
+  "billedPerOp": {
+    "PAR::participant4": 338,
+    "MED::mediator1": 151,
+    "PAR::participant8": 0,
+    "PAR::participant7": 338,
+    "PAR::participant5": 531,
+    "PAR::participant6": 370,
+    "PAR::participant1": 6147,
+    "PAR::participant2": 370,
+    "PAR::participant3": 531
+  },
+  "participantsTotal": 8625,
+  "estimate": {
+    "request": 5482,
+    "response": 415,
+    "total": 5897
+  },
+  "preparedBytes": 22460,
+  "failed": []
+}

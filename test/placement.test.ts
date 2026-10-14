@@ -207,3 +207,23 @@ test("positional parties ($p0) mean the same party on every participant", async 
   // And all of them went to the node that hosts party 0.
   assert.equal(p2.submissions.filter((s) => s.commandId.includes("-op-")).length, 0);
 });
+
+test("an existing party can be used for a role instead of allocating one", async () => {
+  // For parties set up outside the tool, such as one hosted on several
+  // participants, which allocation cannot create.
+  const p1 = new FakeParticipant("p1");
+  const p2 = new FakeParticipant("p2");
+  const workload: Workload = {
+    parties: 2,
+    placement: "round-robin",
+    roles: ["admin", "other"],
+    setup: [{ id: "x", actAs: ["$role:admin"], op: { kind: "create", template: "M:T", args: {} } }],
+    operations: [{ weight: 1, op: { kind: "create", template: "M:T", args: {} } }],
+  };
+  const prep = await prepareRun([p1, p2], workload, { ...base, roleParties: { admin: "dso::shared" } });
+  assert.equal(prep.roles.admin, "dso::shared");
+  assert.ok(!p1.allocated.some((p) => p.includes("-admin")), "admin must not be allocated");
+  assert.ok(prep.roles.other.includes("-other"), "roles not listed are still allocated");
+  // The admin's setup step goes to its placement node (0 by default).
+  assert.equal(p1.submissions.length, 1);
+});

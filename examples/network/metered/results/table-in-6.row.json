@@ -1,0 +1,21 @@
+{
+  "case": "in-6",
+  "what": "std-spike transfer with 6 input holding(s)",
+  "committed": 6,
+  "ops": 10,
+  "billedPerOp": {
+    "PAR::participant2": 0,
+    "PAR::participant3": 0,
+    "PAR::participant4": 0,
+    "MED::mediator1": 151,
+    "PAR::participant1": 4646
+  },
+  "participantsTotal": 4646,
+  "estimate": {
+    "request": 4231,
+    "response": 415,
+    "total": 4646
+  },
+  "preparedBytes": 25453,
+  "failed": []
+}

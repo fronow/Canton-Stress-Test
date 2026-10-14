@@ -1,0 +1,37 @@
+// Create a DSO party hosted on the first K participants of the running
+// network (four-participants.conf, or participants-N.conf from gen-network.cjs), the way the real DSO is hosted on every Super
+// Validator node. participant1 hosts it with Submission (canton-stress submits
+// there); the others with Confirmation.
+//
+// Threshold 1, not K: Canton refuses to submit for a party whose threshold is
+// above 1 (a "consortium party") from a single participant, and this workload's
+// setup must submit as the DSO to create coins and config. On MainNet the DSO
+// has a higher threshold but never submits transfers; it only confirms. What
+// this measures is what the extra CONFIRMING hosts cost, which threshold 1
+// still exercises: every host with confirmation rights receives the request.
+// Generated per K by run-dso-series.sh; prints "DSO=<party id>".
+import com.digitalasset.canton.topology.transaction.ParticipantPermission
+import com.digitalasset.canton.config.RequireTypes.PositiveInt
+import com.digitalasset.canton.config.NonNegativeDuration
+
+val K = __K__
+val hosts = participants.all.sortBy(_.name.stripPrefix("participant").toInt).take(K)
+require(hosts.size == K, s"network has only ${hosts.size} participants, need $K")
+val sync = sequencer1.synchronizer_id
+val dso = participant1.parties.enable(s"dso-k$K-${System.currentTimeMillis}", synchronizeParticipants = hosts)
+if (K > 1) {
+  val perms = hosts.zipWithIndex.map { case (p, i) =>
+    (p.id, if (i == 0) ParticipantPermission.Submission else ParticipantPermission.Confirmation)
+  }
+  // Every hosting participant signs the same mapping; the party's own
+  // namespace (participant1's) is among them.
+  hosts.foreach(p =>
+    p.topology.party_to_participant_mappings.propose(dso, perms, threshold = PositiveInt.one, store = sync)
+  )
+  utils.retry_until_true(NonNegativeDuration.tryFromDuration(scala.concurrent.duration.Duration("60s"))) {
+    hosts.forall(h =>
+      h.topology.party_to_participant_mappings.is_known(sync, dso, hosts.map(_.id), None, Some(PositiveInt.one))
+    )
+  }
+}
+println("DSO=" + dso.toProtoPrimitive)

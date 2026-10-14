@@ -1,0 +1,99 @@
+{
+  "_comment": [
+    "LIBRARY TEMPLATE — a Canton Network Token Standard (CIP-0056) transfer,",
+    "against ANY registry that implements TransferFactory.",
+    "",
+    "The measured operation is the standard interface choice itself, so this",
+    "file does not need to know anything about the implementation behind it.",
+    "What differs between registries is only how holdings are created and how",
+    "the factory is constructed — supplied as parameters.",
+    "",
+    "  node src/cli.ts check workloads/token-standard-transfer.json",
+    "    → lists the parameters this template needs",
+    "",
+    "Worked invocations for two different registries are in workloads/README.md."
+  ],
+  "version": 1,
+  "parties": "$param:parties",
+  "roles": [
+    "admin",
+    "recv"
+  ],
+  "setup": [
+    {
+      "_comment": "The registry's factory. Its template and fields are implementation-specific.",
+      "id": "factory",
+      "disclose": true,
+      "actAs": [
+        "$role:admin"
+      ],
+      "op": {
+        "kind": "create",
+        "template": "$param:factoryTemplate",
+        "args": "$param:factoryArgs"
+      }
+    },
+    {
+      "_comment": "The sending wallet's holdings. One per measured transfer, so a transfer normally has its own input to spend.",
+      "id": "holdings",
+      "count": "$param:holdings",
+      "actAs": "$param:holdingActAs",
+      "op": {
+        "kind": "create",
+        "template": "$param:holdingTemplate",
+        "args": "$param:holdingArgs"
+      }
+    }
+  ],
+  "operations": [
+    {
+      "weight": 1,
+      "_comment": "The standard transfer — identical for every conforming registry.",
+      "op": {
+        "kind": "exercise",
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "contract": "$ref:factory",
+        "choice": "TransferFactory_Transfer",
+        "args": {
+          "expectedAdmin": "$role:admin",
+          "transfer": {
+            "sender": "$p0",
+            "receiver": "$role:recv",
+            "amount": "$param:transferAmount",
+            "instrumentId": {
+              "admin": "$role:admin",
+              "id": "$param:instrumentId"
+            },
+            "requestedAt": "$now-60s",
+            "executeBefore": "$now+1h",
+            "inputHoldingCids": [
+              "$ref:holdings[*]"
+            ],
+            "meta": {
+              "values": {
+                "note": "d3dc16a7042850f5387f790856f8985628e8961af8f10bc8e8f458b2d9a867dcb8c90a88feec1809d668f3fa7873c8e4da0144cd4224642184f07d64f1dbc4884aa49dc004c3f9e4ecde442b5b2412c68492be64471c602c55102b1800a938304b8ca0c3a05003a2407b95702a22087eed98ff79e85b97f81d44c81b395891ce43a263eeab108682dd3e1517962ebf0e6330c15c905d53cdc9d7dcc58b06106a7500f9d1303ab1a0dc61505bcf40bcbe700335e00830900beea8f49785ba8e7074c5e0428090dc9d80ec0fb06a4e20d103d007ffc0d464f041adfce1dc7c40a8fcecbb7cd39bfc88327c4746fce2017c9669fc3de87c19c4fce5a77c29ab98965fe8af85f85d9ac8b3d7583f80a82cf7b8ef898814ff1839ed68e15913c8b748fdf9d8533128561e382fee081ec9981825e8b66793ce0afe8812560a02ce71f5e6c75ab99bfef4d1e614f10eb4561ad4ce0474cb3d94c450343dfe54dae1f4c28d144a29b48099d49817749f5494141b34116d5424b88f5b4e4913ba7c202efc5e5d1754a4fb70b90ffb5d933ba1c85ed258865fa84beab8270088f4aa188fbc680ae878498b48e1d173e93828591938eecd0855bc98879ce8fc7ef8019fc80ff858eaeed0ab0ec0d3c7f0b741603216106c45001f61301901a0e471501c32dca8afdc017c785e8f48fe53009357306cbfa07057504f8d4068a4704823e0e586901a2b806585b0871fbbd57cd0cd84c07405f0d5a760378410401b00857f30b7c7a0d2bf50e5d540554c703babe0066e90ccf380e6414cb6f58cff34cc87a30cb6144c7dcc8c2abfcc6bd20c30174c5b138c03facce3f10c38dde8432bf8cf48c81eed588bdea8c69154cb78f434d814ce18b47f5cd47b1e746b4f9467fa34b960543f9bf451bf147e73b4501bd48e7174efa694430534570f54b51ef44486147f2eb499bad4592474c7dd941470341b9e5469958f03674a2786b2edf722ea95aaf78592025b5a72518271b1b238e4fa59aaa277032a1f25127a44daa5bd02b4160a206e72a1c2ba1095625f76ea4e816d2a5199375c5572366138b57d1f5c69b856e514c5b033cc20713d6bafc0bf494384dbf76460cdc48154a4b30204ed13e458f044ab05243a2884337864f0bac4ff3da44d3704bba4e47aad449e7e24c2ad84da1964f147c43146a4590c04ab55e4770a4468172436d28493da64d674c47b6fa46a8104c026e4020744abd024cdf8ac7f496c192b2ce6c9ecc37548a4dfd8771f28267438188c084e0f98fe8783fb9cf8c565c8bf4658efc3a8a37eb8890488e85e182b606847bc78c7cf48eb31d8640928521638088608a78198d0118405ad64974bc48a8e40d61170158ce0593b90f5d01bf3d5b00d9c201d39d060915bacc52605855eb06d369a87ca675d3213ea7a4802220cd845bb1b91a87e887b5018786a6820fe7864e948bb43d877b3287d78385d400866b39802c7e887cdf8c7a3f093ed608f521066d10074fd30146da0d96d50337edcbc0bdcd614dca9e9dcc19adcc5f7dcf790dcb3b5dc1576dc82a3dc2660788ba348e475d83dfd2876fa38359a08f10598e3b1e8976ff8683cc896d1580ff2a8a981b873df242afa84b8e2640adcc47bb7a4eabc9f64c1e45206446d6324a02e847806646530c4897ba40d9d04bb12e43216e08bfd903cd6804254b02baf20b550d0b2c8c0c9f9f0c68b60409810359f0046b330d2eba0591350af9940f5c070e50fe09e02906ef780a861b095382062a5d065f9c003d6f0bfa460519e38456e08464998e9a5e87853f8a150c8fc55588126a8b4a5b8b89f88675d18eff368c45378d61a48db20d85ecc28811d38308108276098c270e8a0c2f8aa93c857dc589ba1a87504b8931288745418b71e68aba27864bd484087d8eda7280e5c388654086dcb34e15d545c54f4ea84149054b47ae8d43dba74cfbb9411f634e1ac54018b908e4c8048f3d86ba3287aa838cab0081f639845b7e827fdf838b2c84d0f588c58a8b4efb864218809b7187c4568f0d113eecf488631d8630928e516389f8608f281984d7de8cb4bf884e8c8340d584a7ea83f1db83db788629518f6cb687e4b7894b24851d8d8fb2428e29538409908519898cc48e8a1baf8a42bc8ed94586af9a88d7cb88e2a88ad8c1823f668d39a78f95548d53fd84fff28bdd438cc6c08246f9813d3e871e9f80bc263cdee570890d64adf4eb06c01cc4a9c5f4c9c93269c12f89c7b629cae18370b119cbc079c7a5938970d0878fc9809dce8f1bef85f73642499c40730a4b9ae049de3808addb0cc0420df81d097a5c09212f09730605cd9100b4c00f75c30fa743c75c5bccc793c67e6bcf2863c916fbc5fdb3c04a0bc59b83c2f4d57fe703b29c3502a89406df070b17fe0c9b290a8e7807391b0b8a8209955d04ee9c05206f0aa1460dfed10f2d000c29030e604a018b8508eda4044010c8e1a4c4c5a8c6135cc90100c827d4c84818c2bd0cc0e0f0cda104c09ac28827d3877f4a475220454b3e43810446ba524fe4884751864a1dac429dda43357047744e41dcd44d31e245c6120ad1ad0bfcac0efd3f0505d60eb021010c100f02d3099713c3d7ebc343e3c9cc7bc04533c9bb8bc7083d823f32854b8388380082ff3983307e8930df8ae82c8d69f58fea8a8c0ffb866f1889c4718c395683c4d78178c4874aad83c21c3b5ca378ddb9cf8099c319f9c6a7d9c45039c24119c61079c49c59c46ab9c08999c1eef9c472137d50dd258de9ac5b3c2fea5ca2c2330a39ba0d4035027c940c2307010bfe0d7f290abbb1cc933"
+              }
+            }
+          },
+          "extraArgs": {
+            "context": {
+              "values": {}
+            },
+            "meta": {
+              "values": {}
+            }
+          }
+        }
+      },
+      "submit": {
+        "actAs": [
+          "$p0"
+        ]
+      }
+    }
+  ],
+  "rolePlacement": {
+    "admin": 0,
+    "recv": 0
+  }
+}

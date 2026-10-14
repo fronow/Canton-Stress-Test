@@ -1,0 +1,21 @@
+{
+  "case": "g-a0-r1-rand2000",
+  "what": "admin on node 0, receiver on node 1, 2000 random hex chars of metadata",
+  "committed": 10,
+  "ops": 10,
+  "billedPerOp": {
+    "MED::mediator1": 151,
+    "PAR::participant4": 0,
+    "PAR::participant3": -64,
+    "PAR::participant1": 7346,
+    "PAR::participant2": 64
+  },
+  "participantsTotal": 7346,
+  "estimate": {
+    "request": 6840,
+    "response": 415,
+    "total": 7255
+  },
+  "preparedBytes": 12018,
+  "failed": []
+}

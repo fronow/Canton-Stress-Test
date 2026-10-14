@@ -1,0 +1,19 @@
+module CoSign where
+
+-- Signed by the issuer and every co-signer, so all of them confirm every
+-- transfer. The owner is an observer and the controller of Transfer.
+template CoAsset
+  with
+    issuer : Party
+    cosigners : [Party]
+    owner : Party
+    amount : Decimal
+  where
+    signatory issuer :: cosigners
+    observer owner
+
+    choice Transfer : ContractId CoAsset
+      with
+        newOwner : Party
+      controller owner
+      do create this with owner = newOwner

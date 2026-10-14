@@ -22,3 +22,6 @@ PUBLISHING.md
 *.2026-*Z.md
 cctools.network_*.md
 www.*.md
+
+# Canton logs written by examples/network/metered/cloud/run-scale.sh
+examples/network/metered/cloud/canton-*.log

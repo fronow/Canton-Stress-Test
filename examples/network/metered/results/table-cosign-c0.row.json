@@ -1,0 +1,21 @@
+{
+  "case": "cosign-c0",
+  "what": "CoAsset transfer, cosigners hosted: []",
+  "committed": 10,
+  "ops": 10,
+  "billedPerOp": {
+    "PAR::participant2": 0,
+    "PAR::participant3": 0,
+    "PAR::participant4": 0,
+    "MED::mediator1": 151,
+    "PAR::participant1": 3551
+  },
+  "participantsTotal": 3551,
+  "estimate": {
+    "request": 3087,
+    "response": 415,
+    "total": 3502
+  },
+  "preparedBytes": 3460,
+  "failed": []
+}

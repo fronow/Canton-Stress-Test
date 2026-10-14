@@ -1,0 +1,21 @@
+{
+  "case": "P4",
+  "what": "P4: Amulet, DSO on nodes 0-2, receiver node 3",
+  "committed": 10,
+  "ops": 10,
+  "billedPerOp": {
+    "MED::mediator1": 151,
+    "PAR::participant4": 0,
+    "PAR::participant3": 444,
+    "PAR::participant1": 7846,
+    "PAR::participant2": 508
+  },
+  "participantsTotal": 8798,
+  "estimate": {
+    "request": 7197,
+    "response": 415,
+    "total": 7612
+  },
+  "preparedBytes": 22472,
+  "failed": []
+}
