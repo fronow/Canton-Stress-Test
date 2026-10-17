@@ -300,6 +300,61 @@ recipients adds cost the four- and eight-node runs could not see), and the
 extrapolation quoted until now must be withdrawn and replaced by the measured
 figure, whichever direction it goes.
 
-## Results, round 6
+## Results, round 6 (measured 2026-10-17, after the predictions above)
 
-(Filled in after the run.)
+Run on a rented 8-vCPU, 64 GB machine (Google Cloud c2d-highmem-8) with
+`cloud/run-scale.sh`, N=43, 30 transfers per case, 25 committed in each. The
+first pass gave K = 1, 8, 16, 24 and 43; K=32 was then re-run (see below) and
+K=43 repeated (`-n43b` files).
+
+| Id | DSO hosts | Submitter: predicted → measured | | All nodes: predicted → measured | | Estimate: predicted → measured | |
+|---|---|---|---|---|---|---|---|
+| P18 | 1 | 4,616 → 4,598 | −0.4% pass | 4,552 → 4,598 | +1.0% pass | 4,548 → 4,549 | 0.0% pass |
+| P19 | 8 | 6,249 → 6,174 | −1.2% pass | 9,001 → 8,540 | −5.1% fail | 6,120 → 6,123 | +0.1% pass |
+| P20 | 16 | 8,116 → 7,992 | −1.5% pass | 14,085 → 13,534 | −3.9% pass | 7,917 → 7,932 | +0.2% pass |
+| P21 | 24 | 9,982 → 9,806 | −1.8% pass | 19,169 → 15,489 | −19.2% fail | 9,714 → 9,755 | +0.4% pass |
+| P22 | 32 | 11,848 → 12,449 | +5.1% **fail** | 24,253 → 59,078 | +144% fail | 11,511 → 11,582 | +0.6% pass |
+| P23 | 43 | 14,415 → 15,119 | +4.9% pass | 31,243 → 63,051 | +102% fail | 13,981 → 14,115 | +1.0% pass |
+| (repeat) | 43 | 14,415 → 15,126 | +4.9% pass | 31,243 → 55,703 | +78% fail | 13,981 → 14,127 | +1.0% pass |
+
+Verdicts as written: estimate 6 of 6; submitter 5 of 6 (32 hosts missed by
+0.1 point); all nodes 2 of 6.
+
+**What held.** Canton's own estimate, which is the transaction's size and has no
+background noise, followed the line published from eight nodes to within 1% at
+every point up to 43 hosts (per extra host: 224.6 B predicted, ~227 B
+measured). The cost of the TRANSACTION scales linearly to MainNet's Super
+Validator count.
+
+**What did not.** The gap between the submitter's bill and the estimate was a
+constant ~50 B up to 24 hosts (49 / 51 / 60 / 51 B) and then jumped to 867 B at
+32 hosts and ~1,000 B at 43 (both runs). The DSO's other hosts show the same
+step: ~340 B each up to 16 hosts, mixed 146 / 340 B at 24, then ~1,100-1,550 B
+at 32 and ~480-1,285 B at 43. So above ~24 hosts every DSO host, the submitter
+included, was billed roughly 1 KB per transfer more than the transaction
+accounts for. That is what breaks the all-nodes predictions; the transaction
+itself stayed on the line.
+
+**What the extra is not, and what it might be.** Ten quiet minutes afterwards
+(network up, DSO on 32 hosts, no transfers) billed every node exactly 0 B
+(`results/idle-43-quiet-10min.txt`), so it is not traffic on a timer. Two
+candidates remain, untested: periodic exchanges between nodes that share
+contracts, which may only advance while transactions are flowing (nodes keep
+time by the messages they receive, so an idle network would send none); or
+side effects of an overloaded machine (the log shows CPU-starvation warnings
+from `ExecutionContextMonitor`, and at 32 hosts confirmations arrived late).
+Deciding between them needs a run on more CPU, or one that holds transfers at a
+slower rate.
+
+**K=32 and the deadline change.** The first three attempts at 32 hosts failed
+with "The server was not able to produce a timely response": the log showed the
+mediator processing late and participants' confirmations timing out after the
+default 30 s. Canton's confirmation deadlines were raised to 120 s on the
+running network (`cloud/raise-timeouts.canton`) and the fourth attempt
+committed 25 of 30. Deadlines change how long Canton waits, not what it bills,
+but the K=32 row was measured under that setting and the others were not. A
+first attempt also ended early because the run was interrupted by hand; every
+case completed before the interruption was kept.
+
+Machine and cost: 8 vCPU, 64 GB; about 4 hours in total including the retries,
+roughly $2 at $0.54/hour.

@@ -27,11 +27,14 @@ two participants + sequencer + mediator, all in memory on one machine.
    itself. See the [participant series](#participant-series-what-each-participants-role-costs)
    and the [cost model](#a-first-cost-model-tested-by-predicting-before-measuring).
 5. **Data is billed once, after compression**, not once per node.
-6. **Every extra node confirming for the DSO adds ~233 B to the submitter's
-   bill and ~636 B across the network**, linearly from 1 to 8 hosts. Carried
-   to MainNet's 43 Super Validators (an extrapolation): ~14 KB for the
-   submitter and ~31 KB for the network, the same order as MainNet's observed
-   sizes. See [DSO hosting](#amulet-with-the-dso-hosted-on-several-participants).
+6. **Every extra node confirming for the DSO adds ~230 B to the transaction**,
+   in a straight line from 1 to 43 hosts, MainNet's Super Validator count:
+   Canton's estimate stayed within 1% of the line published from eight nodes,
+   and the submitter was billed **~15.1 KB at 43 hosts** (measured twice, 7 B
+   apart), the same range as the draft CIP's 16.7 KB median. Above ~24 hosts
+   every DSO host was also billed about 1 KB per transfer more than the
+   transaction accounts for; the cause is not yet identified. See
+   [DSO hosting](#amulet-with-the-dso-hosted-on-several-participants).
 7. **The submitter pays per confirming participant, not per confirming
    party.** Two co-signers sharing one node cost the submitter the same as
    one; the node itself pays ~160 B more per extra party it confirms for. See
@@ -39,10 +42,10 @@ two participants + sequencer + mediator, all in memory on one machine.
 8. **Each extra input holding adds ~120 B**, linearly from 1 to 8 inputs. With
    production's typical 1-3 inputs, inputs are a minor cost. See
    [inputs per transfer](#inputs-per-transfer).
-9. **A first cost model predicts unmeasured cases.** 17 predictions were
-   written down before measuring. The submitter's bill landed within 5% in 16
-   of 17, and the one miss led to a refined rule that then passed its own
-   advance test. See [PREDICTIONS.md](PREDICTIONS.md).
+9. **A first cost model predicts unmeasured cases.** 23 predictions of the
+   submitter's bill were written down before measuring, the last six before a
+   43-participant run; 21 landed within 5%. The predictions made for Canton's
+   own estimate all landed within 2%. See [PREDICTIONS.md](PREDICTIONS.md).
 
 ## Contents
 
@@ -271,7 +274,7 @@ Straight-line fits in the number of extra hosts:
 - **These points were predicted.** Hosts 5-8 were predicted from hosts 1-4
   before the eight-node network was booted; the submitter's bill landed within
   5% in all four (PREDICTIONS.md, round 3).
-- **Extrapolation, not a measurement:** carried to MainNet's 43 Super
+- **Extrapolation at the time of the eight-node run, now measured (below):** carried to MainNet's 43 Super
   Validators, the line gives ~14 KB for the submitter and ~31 KB across the
   network. That is the same order as the draft CIP's 16.7 KB median, an
   operator's 35.5 KB node median, and a public average of roughly 23 KB
@@ -285,6 +288,40 @@ because Canton refuses to submit for a party with a higher threshold (a
 to submit as the DSO; the extra hosts still receive the request and confirm,
 which is what is being measured. And MainNet transfers carry more than this one
 (featured-app markers, several inputs, reward accounting).
+
+### Measured at MainNet scale: up to 43 hosts
+
+Run on a rented 8-vCPU, 64 GB machine with `cloud/run-scale.sh` (N=43, 30
+transfers per case, 25 committed each), against predictions published before
+the run ([PREDICTIONS.md](PREDICTIONS.md), round 6).
+
+| DSO hosts | Submitter billed | Estimate | Submitter − estimate | Each other host paid |
+|---|---|---|---|---|
+| 1 | 4,598 | 4,549 | 49 | — |
+| 8 | 6,174 | 6,123 | 51 | 338 |
+| 16 | 7,992 | 7,932 | 60 | 339-429 |
+| 24 | 9,806 | 9,755 | 51 | 146 or 340 |
+| 32 | 12,449 | 11,582 | 867 | 1,143-1,544 |
+| 43 | 15,119 | 14,115 | 1,004 | 481-1,285 |
+| 43 (repeat) | 15,126 | 14,127 | 999 | 340-1,285 |
+
+- **The transaction scales linearly to 43 hosts.** The estimate (the
+  transaction's own size) landed within 1% of the published prediction at every
+  point; ~227 B per extra host against 224.6 B from the eight-node fit.
+- **The submitter's bill: 5 of 6 predictions within 5%** (32 hosts +5.1%,
+  43 hosts +4.9%), and the repeat at 43 hosts came within 7 B of the first.
+- **An extra ~1 KB per DSO host appears above ~24 hosts.** Up to 24 hosts the
+  submitter is billed a constant ~50 B over the estimate; at 32 and 43 it is
+  ~870-1,000 B over, and the other hosts jump from ~340 B to ~1,100-1,550 B.
+  Ten quiet minutes afterwards billed every node 0 B, so it is not traffic on a
+  timer. Candidates, untested: exchanges between nodes sharing contracts that
+  only advance while transactions flow, or side effects of an overloaded
+  machine (CPU-starvation warnings in the log). It makes the network-wide
+  totals at 32-43 hosts roughly double the line's prediction.
+- **32 hosts needed longer confirmation deadlines.** On 8 vCPUs, confirmations
+  from 32 hosts missed Canton's default 30 s deadline; raising it to 120 s
+  (`cloud/raise-timeouts.canton`) let the case run. It changes how long Canton
+  waits, not what it bills.
 
 ## A first cost model, tested by predicting before measuring
 
@@ -507,7 +544,10 @@ uploads the Amulet DAR to every participant and runs the DSO series for chosen
 K, all in one command; `cloud/README.md` lists the machine (64 GB RAM), what to
 copy over and how to bring the results back. It was tested end to end on four
 participants (`N=4 KS="1 4"`: 4,600 and 5,270 B, matching the earlier
-four-node session). At 43 participants only the size is new. Not yet run.
+four-node session), then run at 43 participants on a rented 8-vCPU, 64 GB
+machine (results above). On that machine the 32-host case needs longer
+confirmation deadlines: run `cloud/raise-timeouts.canton` against the running
+network before measuring it.
 
 ## Limits
 
@@ -515,9 +555,10 @@ four-node session). At 43 participants only the size is new. Not yet run.
   Synchronizer. At this value the recipients term adds well under 1% for two
   recipients, but confirm it against MainNet's published synchronizer
   parameters before quoting absolute numbers.
-- **Up to eight participants.** The DSO line is measured from 1 to 8 hosts;
-  the 43-host figures are an extrapolation until `cloud/run-scale.sh` is run
-  on a larger machine.
+- **43 participants on one 8-vCPU machine.** The DSO line is measured from 1
+  to 43 hosts, but all nodes share one machine and one process, with no real
+  network distances; above ~24 hosts the machine was CPU-starved, which may be
+  behind the extra ~1 KB per host.
 - **The DSO has threshold 1** (see above), and the Amulet transfer is a
   simplified one: no real AmuletRules, mining rounds, featured-app markers or
   reward accounting, which MainNet transfers carry.

@@ -1,0 +1,11 @@
+// Raise Canton's confirmation deadlines from the default 30 s to 120 s on a
+// RUNNING network. Needed for the DSO on 32 participants on an 8-vCPU machine:
+// confirmations from 32 hosts arrived late (mediator: "late processing",
+// participants: "Response message ... timed out") and the first transaction
+// was rejected. Deadlines change how long Canton waits, not what it bills.
+// Run: java -jar canton.jar run cloud/raise-timeouts.canton -c remote-43.conf
+
+import com.digitalasset.canton.config.NonNegativeFiniteDuration
+sequencer1.topology.synchronizer_parameters.propose_update(sequencer1.synchronizer_id, _.copy(confirmationResponseTimeout = NonNegativeFiniteDuration.ofSeconds(120), mediatorReactionTimeout = NonNegativeFiniteDuration.ofSeconds(120)))
+Thread.sleep(5000)
+println("PARAMS " + sequencer1.topology.synchronizer_parameters.get_dynamic_synchronizer_parameters(sequencer1.synchronizer_id))

@@ -51,5 +51,5 @@ done
 echo "== DSO series K in: $KS ($OPS transfers each)"
 cd "$net/metered"
 TAG="${TAG:-n$N}" JAVA="$JAVA" CANTON_JAR="$CANTON_JAR" REMOTE="remote-$N.conf" KS="$KS" OPS="$OPS" bash run-dso-series.sh
-echo "== done; per-case rows in $net/metered/results/table-amulet-dso-*-n$N.row.json"
+echo "== done; per-case rows in $net/metered/results/table-amulet-dso-*-${TAG:-n$N}.row.json"
 if [ "${KEEP:-0}" = "1" ]; then echo "   network left running (KEEP=1); stop it with: kill $canton_pid"; fi

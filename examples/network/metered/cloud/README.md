@@ -94,6 +94,15 @@ starting the run, as for every earlier round.
 
 - **Boot never reaches READY:** look at `canton-43.log` here. Out of memory:
   raise `HEAP` (and the machine's RAM).
+- **A K fails with "The server was not able to produce a timely response":**
+  confirmations from many hosts missed Canton's default 30 s deadline (on 8
+  vCPUs this happened at 32 hosts). Keep the network running (`KEEP=1`),
+  raise the deadlines with
+  `java -jar ~/canton.jar run raise-timeouts.canton -c ../../remote-43.conf`
+  (from this directory), then re-run that K alone with
+  `run-dso-series.sh` (see the measured run's notes in PREDICTIONS.md, round 6).
+- **Do not press Ctrl+C in the run's window.** To leave it running inside
+  tmux, press Ctrl+B and then D.
 - **A K fails to create its DSO party:** the console output is in the run's
   terminal; the most likely cause is a timeout while 43 participants sign the
   hosting proposal. Re-run that K alone with `KS="<K>"`.

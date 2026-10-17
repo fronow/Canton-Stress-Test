@@ -151,7 +151,7 @@ const MODEL = {
            src: "#canton-coin-amulet" },
   },
   perConfirmingNode: 233,   // submitter, per extra node hosting a confirming party (DSO series, 1-8 nodes)
-  perConfirmingNodeMeasuredUpTo: 7, // extra nodes measured: 0..7
+  perConfirmingNodeMeasuredUpTo: 42, // extra nodes measured: 0..42 (DSO on 1-43 hosts)
   confirmingNodeOwn: 340,   // what each such node pays itself
   confirmingNodePerExtraParty: 160,
   perObserverNode: 50,      // node hosting only observers
@@ -329,7 +329,7 @@ if (typeof document !== "undefined") {
       <tr><td>OpenZeppelin: preapproved / propose + accept</td><td>4,448 / 8,554 B</td><td><a href="${SRC}#reference-table-token-standard-transfers-billed">reference table</a></td></tr>
       <tr><td>Canton Coin (Amulet) transfer</td><td>4,601 B</td><td><a href="${SRC}#canton-coin-amulet">Amulet</a></td></tr>
       <tr><td>Receiver on a node of its own</td><td>+1,930 B (std-spike), +2,290 B (Amulet); independent of data size</td><td><a href="${SRC}#a-first-cost-model-tested-by-predicting-before-measuring">cost model</a></td></tr>
-      <tr><td>Each extra confirming node (sender's bill)</td><td>+233 B, linear over 1-8 nodes; ×2 when a remote-receiver part exists</td><td><a href="${SRC}#amulet-with-the-dso-hosted-on-several-participants">DSO series</a>, <a href="${SRC}#confirming-parties-or-confirming-participants">parties vs participants</a></td></tr>
+      <tr><td>Each extra confirming node (sender's bill)</td><td>+233 B, linear over 1-43 nodes in the transaction itself; ×2 when a remote-receiver part exists. Above ~24 nodes each host was also billed ~1 KB more per transfer, not modelled here</td><td><a href="${SRC}#amulet-with-the-dso-hosted-on-several-participants">DSO series</a>, <a href="${SRC}#confirming-parties-or-confirming-participants">parties vs participants</a></td></tr>
       <tr><td>Each confirming node pays itself</td><td>~340 B, +~160 B per extra party it confirms for</td><td><a href="${SRC}#confirming-parties-or-confirming-participants">parties vs participants</a></td></tr>
       <tr><td>Observer-only node</td><td>+~50 B</td><td><a href="${SRC}#participant-series-what-each-participants-role-costs">participant series</a></td></tr>
       <tr><td>Each input holding beyond the first</td><td>+120 B, linear over 1-8</td><td><a href="${SRC}#inputs-per-transfer">inputs per transfer</a></td></tr>

@@ -57,6 +57,8 @@ test("byte estimates reproduce measured bills within 5%", () => {
   // Amulet, DSO on 2 and 3 hosts with the receiver on a node of its own (P5, P4).
   within5(txBytes(design({ family: "amulet", receiverRemote: true, confirmingNodes: 1 })).submitter, 7397);
   within5(txBytes(design({ family: "amulet", receiverRemote: true, confirmingNodes: 2 })).submitter, 7846);
+  // Amulet, DSO on 43 hosts: the MainNet-scale run (15,119 B).
+  within5(txBytes(design({ family: "amulet", confirmingNodes: 42 })).submitter, 15119);
   // Three input holdings (round 4, 4,409 B).
   within5(txBytes(design({ inputs: 3 })).submitter, 4409);
 });
