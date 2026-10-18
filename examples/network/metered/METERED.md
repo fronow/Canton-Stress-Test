@@ -533,7 +533,7 @@ In `examples/network/metered/`:
 | `amulet/gen-amulet.cjs`, `amulet/amulet-transfer.json` | The Canton Coin transfer workload |
 | `multihost-dso.canton.tmpl`, `run-dso-series.sh` | Create a DSO hosted on K nodes and measure it |
 | `cosign/` | The co-signed asset (Daml), its workload, `multihost-party.canton.tmpl` and `run-cosign.sh` |
-| `../../../docs/cost-comparator.html` | The design cost comparator: a single offline page built on the model here; its constants are pinned by `test/comparator.test.ts` |
+| `../../../docs/cost-comparator.html` | The [design cost comparator](https://fronow.github.io/Canton-Stress-Test/docs/cost-comparator.html): a single offline page built on the model here; its constants are pinned by `test/comparator.test.ts` |
 | `cloud/run-scale.sh`, `cloud/README.md` | One command for the DSO series on a large rented machine (43 participants) |
 | `results/` | Every raw report and per-case row behind every number here |
 

@@ -361,7 +361,7 @@ generates a config for any N up to 99. Booted with
 what the sequencer actually bills each node. Results so far, how to reproduce
 them, and a first cost model tested by predicting before measuring:
 [examples/network/metered/METERED.md](examples/network/metered/METERED.md).
-[`docs/cost-comparator.html`](docs/cost-comparator.html) turns those measurements into
+The [design cost comparator](https://fronow.github.io/Canton-Stress-Test/docs/cost-comparator.html) ([source](docs/cost-comparator.html)) turns those measurements into
 a design cost comparator: two designs side by side, priced under the draft
 Universal Burn CIP, every term marked measured or extrapolated.
 
