@@ -66,7 +66,7 @@
   <div class="presets" role="group" aria-label="Examples">
     <button data-preset="settlement">Propose/accept vs preapproved</button>
     <button data-preset="receiver">Receiver on its own node vs co-hosted</button>
-    <button data-preset="mainnet">Canton Coin: 1 vs 43 DSO hosts</button>
+    <button data-preset="mainnet">Canton Coin: 1 vs 13 DSO hosts (MainNet)</button>
     <button data-preset="inputs">1 input vs 3 inputs</button>
   </div>
 
@@ -237,7 +237,7 @@ if (typeof document !== "undefined") {
   const presets = {
     settlement: [{ family: "oz", settlement: "twostep" }, { family: "oz", settlement: "direct" }],
     receiver: [{ family: "std", receiverRemote: true }, { family: "std", receiverRemote: false }],
-    mainnet: [{ family: "amulet", confirmingNodes: 0 }, { family: "amulet", confirmingNodes: 42 }],
+    mainnet: [{ family: "amulet", confirmingNodes: 0 }, { family: "amulet", confirmingNodes: 12 }],
     inputs: [{ family: "std", inputs: 1 }, { family: "std", inputs: 3 }],
   };
   const base = { settlement: "direct", receiverRemote: false, confirmingNodes: 0, partiesPerNode: 1, observerNodes: 0, inputs: 1, dataBytes: 0 };

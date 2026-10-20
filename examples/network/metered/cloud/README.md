@@ -1,9 +1,10 @@
-# Measuring at MainNet scale: the DSO on 43 participants
+# Measuring large networks: the DSO on up to 43 participants
 
-On MainNet the DSO is hosted by 43 Super Validator nodes. Locally the DSO
-series stops at 8 hosts and the 43-host figures (~14 KB for the submitter,
-~31 KB across the network) are an extrapolation. This directory replaces the
-extrapolation with a measurement, on one rented machine, in one command.
+Locally the DSO series stops at 8 hosts. This directory measures it on up to
+43 participants, on one rented machine, in one command. (MainNet's DSO has 13
+Super Validator nodes as of 2026-10-20; earlier versions of this page said 43,
+which was wrong. 13 hosts fit on a desktop with the local eight-node setup
+extended; this directory is for going past MainNet's size.)
 
 It is still your own private network (one sequencer, one mediator, N
 participants, in memory). Nothing touches DevNet, TestNet or MainNet, so no

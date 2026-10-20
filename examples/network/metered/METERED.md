@@ -28,10 +28,13 @@ two participants + sequencer + mediator, all in memory on one machine.
    and the [cost model](#a-first-cost-model-tested-by-predicting-before-measuring).
 5. **Data is billed once, after compression**, not once per node.
 6. **Every extra node confirming for the DSO adds ~230 B to the transaction**,
-   in a straight line from 1 to 43 hosts, MainNet's Super Validator count:
-   Canton's estimate stayed within 1% of the line published from eight nodes,
-   and the submitter was billed **~15.1 KB at 43 hosts** (measured twice, 7 B
-   apart), the same range as the draft CIP's 16.7 KB median. Above ~24 hosts
+   in a straight line from 1 to 43 hosts: Canton's estimate stayed within 1% of
+   the line published from eight nodes. At **13 hosts, MainNet's Super
+   Validator count** (DSO rules, read 2026-10-20), the line gives **~7.3 KB**
+   for the submitter; at 43 hosts it was billed ~15.1 KB (measured twice, 7 B
+   apart). This transfer is leaner than a typical MainNet one (see the
+   correction under DSO hosting), so 7.3 KB is a floor for MainNet, not its
+   typical bill. Above ~24 hosts
    every DSO host was also billed about 1 KB per transfer more than the
    transaction accounts for; the cause is not yet identified. See
    [DSO hosting](#amulet-with-the-dso-hosted-on-several-participants).
@@ -61,7 +64,7 @@ two participants + sequencer + mediator, all in memory on one machine.
 - [Things found on the way](#things-found-on-the-way)
 - [Reproduce every result](#reproduce-every-result)
 - [Files](#files)
-- [MainNet scale (43 participants)](#mainnet-scale-43-participants)
+- [Large networks (43 participants)](#large-networks-43-participants)
 - [Limits](#limits)
 
 ## How Canton bills traffic
@@ -274,8 +277,8 @@ Straight-line fits in the number of extra hosts:
 - **These points were predicted.** Hosts 5-8 were predicted from hosts 1-4
   before the eight-node network was booted; the submitter's bill landed within
   5% in all four (PREDICTIONS.md, round 3).
-- **Extrapolation at the time of the eight-node run, now measured (below):** carried to MainNet's 43 Super
-  Validators, the line gives ~14 KB for the submitter and ~31 KB across the
+- **Extrapolation at the time of the eight-node run, now measured (below):** carried to 43
+  hosts (then wrongly believed to be MainNet's Super Validator count; it is 13), the line gives ~14 KB for the submitter and ~31 KB across the
   network. That is the same order as the draft CIP's 16.7 KB median, an
   operator's 35.5 KB node median, and a public average of roughly 23 KB
   (September 2026 traffic purchased over transactions). The 43-host figure
@@ -289,7 +292,21 @@ to submit as the DSO; the extra hosts still receive the request and confirm,
 which is what is being measured. And MainNet transfers carry more than this one
 (featured-app markers, several inputs, reward accounting).
 
-### Measured at MainNet scale: up to 43 hosts
+### Measured up to 43 hosts
+
+> **Correction (2026-10-20).** Earlier versions of these notes called 43
+> "MainNet's Super Validator count". It is not: MainNet's DSO rules list **13**
+> Super Validator nodes (public Scan API, `/v0/dso`, read 2026-10-20). The
+> measurements stand as measurements of 1-43 hosts; at 13 hosts the measured
+> line gives about **7.3 KB** for the submitter (7,310 B, interpolated between
+> the 8- and 16-host points; estimate 7,254 B).
+>
+> A sample of 200 MainNet transactions (one minute, 2026-10-20, Scan
+> `/v2/updates`) shows the single `TransferFactory_Transfer` measured here is
+> the most common MainNet transaction (35%), but real ones route through the
+> receiver's transfer preapproval and add a featured-app marker and two
+> holdings-change log events (median 8 events per transaction), which this
+> workload does not.
 
 Run on a rented 8-vCPU, 64 GB machine with `cloud/run-scale.sh` (N=43, 30
 transfers per case, 25 committed each), against predictions published before
@@ -537,7 +554,7 @@ In `examples/network/metered/`:
 | `cloud/run-scale.sh`, `cloud/README.md` | One command for the DSO series on a large rented machine (43 participants) |
 | `results/` | Every raw report and per-case row behind every number here |
 
-## MainNet scale (43 participants)
+## Large networks (43 participants)
 
 `cloud/run-scale.sh` generates an N-participant metered network, boots it,
 uploads the Amulet DAR to every participant and runs the DSO series for chosen

@@ -123,6 +123,9 @@ If the line holds to 8 hosts, that extrapolation stands on twice as much
 evidence; if it bends, the 43-host figure has to be revised before anyone
 quotes it.
 
+(Correction, 2026-10-20: MainNet has 13 Super Validator nodes, not 43. See the
+note before the round 6 results.)
+
 ## Results, round 3 (measured 2026-10-12, after the predictions above)
 
 Eight-participant network (`participants-8.conf` from `gen-network.cjs`), DSO
@@ -299,6 +302,14 @@ per-host cost is not constant at large K (for example, if fan-out to many
 recipients adds cost the four- and eight-node runs could not see), and the
 extrapolation quoted until now must be withdrawn and replaced by the measured
 figure, whichever direction it goes.
+
+> **Correction (2026-10-20).** Earlier versions of these notes called 43
+> "MainNet's Super Validator count". It is not: MainNet's DSO rules list **13**
+> Super Validator nodes (public Scan API, `/v0/dso`, read 2026-10-20). The
+> measurements stand as measurements of 1-43 hosts; at 13 hosts the measured
+> line gives about **7.3 KB** for the submitter (7,310 B, interpolated between
+> the 8- and 16-host points; estimate 7,254 B).
+> The predictions above are left exactly as written.
 
 ## Results, round 6 (measured 2026-10-17, after the predictions above)
 

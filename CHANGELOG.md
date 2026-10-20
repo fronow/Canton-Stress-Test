@@ -56,7 +56,11 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   Universal Burn CIP (volume tiers counted in MB, commitment and loyalty
   discounts), each term marked measured or extrapolated. `test/comparator.test.ts`
   pins it to the CIP's own price examples and to measured bills.
-- **The DSO measured on 43 participants** (MainNet's Super Validator count),
+- **Correction: MainNet has 13 Super Validator nodes, not 43** (public Scan
+  API, 2026-10-20). At 13 hosts the measured line gives ~7.3 KB for the
+  submitter; METERED.md, the cloud README and the comparator are corrected,
+  and PREDICTIONS.md carries a dated note (the predictions are unchanged).
+- **The DSO measured on 43 participants**,
   on a rented 8-vCPU, 64 GB machine with `cloud/run-scale.sh`: the transaction
   stayed on the line predicted from eight nodes (estimate within 1%), the
   submitter was billed ~15.1 KB at 43 hosts; above ~24 hosts each host was
