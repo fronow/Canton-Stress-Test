@@ -89,6 +89,7 @@ export interface LedgerApi {
     disclosedContracts?: DisclosedContract[];
     command: LedgerCommand;
     actAs: string[];
+    readAs?: string[];
     synchronizerId: string;
   }): Promise<TrafficCost | undefined>;
 }
@@ -382,6 +383,7 @@ export class LedgerClient implements LedgerApi {
   async estimateTrafficCost(req: {
     command: LedgerCommand;
     actAs: string[];
+    readAs?: string[];
     synchronizerId: string;
     disclosedContracts?: DisclosedContract[];
   }): Promise<TrafficCost | undefined> {
@@ -395,7 +397,7 @@ export class LedgerClient implements LedgerApi {
       synchronizerId: req.synchronizerId,
       verboseHashing: false,
       actAs: req.actAs,
-      readAs: [],
+      readAs: req.readAs ?? [],
       commands: [req.command],
       packageIdSelectionPreference: [],
       disclosedContracts: req.disclosedContracts ?? [],

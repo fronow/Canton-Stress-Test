@@ -1,0 +1,31 @@
+{
+  "case": "amulet-dso-13",
+  "what": "Canton Coin (Amulet) transfer offer (two-step, first step), DSO hosted on 13 participant(s)",
+  "committed": 25,
+  "ops": 30,
+  "billedPerOp": {
+    "PAR::participant8": 494,
+    "PAR::participant1": 7464,
+    "PAR::participant7": 494,
+    "PAR::participant6": 494,
+    "PAR::participant3": 494,
+    "PAR::participant4": 494,
+    "PAR::participant2": 494,
+    "PAR::participant9": 494,
+    "PAR::participant12": 495,
+    "PAR::participant11": 495,
+    "PAR::participant10": 495,
+    "PAR::participant13": 495,
+    "PAR::participant5": 339,
+    "MED::mediator1": 151
+  },
+  "participantsTotal": 13241,
+  "estimate": {
+    "request": 6843,
+    "response": 415,
+    "total": 7258
+  },
+  "preparedBytes": 22511,
+  "failed": [],
+  "tag": "n13"
+}

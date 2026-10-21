@@ -653,13 +653,16 @@ async function estimateTraffic(
     seen.add(key);
     const built = buildCommand(w.op, buildCtx);
     if (!built) continue;
-    const { actAs } = submittersFor(w.op, w.submit, built.target, buildCtx, fallbackFor(w.op));
+    const { actAs, readAs } = submittersFor(w.op, w.submit, built.target, buildCtx, fallbackFor(w.op));
     const api = apiFor(actAs);
     let cost;
     try {
       cost = await api.estimateTrafficCost!({
         command: built.command,
         actAs,
+        // The submission reads as these parties; the estimate must too, or a
+        // contract visible only through them is CONTRACT_NOT_FOUND here.
+        readAs,
         synchronizerId,
         disclosedContracts: disclosed,
       });

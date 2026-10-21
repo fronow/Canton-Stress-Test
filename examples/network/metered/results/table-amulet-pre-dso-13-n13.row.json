@@ -1,0 +1,31 @@
+{
+  "case": "amulet-pre-dso-13",
+  "what": "Canton Coin (Amulet) transfer through a preapproval, DSO hosted on 13 participant(s)",
+  "committed": 25,
+  "ops": 30,
+  "billedPerOp": {
+    "PAR::participant8": 648,
+    "PAR::participant1": 8357,
+    "PAR::participant7": 494,
+    "PAR::participant6": 648,
+    "PAR::participant3": 648,
+    "PAR::participant4": 648,
+    "PAR::participant2": 494,
+    "PAR::participant9": 494,
+    "PAR::participant12": 650,
+    "PAR::participant11": 650,
+    "PAR::participant10": 650,
+    "PAR::participant13": 495,
+    "PAR::participant5": 648,
+    "MED::mediator1": 151
+  },
+  "participantsTotal": 15524,
+  "estimate": {
+    "request": 7405,
+    "response": 415,
+    "total": 7820
+  },
+  "preparedBytes": 33750,
+  "failed": [],
+  "tag": "n13"
+}

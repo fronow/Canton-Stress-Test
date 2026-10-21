@@ -56,6 +56,19 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   Universal Burn CIP (volume tiers counted in MB, commitment and loyalty
   discounts), each term marked measured or extrapolated. `test/comparator.test.ts`
   pins it to the CIP's own price examples and to measured bills.
+- **A completed Canton Coin transfer at MainNet scale.** `amulet/gen-amulet-preapproved.cjs`
+  builds MainNet's most common transaction (through the receiver's preapproval,
+  featured-app marker, event log; event tree checked against MainNet) and
+  `gen-amulet-accept.cjs` the receiver's accept of an offer. With the DSO on 13
+  hosts: sender 8,357 B, all nodes 15,675 B; offer + accept 14,963 B for the
+  users, 25,501 B for the network. Predicted in advance (PREDICTIONS.md rounds
+  7-8). The comparator's Canton Coin family now has both routes.
+- **Correction: earlier Amulet figures were the offer**, the first step of a
+  two-step transfer, not a completed transfer; relabelled throughout.
+- **Fix: the cost estimate ignored readAs**, so an operation that reads as
+  another party got CONTRACT_NOT_FOUND instead of an estimate.
+- **`read.sh` and `run-dso-series.sh` write console logs to their own files**,
+  so a running network's log rotation no longer breaks them.
 - **Correction: MainNet has 13 Super Validator nodes, not 43** (public Scan
   API, 2026-10-20). At 13 hosts the measured line gives ~7.3 KB for the
   submitter; METERED.md, the cloud README and the comparator are corrected,

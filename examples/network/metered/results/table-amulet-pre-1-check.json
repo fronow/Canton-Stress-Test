@@ -1,0 +1,213 @@
+{
+  "model": "closed",
+  "parties": 6,
+  "ops": 3,
+  "summary": {
+    "ops": 3,
+    "committed": 3,
+    "contention": 0,
+    "rejected": 0,
+    "wallMs": 1118.5281999999988,
+    "throughputPerSec": 2.682095990069811,
+    "attemptedPerSec": 2.682095990069811,
+    "contentionRate": 0,
+    "latency": {
+      "p50": 362.8011000000006,
+      "p90": 404.055699999999,
+      "p95": 404.055699999999,
+      "p99": 404.055699999999,
+      "max": 404.055699999999,
+      "mean": 372.6873333333327
+    },
+    "latencyCurve": [
+      {
+        "p": 50,
+        "ms": 362.8011000000006
+      },
+      {
+        "p": 75,
+        "ms": 404.055699999999
+      },
+      {
+        "p": 90,
+        "ms": 404.055699999999
+      },
+      {
+        "p": 95,
+        "ms": 404.055699999999
+      },
+      {
+        "p": 99,
+        "ms": 404.055699999999
+      },
+      {
+        "p": 99.9,
+        "ms": 404.055699999999
+      }
+    ]
+  },
+  "instrumentation": {
+    "hotspots": [
+      {
+        "key": "00b994b8b3783d4229d03550efea2e113d56e7713f9ac3651786f945a1ca7112c4ca121220a208075eb0e2dad741c6421981e4b8d9325f4d3735aef83ec92879943fd0dd43",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 404.055699999999,
+        "p99": 404.055699999999,
+        "maxMs": 404.055699999999,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "003fd9791e414cf41b1a1d1e517a7e8f0114ec6772b3486c80ab74bff852a72e08ca1212204fd15f8a51d76fafd7ea47b0dbdf8f7fe9ccaa945e08acea1d58eb29d5bbb366",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 351.2051999999985,
+        "p99": 351.2051999999985,
+        "maxMs": 351.2051999999985,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "000470e4a14fd04425f1546ad72f55f2339611a92f28d76ce4f45232b0208b2e1bca121220de8b06f7821f5acc6c453f1b40acabc31039ad2c06092885883d67436538900a",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 362.8011000000006,
+        "p99": 362.8011000000006,
+        "maxMs": 362.8011000000006,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "00a6f4d532ad9d6436dadf44aca7008cfb3f5651b80f7c70f958e134408039349fca1212200b408b1065e9cc9c362cc21d8fdc5ebd7dd485a67bedfab927453484836136b1",
+        "ops": 9,
+        "committed": 9,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 362.8011000000006,
+        "p99": 404.055699999999,
+        "maxMs": 404.055699999999,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": true
+      },
+      {
+        "key": "00d80c9fa06ac883f197c21cde0e3c6a9ebfd86e6c3bbd25cb08cbb9bd14cd2675ca12122018251e5ea44eaff6a54732091d6487b8a86338acece943d5e356aee191227592",
+        "ops": 3,
+        "committed": 3,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 362.8011000000006,
+        "p99": 404.055699999999,
+        "maxMs": 404.055699999999,
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "role": "target",
+        "ubiquitous": true
+      },
+      {
+        "key": "00c04b10077a22e6b12b4a234e1fb64bd30cdfd4a7621706d01adc7e742ff2d87cca1212209bbabac814f6cca438e78c4621312415baac8bdd85e10b66cc576f83c4f743de",
+        "ops": 3,
+        "committed": 3,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 362.8011000000006,
+        "p99": 404.055699999999,
+        "maxMs": 404.055699999999,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": true
+      },
+      {
+        "key": "005ee3d2d57a5c800ce58b80859b71fb8176f44fb369b1920ebc15a9f5b9a8e052ca121220c69f8ee9bb4da2b52b37e9289e11f4d919c7ef4505744ac7535e1b2366a8d4c2",
+        "ops": 3,
+        "committed": 3,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 362.8011000000006,
+        "p99": 404.055699999999,
+        "maxMs": 404.055699999999,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": true
+      }
+    ],
+    "byParty": [
+      {
+        "key": "cs-mvh6t3g2-p0::122097289d911f2ebea0361946cb14d9637482884dfeb67c773018efb84066986bfa",
+        "ops": 3,
+        "committed": 3,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 362.8011000000006,
+        "p99": 404.055699999999,
+        "maxMs": 404.055699999999
+      }
+    ],
+    "byOperation": [
+      {
+        "key": "Splice.Api.Token.TransferInstructionV1:TransferFactory:TransferFactory_Transfer",
+        "ops": 3,
+        "committed": 3,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 362.8011000000006,
+        "p99": 404.055699999999,
+        "maxMs": 404.055699999999
+      }
+    ],
+    "traffic": {
+      "perOperation": [
+        {
+          "operation": "Splice.Api.Token.TransferInstructionV1:TransferFactory:TransferFactory_Transfer",
+          "confirmationRequest": 4681,
+          "confirmationResponse": 415,
+          "total": 5096,
+          "preparedBytes": 33462
+        }
+      ],
+      "totalForRun": 15288,
+      "perSecond": 13667.961165395756,
+      "unmetered": false,
+      "preparedBytesForRun": 100386,
+      "preparedBytesPerOp": 33462,
+      "usdPerMb": 60,
+      "costBasis": "estimate",
+      "estimatedCostUsd": 0.91728,
+      "costPerOpUsd": 0.30576
+    },
+    "synchronizerId": "stressnet::1220bf8f873652476fc8af3e2eab48dacaeb2fe8b1a63c77ecc2155729c7bc23ab92"
+  },
+  "setup": {
+    "steps": 5,
+    "submitted": 64,
+    "bindings": {
+      "factory": 1,
+      "config": 1,
+      "holdings": 60,
+      "featured": 1,
+      "preapproval": 1
+    }
+  },
+  "shape": {
+    "pool": 60,
+    "inputs": 1
+  }
+}

@@ -151,3 +151,31 @@ test("cost is estimated on the participant that HOSTS the submitter", async () =
   assert.deepEqual(t?.failed ?? [], []);
   assert.equal(t?.perOperation[0]?.total, 3950);
 });
+
+test("the estimate reads as the same parties as the submission", async () => {
+  // Found accepting a Canton Coin transfer offer: the receiver reads as the
+  // sender to see the locked amulet, and the submission committed, but the
+  // estimate was prepared without readAs and failed with CONTRACT_NOT_FOUND.
+  let seenReadAs: string[] | undefined;
+  const { report } = await runMeasured(
+    fakeLedger({
+      async connectedSynchronizerId() {
+        return "sync::1";
+      },
+      async estimateTrafficCost(req) {
+        seenReadAs = req.readAs;
+        return { confirmationRequest: 3600, confirmationResponse: 350, total: 3950, preparedBytes: 2000 };
+      },
+    }),
+    {
+      parties: 2,
+      setup: [],
+      operations: [{ weight: 1, submit: { actAs: ["p1"], readAs: ["p0"] }, op: { kind: "create", template: "pkg:M:T", args: {} } }],
+    },
+    { kind: "closed", ops: 1, warmup: 0, concurrency: 1 },
+    { parties: ["p0", "p1"], roles: {}, bindings: {} },
+    { amount: "1.0", seed: 1, runId: "t" },
+  );
+  assert.deepEqual(seenReadAs, ["p0"]);
+  assert.deepEqual(report.instrumentation?.traffic?.failed ?? [], []);
+});

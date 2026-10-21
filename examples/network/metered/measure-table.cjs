@@ -167,9 +167,12 @@ if (fs.existsSync(amulet))
   fs.writeFileSync(amuletSpread, JSON.stringify({ ...JSON.parse(fs.readFileSync(amulet, "utf8")), placement: "round-robin" }, null, 2));
 // Amulet with the DSO hosted on several participants (run-dso-series.sh sets
 // DSO to the party id and DSO_K to how many nodes host it).
+// AMULET_FILE swaps in another Amulet workload (e.g. amulet/amulet-preapproved.json);
+// AMULET_CASE names it in the case id (default "amulet").
 if (process.env.DSO)
-  cases[`amulet-dso-${process.env.DSO_K}`] = { file: amulet, api: NODES(1), args: ["--role-party", `admin=${process.env.DSO}`],
-    what: `Canton Coin (Amulet) transfer, DSO hosted on ${process.env.DSO_K} participant(s)` };
+  cases[`${process.env.AMULET_CASE ?? "amulet"}-dso-${process.env.DSO_K}`] = { file: process.env.AMULET_FILE ? path.resolve(process.env.AMULET_FILE) : amulet,
+    api: NODES(1), args: ["--role-party", `admin=${process.env.DSO}`],
+    what: `Canton Coin (Amulet) ${({ "amulet-pre": "transfer through a preapproval", "amulet-accept": "two-step transfer, accept (second step)" })[process.env.AMULET_CASE] ?? "transfer offer (two-step, first step)"}, DSO hosted on ${process.env.DSO_K} participant(s)` };
 cases["amulet-2"] = { file: amuletSpread, api: NODES(2), args: [],
   what: "Canton Coin (Amulet) transfer, receiver on a 2nd participant" };
 

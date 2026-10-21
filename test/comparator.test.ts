@@ -51,14 +51,22 @@ test("byte estimates reproduce measured bills within 5%", () => {
   // OpenZeppelin preapproved vs propose + accept (reference table).
   assert.equal(txBytes(design({ family: "oz" })).submitter, 4448);
   assert.equal(txBytes(design({ family: "oz", settlement: "twostep" })).submitter, 8554);
-  // Amulet, DSO on 8 hosts (submitter 6,175 B; all nodes 9,120 B).
-  within5(txBytes(design({ family: "amulet", confirmingNodes: 7 })).submitter, 6175);
-  within5(txBytes(design({ family: "amulet", confirmingNodes: 7 })).network, 9120);
-  // Amulet, DSO on 2 and 3 hosts with the receiver on a node of its own (P5, P4).
-  within5(txBytes(design({ family: "amulet", receiverRemote: true, confirmingNodes: 1 })).submitter, 7397);
-  within5(txBytes(design({ family: "amulet", receiverRemote: true, confirmingNodes: 2 })).submitter, 7846);
-  // Amulet, DSO on 43 hosts: the MainNet-scale run (15,119 B).
-  within5(txBytes(design({ family: "amulet", confirmingNodes: 42 })).submitter, 15119);
+  // Amulet offer (two-step, first step), DSO on 8 hosts (submitter 6,175 B; all nodes 9,120 B).
+  const offer = { family: "amulet", settlement: "offer" };
+  within5(txBytes(design({ ...offer, confirmingNodes: 7 })).submitter, 6175);
+  within5(txBytes(design({ ...offer, confirmingNodes: 7 })).network, 9120);
+  // Amulet offer, DSO on 2 and 3 hosts with the receiver on a node of its own (P5, P4).
+  within5(txBytes(design({ ...offer, receiverRemote: true, confirmingNodes: 1 })).submitter, 7397);
+  within5(txBytes(design({ ...offer, receiverRemote: true, confirmingNodes: 2 })).submitter, 7846);
+  // Amulet offer, DSO on 43 hosts (15,119 B).
+  within5(txBytes(design({ ...offer, confirmingNodes: 42 })).submitter, 15119);
+  // Amulet at MainNet's 13 DSO hosts (rounds 7 and 8): through a preapproval,
+  // sender 8,357 B and all nodes 15,675 B; offer + accept, users 14,963 B and
+  // all nodes 25,501 B.
+  within5(txBytes(design({ family: "amulet", confirmingNodes: 12 })).submitter, 8357);
+  within5(txBytes(design({ family: "amulet", confirmingNodes: 12 })).network, 15675);
+  within5(txBytes(design({ family: "amulet", settlement: "twostep", confirmingNodes: 12 })).submitter, 14963);
+  within5(txBytes(design({ family: "amulet", settlement: "twostep", confirmingNodes: 12 })).network, 25501);
   // Three input holdings (round 4, 4,409 B).
   within5(txBytes(design({ inputs: 3 })).submitter, 4409);
 });

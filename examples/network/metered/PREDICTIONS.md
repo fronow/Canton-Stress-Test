@@ -369,3 +369,83 @@ case completed before the interruption was kept.
 
 Machine and cost: 8 vCPU, 64 GB; about 4 hours in total including the retries,
 roughly $2 at $0.54/hour.
+
+## Round 7: a completed MainNet-shape transfer, DSO on 13 hosts, written BEFORE the run (2026-10-21)
+
+Every Amulet figure above measured the OFFER step of a two-step transfer: with
+no preapproval in the context, ExternalPartyAmuletRules locks the sender's
+amulet and creates an AmuletTransferInstruction (checked on the ledger after
+three runs: three LockedAmulet, three AmuletTransferInstruction). MainNet's
+DSO has 13 Super Validator nodes, and its most common transaction (35% of a
+200-transaction sample) is a transfer that completes through the receiver's
+TransferPreapproval. `amulet/gen-amulet-preapproved.cjs` builds that shape; on
+one participant its event tree matches the MainNet one step for step
+(TransferFactory_Transfer, TransferPreapproval_SendV2, Archive, a
+FeaturedAppActivityMarker, two Amulets, two EventLog_HoldingsChange).
+
+Measured so far, DSO on 1 host (four-participant network, 3 transfers):
+submitter 5,298 B, estimate 5,096 B.
+
+Prediction, from that point and the round 3 per-host slopes only:
+
+| Id | DSO hosts | Submitter | Estimate |
+|---|---|---|---|
+| P24 | 13 | 5,298 + 12 × 233.3 = **8,098 B** | 5,096 + 12 × 224.6 = **7,791 B** |
+
+Pass criterion: within 5%.
+
+## Results, round 7 (measured 2026-10-21, after the prediction above)
+
+Thirteen-participant metered network on a desktop (16 GB), 30 transfers per
+case, 25 committed. The DSO on 1 host was re-measured on the same network as a
+check: submitter 5,328 B (5,298 B on four participants), estimate 5,099 B.
+
+| Id | DSO hosts | Submitter: predicted → measured | | Estimate: predicted → measured | |
+|---|---|---|---|---|---|
+| P24 | 13 | 8,098 → 8,357 | +3.2% pass | 7,791 → 7,820 | +0.4% pass |
+
+Each of the other twelve DSO hosts paid 494-650 B (vs ~340 B for the offer:
+the completed transfer has more for them to confirm); the mediator 151 B. All
+nodes together: 15,675 B per transfer.
+
+As on the rented machine at 32 hosts, 13 hosts on a desktop needed Canton's
+confirmation deadlines raised to 120 s (`cloud/raise-timeouts.canton`) after the
+first attempt timed out; deadlines change waiting, not billing.
+
+## Round 8: the accept step of a two-step transfer, DSO on 13 hosts, written BEFORE the run (2026-10-21)
+
+`amulet/gen-amulet-accept.cjs`: setup makes one offer per operation (the
+transfer of `amulet-transfer.json`), and each measured operation is the
+receiver's TransferInstruction_Accept, reading as the sender to see the locked
+amulet (a wallet gets it as a disclosed contract). Measured on the
+thirteen-participant network with the DSO on 1 host (30 accepts, all
+committed): receiver billed 4,916 B, estimate 4,524 B.
+
+| Id | DSO hosts | Receiver (submitter) | Estimate |
+|---|---|---|---|
+| P25 | 13 | 4,916 + 12 × 233.3 = **7,716 B** | 4,524 + 12 × 224.6 = **7,219 B** |
+
+Pass criterion: within 5%.
+
+## Results, round 8 (measured 2026-10-21, after the prediction above)
+
+| Id | DSO hosts | Receiver: predicted → measured | | Estimate: predicted → measured | |
+|---|---|---|---|---|---|
+| P25 | 13 | 7,716 → 7,499 | −2.8% pass | 7,219 → 7,227 | +0.1% pass |
+
+30 of 30 committed. The other DSO hosts paid 339-468 B each, the mediator
+151 B; all nodes 12,109 B.
+
+The offer was measured on the same network for comparison (not a
+prediction): sender 7,464 B, estimate 7,258 B, other hosts 339-495 B, all nodes
+13,392 B. That is within 2.1% of the 13-host point interpolated from the
+43-participant run (7,310 B).
+
+**A transfer to MainNet's DSO size, two ways (DSO on 13 hosts):**
+
+| | Paid by the users | All nodes |
+|---|---|---|
+| Through the receiver's preapproval (one transaction) | 8,357 B (sender) | 15,675 B |
+| Offer + accept (two transactions) | 7,464 B (sender) + 7,499 B (receiver) = 14,963 B | 25,501 B |
+
+The preapproved route costs the users 44% less and the network 39% less.

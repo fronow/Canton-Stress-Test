@@ -1,0 +1,183 @@
+{
+  "model": "closed",
+  "parties": 6,
+  "ops": 3,
+  "summary": {
+    "ops": 3,
+    "committed": 3,
+    "contention": 0,
+    "rejected": 0,
+    "wallMs": 1479.8732,
+    "throughputPerSec": 2.0272007088174853,
+    "attemptedPerSec": 2.0272007088174853,
+    "contentionRate": 0,
+    "latency": {
+      "p50": 416.60030000000006,
+      "p90": 725.4308000000001,
+      "p95": 725.4308000000001,
+      "p99": 725.4308000000001,
+      "max": 725.4308000000001,
+      "mean": 493.0842999999998
+    },
+    "latencyCurve": [
+      {
+        "p": 50,
+        "ms": 416.60030000000006
+      },
+      {
+        "p": 75,
+        "ms": 725.4308000000001
+      },
+      {
+        "p": 90,
+        "ms": 725.4308000000001
+      },
+      {
+        "p": 95,
+        "ms": 725.4308000000001
+      },
+      {
+        "p": 99,
+        "ms": 725.4308000000001
+      },
+      {
+        "p": 99.9,
+        "ms": 725.4308000000001
+      }
+    ]
+  },
+  "instrumentation": {
+    "hotspots": [
+      {
+        "key": "009e7025b89f5558a6038f299c6aafcb0fb92449bcf2b6505a8b1f1066d90f900dca12122067a4c8e2e8763a31e18db7c0ac6ccebbe1acaf0c7ba0a94fecda84564e6b11fd",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 725.4308000000001,
+        "p99": 725.4308000000001,
+        "maxMs": 725.4308000000001,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "00ac0529c49f2c7cc87a2e885376649065ad0990fa0a236bad55a1ff98ca6a4d8aca121220a4eabcfa60b5c9f11f99fbc8740250d71fcc4ccada711bc5e2a5c294f30ecf48",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 416.60030000000006,
+        "p99": 416.60030000000006,
+        "maxMs": 416.60030000000006,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "00f3c9c014ed8de48b1980692a162592122268cf2fd0607981df6f1b2f73433ed7ca121220105b69c9272b3979021bc4321130a2594ea8fa0a4d86ea1f838943340e3308c4",
+        "ops": 1,
+        "committed": 1,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 337.22179999999935,
+        "p99": 337.22179999999935,
+        "maxMs": 337.22179999999935,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": false
+      },
+      {
+        "key": "0013847c5ef8f8f1c59aa47dcec9a6155f134bdfea4c2f6fcbb919cf6f15d653c1ca1212206a51916879cb47aca735fdf41de481e2486761496c20bb82ac897f35561eee12",
+        "ops": 3,
+        "committed": 3,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 416.60030000000006,
+        "p99": 725.4308000000001,
+        "maxMs": 725.4308000000001,
+        "template": "#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory",
+        "role": "target",
+        "ubiquitous": true
+      },
+      {
+        "key": "0020bf2b704392dc34f07a41cdc1e67817fa41413acfbf07326fc2285400f67f9bca12122076b2a1da8404cbaa4be02c560bb015b1a9edfefda01e16fa648a92f2324d96a5",
+        "ops": 3,
+        "committed": 3,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 416.60030000000006,
+        "p99": 725.4308000000001,
+        "maxMs": 725.4308000000001,
+        "template": "",
+        "role": "argument",
+        "ubiquitous": true
+      }
+    ],
+    "byParty": [
+      {
+        "key": "cs-mvh5scm3-p0::122097289d911f2ebea0361946cb14d9637482884dfeb67c773018efb84066986bfa",
+        "ops": 3,
+        "committed": 3,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 416.60030000000006,
+        "p99": 725.4308000000001,
+        "maxMs": 725.4308000000001
+      }
+    ],
+    "byOperation": [
+      {
+        "key": "Splice.Api.Token.TransferInstructionV1:TransferFactory:TransferFactory_Transfer",
+        "ops": 3,
+        "committed": 3,
+        "contention": 0,
+        "rejected": 0,
+        "contentionRate": 0,
+        "p50": 416.60030000000006,
+        "p99": 725.4308000000001,
+        "maxMs": 725.4308000000001
+      }
+    ],
+    "traffic": {
+      "perOperation": [
+        {
+          "operation": "Splice.Api.Token.TransferInstructionV1:TransferFactory:TransferFactory_Transfer",
+          "confirmationRequest": 4118,
+          "confirmationResponse": 415,
+          "total": 4533,
+          "preparedBytes": 22307
+        }
+      ],
+      "totalForRun": 13599,
+      "perSecond": 9189.300813069662,
+      "unmetered": false,
+      "preparedBytesForRun": 66921,
+      "preparedBytesPerOp": 22307,
+      "usdPerMb": 60,
+      "costBasis": "estimate",
+      "estimatedCostUsd": 0.81594,
+      "costPerOpUsd": 0.27198
+    },
+    "synchronizerId": "stressnet::1220bf8f873652476fc8af3e2eab48dacaeb2fe8b1a63c77ecc2155729c7bc23ab92"
+  },
+  "setup": {
+    "steps": 3,
+    "submitted": 62,
+    "bindings": {
+      "factory": 1,
+      "config": 1,
+      "holdings": 60
+    }
+  },
+  "shape": {
+    "pool": 60,
+    "inputs": 1
+  }
+}

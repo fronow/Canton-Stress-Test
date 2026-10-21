@@ -67,6 +67,7 @@
     <button data-preset="settlement">Propose/accept vs preapproved</button>
     <button data-preset="receiver">Receiver on its own node vs co-hosted</button>
     <button data-preset="mainnet">Canton Coin: 1 vs 13 DSO hosts (MainNet)</button>
+    <button data-preset="amulet13">Canton Coin on MainNet: offer + accept vs preapproval</button>
     <button data-preset="inputs">1 input vs 3 inputs</button>
   </div>
 
@@ -146,9 +147,17 @@ const MODEL = {
              direct: { label: "Preapproved direct (one transaction)", bytes: 4448 },
              twostep: { label: "Propose + accept (two transactions)", bytes: 4317 + 4237 } },
            src: "#reference-table-token-standard-transfers-billed" },
-    amulet: { label: "Canton Coin (Amulet) transfer", base: 4601, receiver: 2290,
-           settlements: { direct: { label: "Direct (completes in one transaction)", bytes: 4601 } },
-           src: "#canton-coin-amulet" },
+    // Canton Coin, splice-amulet 0.1.23 (MainNet's package). "direct" is the
+    // MainNet shape: through the receiver's TransferPreapproval, with a
+    // featured-app marker and the holdings-change event log. "twostep" is an
+    // offer (locks the amulet) plus the receiver's accept. nodeOwn: what each
+    // extra DSO host paid itself per step, measured at 13 hosts.
+    amulet: { label: "Canton Coin (Amulet) transfer", base: 5298, receiver: 2290,
+           settlements: {
+             direct: { label: "Through the receiver's preapproval (one transaction)", bytes: 5298, nodeOwn: 597 },
+             twostep: { label: "Offer + accept (two transactions)", bytes: 4601 + 4916, nodeOwn: 427 },
+             offer: { label: "Offer only (first step of two)", bytes: 4601 } },
+           src: "#a-completed-transfer-mainnets-shape-on-13-hosts" },
   },
   perConfirmingNode: 233,   // submitter, per extra node hosting a confirming party (DSO series, 1-8 nodes)
   perConfirmingNodeMeasuredUpTo: 42, // extra nodes measured: 0..42 (DSO on 1-43 hosts)
@@ -198,7 +207,8 @@ function txBytes(d) {
   const data = Math.max(0, +d.dataBytes || 0);
   if (data > 0) { const c = Math.round(MODEL.dataFactor * data); sub += c; parts.push(["Extra incompressible data", c, "m"]); }
   // What everyone else pays: the mediator, and each confirming node itself.
-  const others = (MODEL.mediator + n * (MODEL.confirmingNodeOwn + MODEL.confirmingNodePerExtraParty * Math.max(0, (d.partiesPerNode | 0) - 1))) * steps;
+  const own = s.nodeOwn ?? MODEL.confirmingNodeOwn;
+  const others = (MODEL.mediator + n * (own + MODEL.confirmingNodePerExtraParty * Math.max(0, (d.partiesPerNode | 0) - 1))) * steps;
   return { submitter: sub, network: sub + others, parts, flags };
 }
 
@@ -238,6 +248,7 @@ if (typeof document !== "undefined") {
     settlement: [{ family: "oz", settlement: "twostep" }, { family: "oz", settlement: "direct" }],
     receiver: [{ family: "std", receiverRemote: true }, { family: "std", receiverRemote: false }],
     mainnet: [{ family: "amulet", confirmingNodes: 0 }, { family: "amulet", confirmingNodes: 12 }],
+    amulet13: [{ family: "amulet", settlement: "twostep", confirmingNodes: 12 }, { family: "amulet", settlement: "direct", confirmingNodes: 12 }],
     inputs: [{ family: "std", inputs: 1 }, { family: "std", inputs: 3 }],
   };
   const base = { settlement: "direct", receiverRemote: false, confirmingNodes: 0, partiesPerNode: 1, observerNodes: 0, inputs: 1, dataBytes: 0 };
@@ -327,7 +338,7 @@ if (typeof document !== "undefined") {
       <tr><th>Term</th><th>Value</th><th>Evidence</th></tr>
       <tr><td>Token Standard transfer, std-spike</td><td>4,100 B</td><td><a href="${SRC}#inputs-per-transfer">inputs per transfer</a></td></tr>
       <tr><td>OpenZeppelin: preapproved / propose + accept</td><td>4,448 / 8,554 B</td><td><a href="${SRC}#reference-table-token-standard-transfers-billed">reference table</a></td></tr>
-      <tr><td>Canton Coin (Amulet) transfer</td><td>4,601 B</td><td><a href="${SRC}#canton-coin-amulet">Amulet</a></td></tr>
+      <tr><td>Canton Coin: through a preapproval / offer / accept</td><td>5,298 / 4,601 / 4,916 B (DSO on 1 node); at 13 DSO nodes 8,357 / 7,464 / 7,499 B</td><td><a href="${SRC}#a-completed-transfer-mainnets-shape-on-13-hosts">13 hosts</a>, <a href="${SRC}#canton-coin-amulet">Amulet</a></td></tr>
       <tr><td>Receiver on a node of its own</td><td>+1,930 B (std-spike), +2,290 B (Amulet); independent of data size</td><td><a href="${SRC}#a-first-cost-model-tested-by-predicting-before-measuring">cost model</a></td></tr>
       <tr><td>Each extra confirming node (sender's bill)</td><td>+233 B, linear over 1-43 nodes in the transaction itself; ×2 when a remote-receiver part exists. Above ~24 nodes each host was also billed ~1 KB more per transfer, not modelled here</td><td><a href="${SRC}#amulet-with-the-dso-hosted-on-several-participants">DSO series</a>, <a href="${SRC}#confirming-parties-or-confirming-participants">parties vs participants</a></td></tr>
       <tr><td>Each confirming node pays itself</td><td>~340 B, +~160 B per extra party it confirms for</td><td><a href="${SRC}#confirming-parties-or-confirming-participants">parties vs participants</a></td></tr>

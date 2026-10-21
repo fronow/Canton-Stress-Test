@@ -1,0 +1,22 @@
+{
+  "case": "amulet-pre-1",
+  "what": "Amulet transfer via preapproval, 1 participant",
+  "committed": 3,
+  "ops": 3,
+  "billedPerOp": {
+    "PAR::participant4": 0,
+    "PAR::participant2": 0,
+    "MED::mediator1": 151,
+    "PAR::participant3": 0,
+    "PAR::participant1": 5298
+  },
+  "participantsTotal": 5298,
+  "estimate": {
+    "request": 4681,
+    "response": 415,
+    "total": 5096
+  },
+  "preparedBytes": 33462,
+  "failed": [],
+  "tag": "check"
+}
