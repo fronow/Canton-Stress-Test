@@ -362,8 +362,8 @@ what the sequencer actually bills each node. Results so far, how to reproduce
 them, and a first cost model tested by predicting before measuring:
 [examples/network/metered/METERED.md](examples/network/metered/METERED.md).
 The [design cost comparator](https://fronow.github.io/Canton-Stress-Test/docs/cost-comparator.html) ([source](docs/cost-comparator.html)) turns those measurements into
-a design cost comparator: two designs side by side, priced under the draft
-Universal Burn CIP, every term marked measured or extrapolated.
+a design cost comparator: two designs side by side, priced at CIP-0129's
+$60/MB list price (Universal Burn, approved; volume curve and discounts illustrative until the second CIP), every term marked measured or extrapolated.
 
 **Parties set up outside the tool.** `--role-party admin=<party id>` uses an
 existing party for a role instead of allocating a new one, for example a party

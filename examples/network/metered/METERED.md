@@ -132,8 +132,9 @@ What this shows:
 ## Reference table: Token Standard transfers, billed
 
 Same metered network, `measure-table.cjs`, 10 operations per case at
-concurrency 1. Bytes billed per committed transaction. "Typical" is the draft
-Universal Burn CIP's reference transaction, 16,667 B ($1 at $60/MB). Raw rows in
+concurrency 1. Bytes billed per committed transaction. "Typical" is the
+reference transaction behind CIP-0129's "about $1 for a typical transaction" at
+$60/MB: 16,667 B. Raw rows in
 `results/table-*.row.json`, combined in `results/workload-costs.json`
 (`build-table.cjs` regenerates both).
 
@@ -292,7 +293,7 @@ Straight-line fits in the number of extra hosts:
   5% in all four (PREDICTIONS.md, round 3).
 - **Extrapolation at the time of the eight-node run, now measured (below):** carried to 43
   hosts (then wrongly believed to be MainNet's Super Validator count; it is 13), the line gives ~14 KB for the submitter and ~31 KB across the
-  network. That is the same order as the draft CIP's 16.7 KB median, an
+  network. That is the same order as the 16.7 KB typical transaction in the Universal Burn deck, an
   operator's 35.5 KB node median, and a public average of roughly 23 KB
   (September 2026 traffic purchased over transactions). The 43-host figure
   barely moved when the evidence doubled from four points to eight (14.1 to

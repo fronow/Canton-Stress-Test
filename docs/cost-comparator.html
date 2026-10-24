@@ -60,8 +60,9 @@
   <p class="lede">Compare what two designs of the same transaction cost in Canton traffic, before
   building either. Every term comes from bills read off a metered Canton 3.4.11 network, and each one
   says whether it was <span class="chip m">measured</span> or is an
-  <span class="chip x">extrapolation</span>. Prices follow the draft Universal Burn CIP and are
-  illustrative until its parameters are approved.</p>
+  <span class="chip x">extrapolation</span>. Prices use the $60/MB list price of
+  <a href="https://github.com/canton-foundation/cips/blob/main/cip-0129/cip-0129.md">CIP-0129</a> (Universal Burn, approved 2026-10-23). Its volume curve and
+  discounts are left to a second CIP; the ones here are the illustrative numbers from the CIP's deck.</p>
 
   <div class="presets" role="group" aria-label="Examples">
     <button data-preset="settlement">Propose/accept vs preapproved</button>
@@ -85,8 +86,8 @@
         <input id="tps" type="number" min="0.001" step="any" value="10"></div>
       <div><label for="sync">Synchronizer</label>
         <select id="sync">
-          <option value="global">Global Synchronizer (list price at any volume)</option>
-          <option value="dedicated" selected>Dedicated synchronizer (volume pricing)</option>
+          <option value="global" selected>Global Synchronizer (list price at any volume)</option>
+          <option value="dedicated">Dedicated synchronizer (volume pricing)</option>
         </select></div>
     </div>
     <div class="row">
@@ -110,7 +111,7 @@
           <option value="net">Net of rewards (long-run 9.75% of gross, CIP assumption)</option>
         </select></div>
     </div>
-    <p class="note">Volume tiers are counted in MB, as in the draft CIP: your TPS is converted into
+    <p class="note">Volume tiers are counted in MB, as in the CIP's deck (illustrative): your TPS is converted into
     "typical" 16.7 KB transactions before the tier is applied, so a smaller transaction also lands in
     a lower tier. The Global Synchronizer keeps one price at every volume.</p>
   </section>
@@ -168,8 +169,8 @@ const MODEL = {
   inputsMeasuredUpTo: 8,
   dataFactor: 1.31,         // billed bytes per byte of incompressible data (random hex test)
   mediator: 151,
-  typicalBytes: 1e6 / 60,   // draft CIP: median transaction, $1 at $60/MB
-  netShare: 0.0975,         // draft CIP: long-run net cost after rewards
+  typicalBytes: 1e6 / 60,   // CIP-0129: $60/MB is "about $1 for a typical transaction"
+  netShare: 0.0975,         // CIP-0129 deck (illustrative): long-run net cost after rewards
 };
 
 // Submitter's billed bytes, the whole network's billed bytes, and which terms
@@ -212,7 +213,8 @@ function txBytes(d) {
   return { submitter: sub, network: sub + others, parts, flags };
 }
 
-// Draft Universal Burn price per MB for a sustained volume.
+// Price per MB for a sustained volume: CIP-0129's list price, with the volume
+// curve and discounts from its deck (illustrative until the second CIP).
 function pricePerMb(o) {
   let price = o.listPrice;
   if (o.sync === "dedicated") {
@@ -241,8 +243,9 @@ if (typeof document !== "undefined") {
   const fmtUsd = (u) => u >= 1e6 ? "$" + (u / 1e6).toFixed(2) + "M" : u >= 1e3 ? "$" + Math.round(u).toLocaleString("en-US")
                     : u >= 1 ? "$" + u.toFixed(2) : "$" + u.toFixed(4);
   const designs = {
-    A: { family: "oz", settlement: "twostep", receiverRemote: false, confirmingNodes: 0, partiesPerNode: 1, observerNodes: 0, inputs: 1, dataBytes: 0 },
-    B: { family: "oz", settlement: "direct", receiverRemote: false, confirmingNodes: 0, partiesPerNode: 1, observerNodes: 0, inputs: 1, dataBytes: 0 },
+    // Opens on MainNet: a Canton Coin transfer with the DSO on 13 hosts, two ways.
+    A: { family: "amulet", settlement: "twostep", receiverRemote: false, confirmingNodes: 12, partiesPerNode: 1, observerNodes: 0, inputs: 1, dataBytes: 0 },
+    B: { family: "amulet", settlement: "direct", receiverRemote: false, confirmingNodes: 12, partiesPerNode: 1, observerNodes: 0, inputs: 1, dataBytes: 0 },
   };
   const presets = {
     settlement: [{ family: "oz", settlement: "twostep" }, { family: "oz", settlement: "direct" }],
@@ -290,14 +293,16 @@ if (typeof document !== "undefined") {
     for (const id of ["A", "B"]) {
       const t = txBytes(designs[id]); const c = cost(t.submitter, o); const cn = cost(t.network, o);
       r[id] = { t, c, cn };
+      // In a two-step transfer the receiver submits the second transaction and pays for it.
+      const who = designs[id].settlement === "twostep" ? "users (sender + receiver)" : "sender";
       const rows = t.parts.map(([k, b, m]) => `<tr><td>${k}<span class="chip ${m}">${m === "m" ? "measured" : "extrapolated"}</span></td><td class="r">${fmtB(b)}</td></tr>`).join("");
       document.getElementById("out-" + id).innerHTML = `
-        <div class="kv"><span>Sender's bill per transfer</span><span class="big">${fmtB(t.submitter)}</span></div>
+        <div class="kv"><span>Billed to the ${who}, per transfer</span><span class="big">${fmtB(t.submitter)}</span></div>
         <div class="kv"><span>× the CIP's typical transaction</span><b>${(t.submitter / MODEL.typicalBytes).toFixed(2)}</b></div>
-        <div class="kv"><span>Cost to the sender, per transfer</span><b>${fmtUsd(c.perTx)}</b></div>
-        <div class="kv"><span>Cost to the sender, per year</span><b>${fmtUsd(c.perYear)}</b></div>
+        <div class="kv"><span>Cost to the ${who}, per transfer</span><b>${fmtUsd(c.perTx)}</b></div>
+        <div class="kv"><span>Cost to the ${who}, per year</span><b>${fmtUsd(c.perYear)}</b></div>
         <div class="kv"><span>Whole network (incl. confirmers, mediator), per transfer</span><b>${fmtB(t.network)} · ${fmtUsd(cn.perTx)}</b></div>
-        <table style="margin-top:8px"><tr><th>Where the sender's bytes come from</th><th class="r">Bytes</th></tr>${rows}</table>
+        <table style="margin-top:8px"><tr><th>Where the ${who === "sender" ? "sender's" : "users'"} bytes come from</th><th class="r">Bytes</th></tr>${rows}</table>
         ${t.flags.length ? `<p class="note">Beyond the measured range: ${t.flags.join("; ")}.</p>` : ""}`;
     }
     const dTx = r.B.c.perTx - r.A.c.perTx, dYr = r.B.c.perYear - r.A.c.perYear, dB = r.B.t.submitter - r.A.t.submitter;
@@ -305,7 +310,7 @@ if (typeof document !== "undefined") {
     const cls = dB > 0 ? "pos" : "neg";
     document.getElementById("diff").innerHTML = `
       <h2>B compared with A</h2>
-      <div class="kv"><span>Sender's bytes per transfer</span><span class="big ${cls}">${dB >= 0 ? "+" : "−"}${fmtB(Math.abs(dB))} (${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%)</span></div>
+      <div class="kv"><span>Bytes the users pay per transfer</span><span class="big ${cls}">${dB >= 0 ? "+" : "−"}${fmtB(Math.abs(dB))} (${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%)</span></div>
       <div class="kv"><span>Per transfer, at ${o.tps} transfers/s</span><b class="${cls}">${dTx >= 0 ? "+" : "−"}${fmtUsd(Math.abs(dTx))}</b></div>
       <div class="kv"><span>Per year, at ${o.tps} transfers/s</span><b class="${cls}">${dYr >= 0 ? "+" : "−"}${fmtUsd(Math.abs(dYr))}</b></div>
       <p class="note">Price per MB applied: A ${fmtUsd(r.A.c.perMb)}, B ${fmtUsd(r.B.c.perMb)}${o.net ? " (then 9.75% net)" : ""}.
@@ -346,7 +351,8 @@ if (typeof document !== "undefined") {
       <tr><td>Each input holding beyond the first</td><td>+120 B, linear over 1-8</td><td><a href="${SRC}#inputs-per-transfer">inputs per transfer</a></td></tr>
       <tr><td>Incompressible data</td><td>×1.31 billed bytes per byte; repeated data costs almost nothing</td><td><a href="${SRC}#a-first-cost-model-tested-by-predicting-before-measuring">cost model</a></td></tr>
       <tr><td>Mediator</td><td>151 B per transaction</td><td><a href="${SRC}#reference-table-token-standard-transfers-billed">reference table</a></td></tr>
-      <tr><td>Price per MB and discounts</td><td>Draft Universal Burn CIP (illustrative)</td><td><a href="https://dach-ny.github.io/universal-burn-cip/">CIP explainer</a></td></tr>
+      <tr><td>Price per MB</td><td>$60/MB list price; a MainNet traffic purchase on 2026-10-20 paid exactly this</td><td><a href="https://github.com/canton-foundation/cips/blob/main/cip-0129/cip-0129.md">CIP-0129</a></td></tr>
+      <tr><td>Volume curve and discounts</td><td>Illustrative, from the CIP's deck; the real ones come in a second CIP</td><td><a href="https://dach-ny.github.io/universal-burn-cip/">CIP deck</a></td></tr>
     </table>`;
 
   bind("A"); bind("B"); render();

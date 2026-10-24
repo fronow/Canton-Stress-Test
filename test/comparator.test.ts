@@ -1,6 +1,6 @@
 // The design cost comparator (docs/cost-comparator.html) is a published claim:
-// its constants are measured bills, and its prices follow the draft Universal
-// Burn CIP. These tests load the model straight out of the page and pin it to
+// its constants are measured bills, and its prices follow the Universal
+// Burn deck (CIP-0129, illustrative curve). These tests load the model straight out of the page and pin it to
 // both, so editing a number in the page without new evidence fails the build.
 
 import assert from "node:assert/strict";
@@ -28,7 +28,7 @@ const typical = 1e6 / 60;
 const near = (a: number, b: number, tol: number) =>
   assert.ok(Math.abs(a - b) <= tol, `${a} not within ${tol} of ${b}`);
 
-test("prices reproduce the draft CIP's own examples", () => {
+test("prices reproduce the Universal Burn deck's own examples", () => {
   // List price: a typical 16.7 KB transaction is $1.
   near(cost(typical, pricing({ sync: "global", tps: 1000 })).perTx, 1, 1e-9);
   // Volume curve on a dedicated synchronizer: 50¢ / 25¢ / 12.5¢ at 10 / 100 / 1,000 TPS.

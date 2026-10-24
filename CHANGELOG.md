@@ -56,6 +56,9 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   Universal Burn CIP (volume tiers counted in MB, commitment and loyalty
   discounts), each term marked measured or extrapolated. `test/comparator.test.ts`
   pins it to the CIP's own price examples and to measured bills.
+- **CIP-0129 approved (2026-10-23).** The comparator and docs now cite the
+  approved CIP for the $60/MB list price and mark the volume curve and discounts
+  as the deck's illustrative numbers, pending the second CIP.
 - **A completed Canton Coin transfer at MainNet scale.** `amulet/gen-amulet-preapproved.cjs`
   builds MainNet's most common transaction (through the receiver's preapproval,
   featured-app marker, event log; event tree checked against MainNet) and
